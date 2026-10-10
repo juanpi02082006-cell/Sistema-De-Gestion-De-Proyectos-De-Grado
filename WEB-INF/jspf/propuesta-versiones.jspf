@@ -1,0 +1,42 @@
+<%-- Versiones del FDC-124 de un proyecto (RF43), de la más nueva a la más antigua, cada
+     una con quién la subió y cuándo, y las observaciones enviadas sobre ella. De quien
+     revisa solo se muestra el rol, nunca el nombre: así el estudiante no sabe quién es
+     su evaluador (RF27). Antes de incluirlo, definir idProyectoPropuesta. Deja
+     versionesPropuesta (la consulta). --%>
+<sql:query var="versionesPropuesta">
+    SELECT e.id, e.version, e.oficial, e.nombre_archivo, e.subido_en, u.nombre AS subida_por,
+           r.rol AS rol_revision, r.decision, r.observacion, r.revisado_en
+    FROM entregas e
+    JOIN usuarios u ON u.id = e.subido_por
+    LEFT JOIN revisiones r ON r.entrega_id = e.id AND r.estado = 'Enviada'
+    WHERE e.proyecto_id = ? AND e.tipo = 'FDC-124'
+    ORDER BY e.version DESC, r.id
+    <sql:param value="${idProyectoPropuesta}" />
+</sql:query>
+<c:choose>
+    <c:when test="${versionesPropuesta.rowCount == 0}">
+        <p class="app-vacio mt-0">Todavía no hay versiones del FDC-124.</p>
+    </c:when>
+    <c:otherwise>
+        <c:set var="idVersionAnterior" value="0" />
+        <c:forEach var="v" items="${versionesPropuesta.rows}">
+            <c:if test="${v.id != idVersionAnterior}">
+                <div class="app-archivo">
+                    <span>
+                        <span class="app-lista-dato">Versión <c:out value="${v.version}" /> · <c:out value="${v.nombre_archivo}" /></span>
+                        <span class="app-lista-nota">Subida por <c:out value="${v.subida_por}" /> el <fmt:formatDate value="${v.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
+                    </span>
+                    <span class="app-acciones">
+                        <c:if test="${v.oficial == 1}"><span class="app-estado activo">Oficial</span></c:if>
+                        <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${v.id}">Descargar</a>
+                    </span>
+                </div>
+            </c:if>
+            <c:if test="${not empty v.decision}">
+                <p class="app-observacion mb-3"><strong><c:out value="${v.rol_revision}" /> · <c:out value="${v.decision}" />:</strong> <c:out value="${v.observacion}" />
+                    <span class="app-lista-nota"><fmt:formatDate value="${v.revisado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
+            </c:if>
+            <c:set var="idVersionAnterior" value="${v.id}" />
+        </c:forEach>
+    </c:otherwise>
+</c:choose>

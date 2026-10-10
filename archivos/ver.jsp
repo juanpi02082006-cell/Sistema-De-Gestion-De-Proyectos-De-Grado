@@ -1,12 +1,14 @@
 <%-- Muestra un archivo subido (?id= de la entrega). Los archivos están en
      WEB-INF/archivos, que no se abre desde el navegador; aquí se revisa el permiso y
      se reenvía la petición al archivo. Pueden verlo: el administrador (comité), los
-     estudiantes del proyecto y su director, codirectores o evaluador. --%>
+     estudiantes del proyecto y su director, codirectores o evaluador.
+     El PDF se abre en el navegador; los demás (Word) se descargan con su nombre original. --%>
+<%@ page import="java.net.URLEncoder" %>
 <%@ include file="/WEB-INF/jspf/sesion.jspf" %>
 
 <c:set var="rol" value="${sessionScope.rolActivo.id}" />
 <sql:query var="consulta">
-    SELECT e.ruta_archivo
+    SELECT e.ruta_archivo, e.nombre_archivo
     FROM entregas e
     JOIN proyectos p ON p.id = e.proyecto_id
     WHERE e.id = ?
@@ -37,4 +39,8 @@
 <%-- La JSP ya dejó el tipo text/html: se cambia por el del archivo (application/pdf…) --%>
 <c:set var="tipo" value="${pageContext.servletContext.getMimeType(ruta)}" />
 <c:set var="sinUso" value="${pageContext.response.setContentType(empty tipo ? 'application/octet-stream' : tipo)}" />
+<%-- Nombre original codificado para el encabezado (RFC 5987: los espacios van como %20) --%>
+<c:set var="nombreCodificado" value="${fn:replace(URLEncoder.encode(consulta.rows[0].nombre_archivo, 'UTF-8'), '+', '%20')}" />
+<c:set var="disposicion">${tipo == 'application/pdf' ? 'inline' : 'attachment'}; filename*=UTF-8''${nombreCodificado}</c:set>
+<c:set var="sinUso" value="${pageContext.response.setHeader('Content-Disposition', disposicion)}" />
 <jsp:forward page="/WEB-INF/archivos/${ruta}" />

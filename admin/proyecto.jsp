@@ -9,7 +9,7 @@
 <c:set var="seccion" value="proyectos" />
 
 <sql:query var="consulta">
-    SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.director_id, p.evaluador_id, p.fecha_inicio,
+    SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.director_id, p.evaluador_id, p.fecha_inicio, p.modalidad_id,
            f.orden AS fase, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
            pr.nombre AS periodo, pr.fecha_limite_pago, ${sqlEstadoPago} AS estado_pago
     FROM proyectos p
@@ -81,6 +81,14 @@
                 <span class="app-requisito ${empty p.director_id ? '' : 'cumple'}">${empty p.director_id ? 'Pendiente' : 'Listo'}</span>
             </li>
         </ul>
+    </div>
+</c:if>
+
+<c:if test="${p.fase >= 2 and p.modalidad_id != 5}">
+    <div class="app-tarjeta mb-4">
+        <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
+        <c:set var="idProyectoPropuesta" value="${p.id}" />
+        <%@ include file="/WEB-INF/jspf/propuesta-versiones.jspf" %>
     </div>
 </c:if>
 

@@ -68,6 +68,19 @@
         <servlet-name>subirPago</servlet-name>
         <url-pattern>/estudiante/pago-guardar.jsp</url-pattern>
     </servlet-mapping>
+    <!-- La propuesta (FDC-124, en Word), igual que el recibo -->
+    <servlet>
+        <servlet-name>subirPropuesta</servlet-name>
+        <jsp-file>/estudiante/propuesta-guardar.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>15728640</max-file-size>
+            <max-request-size>16777216</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>subirPropuesta</servlet-name>
+        <url-pattern>/estudiante/propuesta-guardar.jsp</url-pattern>
+    </servlet-mapping>
 
     <!-- La sesión viaja solo en una cookie (nunca como ;jsessionid=... en la URL) -->
     <session-config>

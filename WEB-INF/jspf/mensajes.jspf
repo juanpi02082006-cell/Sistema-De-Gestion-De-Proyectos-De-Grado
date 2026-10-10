@@ -25,6 +25,8 @@
             <c:when test="${param.ok == 'pago-aprobado-fase-2'}">El pago quedó aprobado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'pago-devuelto'}">El recibo se devolvió al estudiante con la observación.</c:when>
             <c:when test="${param.ok == 'asignacion-guardada'}">El director y el evaluador quedaron guardados.</c:when>
+            <c:when test="${param.ok == 'propuesta-subida'}">La versión del FDC-124 se subió correctamente. Cuando esté lista, envíasela a tu director.</c:when>
+            <c:when test="${param.ok == 'propuesta-enviada'}">Enviaste la propuesta a tu director: el proyecto pasó a la fase 3 (Propuesta II).</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
             <c:when test="${param.ok == 'sesion-eliminada'}">La sesión se quitó del calendario.</c:when>
@@ -62,6 +64,12 @@
             <c:when test="${param.error == 'director-invalido'}">Escoge un director: debe ser un docente activo con el rol Director.</c:when>
             <c:when test="${param.error == 'evaluador-invalido'}">El evaluador debe ser un docente activo con el rol Evaluador.</c:when>
             <c:when test="${param.error == 'director-evaluador'}">Un docente no puede evaluar el proyecto que dirige. Escoge otro evaluador.</c:when>
+            <c:when test="${param.error == 'seminario-sin-124'}">La modalidad Seminario no usa el F-DC-124.</c:when>
+            <c:when test="${param.error == 'fase-no-permite-propuesta'}">La propuesta (FDC-124) se sube y se envía en la fase 2.</c:when>
+            <c:when test="${param.error == 'archivo-no-word'}">El FDC-124 debe ser un documento de Word (.doc o .docx).</c:when>
+            <c:when test="${param.error == 'sin-director'}">Tu proyecto todavía no tiene director.</c:when>
+            <c:when test="${param.error == 'propuesta-requerida'}">Sube el FDC-124 antes de enviarlo a tu director.</c:when>
+            <c:when test="${param.error == 'propuesta-devuelta'}">Tu director devolvió la última versión: sube una versión corregida antes de enviarla otra vez.</c:when>
             <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
             <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
             <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>

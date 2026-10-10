@@ -3,8 +3,8 @@
      Antes de incluirlo, definir:
        <c:set var="titulo"  value="..." />   título de la pestaña
        <c:set var="seccion" value="..." />   opción del menú que se marca (inicio, usuarios, roles,
-                                             periodos, proyectos, ideas, habilitacion, proyecto, calendario,
-                                             modalidades) --%>
+                                             periodos, proyectos, dirigidos, ideas, habilitacion, proyecto,
+                                             calendario, modalidades) --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="rolMenu" value="${sessionScope.rolActivo.id}" />
 <!DOCTYPE html>
@@ -39,6 +39,10 @@
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Periodos</a>
                 <a href="${ctx}/admin/proyectos.jsp" class="${seccion == 'proyectos' ? 'activo' : ''}">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Proyectos</a>
+            </c:if>
+            <c:if test="${rolMenu == 3}">
+                <a href="${ctx}/director/proyectos.jsp" class="${seccion == 'dirigidos' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Mis proyectos</a>
             </c:if>
             <c:if test="${rolMenu == 5}">
                 <a href="${ctx}/estudiante/habilitacion.jsp" class="${seccion == 'habilitacion' ? 'activo' : ''}">

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Pruebas de punta a punta del Sprint 5 (primera parte): el comité revisa el recibo de pago
-# (RF32, observación obligatoria RF34), asigna director y evaluador (RF11, RF27) y el
-# proyecto pasa a la fase 2 cuando tiene el pago aprobado (o no aplica) y director.
+# Pruebas de punta a punta del Sprint 5: el comité revisa el recibo de pago (RF32,
+# observación obligatoria RF34), asigna director y evaluador (RF11, RF27) y el proyecto
+# pasa a la fase 2 cuando tiene el pago aprobado (o no aplica) y director. En la fase 2 el
+# estudiante sube el FDC-124 por versiones (RF26, RF30, RF43) y lo envía al director, que
+# lo ve en sus proyectos (RF18, RF19); el proyecto pasa a la fase 3.
 # Se corren sobre la base recién importada (usuarios de prueba con la clave 123456).
 B="http://localhost:8080/segundo-parcial"
 T="$(dirname "$0")/tmp/sprint5"; rm -rf "$T"; mkdir -p "$T"
@@ -110,13 +112,62 @@ asignar $PA 6 ""; [[ "$DESTINO" == *"ok=asignacion-guardada"* ]] && [ "$(fase $P
 [ "$($MYSQL -e "SELECT IFNULL(evaluador_id,'NULL') FROM proyectos WHERE id=$PA")" = "NULL" ]; revisar "Quitar el evaluador lo deja vacío" $?
 asignar $PC 6 ""; [[ "$DESTINO" == *"ok=asignacion-fase-2"* ]]; revisar "Plan nuevo (pago no aplica) + director: pasa a la fase 2" $?
 
+echo "== Fase 2: la propuesta FDC-124 con sus versiones (RF26, RF30, RF43)"
+printf 'documento de Word de prueba v1' > "$T/propuesta.docx"
+printf 'documento de Word de prueba v2' > "$T/propuesta v2.docx"
+subirPropuesta() { pedir "$1" POST /estudiante/propuesta-guardar.jsp -F "propuesta=@$2"; }
+enviar() { pedir "$1" POST /estudiante/propuesta-enviar.jsp; }
+pedir ana GET /estudiante/proyecto.jsp; contiene "Propuesta (FDC-124)" && contiene "propuesta-guardar.jsp" && ! contiene "propuesta-enviar.jsp"; revisar "Fase 2: puede subir el FDC-124; sin versiones no hay botón de enviar" $?
+enviar ana; [[ "$DESTINO" == *"error=propuesta-requerida"* ]]; revisar "Enviar sin versiones: rechazado" $?
+subirPropuesta ana "$T/recibo.pdf"; [[ "$DESTINO" == *"error=archivo-no-word"* ]]; revisar "Un PDF como FDC-124: rechazado (va en Word)" $?
+pedir ana POST /estudiante/propuesta-guardar.jsp -F "otro=x"; [[ "$DESTINO" == *"error=archivo-requerido"* ]]; revisar "Sin archivo: rechazado" $?
+subirPropuesta ana "$T/propuesta.docx"; [[ "$DESTINO" == *"ok=propuesta-subida"* ]]; revisar "Sube la versión 1" $?
+subirPropuesta ana "$T/propuesta v2.docx"; [[ "$DESTINO" == *"ok=propuesta-subida"* ]]; revisar "Sube la versión 2" $?
+[ "$($MYSQL -e "SELECT GROUP_CONCAT(CONCAT(version,':',nombre_archivo) ORDER BY version SEPARATOR ',') FROM entregas WHERE proyecto_id=$PA AND tipo='FDC-124'")" = "1:propuesta.docx,2:propuesta v2.docx" ]; revisar "En la base: las dos versiones, con su nombre original" $?
+V2=$($MYSQL -e "SELECT id FROM entregas WHERE proyecto_id=$PA AND tipo='FDC-124' AND version=2")
+pedir ana GET /estudiante/proyecto.jsp; contiene "Versión 2" && contiene "Versión 1" && contiene "Enviar versión 2 al director"; revisar "Ve las dos versiones y el botón para enviar la última" $?
+CABECERAS=$(curl -s -D - -o "$T/bajado.docx" -b "$T/ana" "$B/archivos/ver.jsp?id=$V2")
+echo "$CABECERAS" | grep -qi "wordprocessingml" && echo "$CABECERAS" | grep -qi "attachment; filename\*=UTF-8''propuesta%20v2.docx" && cmp -s "$T/bajado.docx" "$T/propuesta v2.docx"
+revisar "El Word se descarga con su nombre original y sin cambios" $?
+curl -s -D - -o /dev/null -b "$T/ana" "$B/archivos/ver.jsp?id=$R2" | grep -qi "content-disposition: inline"; revisar "El PDF se sigue abriendo en el navegador" $?
+entrar doc docente.prueba@uts.edu.co; pedir doc POST /acceso/elegir-rol.jsp --data-urlencode "rol=3"
+pedir doc GET /director/proyectos.jsp; contiene "Idea A" && contiene "Versión 2" && sinError; revisar "El director ve el proyecto que dirige, con la versión 2" $?
+pedir doc GET "/director/proyecto.jsp?id=$PA"; contiene "Estudiante 4000000001" && contiene "80 % de créditos" && ! contiene "Evaluador de Prueba" && sinError; revisar "El director ve la información del estudiante (RF19)" $?
+pedir dir GET "/director/proyecto.jsp?id=$PA"; [[ "$DESTINO" == *"error=no-encontrado"* ]]; revisar "Otro director no ve el proyecto" $?
+pedir dir GET "/archivos/ver.jsp?id=$V2"; [[ "$DESTINO" == *"error=denegado"* ]]; revisar "Ni descarga su propuesta" $?
+pedir ana GET /director/proyectos.jsp; [[ "$DESTINO" == *"error=denegado"* ]]; revisar "Un estudiante no entra a las páginas del director" $?
+
+echo "== Fase 2 -> 3: el estudiante envía la propuesta al director (RF18)"
+enviar ana; [[ "$DESTINO" == *"ok=propuesta-enviada"* ]]; revisar "Envía la versión 2 al director" $?
+[ "$(fase $PA)" = "3" ]; revisar "El proyecto pasa a la fase 3" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM historial WHERE proyecto_id=$PA AND accion='Fase' AND descripcion LIKE '%versi_n 2 del FDC-124 al director%'")" = "1" ]; revisar "El envío queda en el historial con la versión" $?
+subirPropuesta ana "$T/propuesta.docx"; [[ "$DESTINO" == *"error=fase-no-permite-propuesta"* ]]; revisar "En la fase 3 no se suben versiones" $?
+enviar ana; [[ "$DESTINO" == *"error=fase-no-permite-propuesta"* ]]; revisar "Ni se vuelve a enviar" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "Está en revisión" && ! contiene "propuesta-guardar.jsp"; revisar "La estudiante ve que está en revisión, sin formulario" $?
+pedir doc GET /panel/inicio.jsp; tr -d '\r\n' < "$T/cuerpo.html" | grep -q 'director/proyectos.jsp">[[:space:]]*<span class="app-acceso-numero">1</span>'; revisar "El inicio del director cuenta 1 propuesta por revisar" $?
+pedir doc GET /director/proyectos.jsp; contiene "Por revisar"; revisar "En sus proyectos aparece por revisar" $?
+
+echo "== Devolución del director: hay que subir una versión nueva (RF43)"
+# La pantalla del director para devolver es de la fase 3; aquí se simula en la base.
+$MYSQL -e "INSERT INTO revisiones (entrega_id, revisor_id, rol, estado, decision, observacion) VALUES ($V2, 6, 'Director', 'Enviada', 'Devuelto', 'Falta el presupuesto'); UPDATE proyectos SET fase_id=(SELECT id FROM fases WHERE orden=2) WHERE id=$PA"
+pedir ana GET /estudiante/proyecto.jsp; contiene "devolvió la última versión" && contiene "Falta el presupuesto" && ! contiene "propuesta-enviar.jsp"; revisar "Ve la devolución con la observación y sin el botón de enviar" $?
+enviar ana; [[ "$DESTINO" == *"error=propuesta-devuelta"* ]]; revisar "No reenvía la versión devuelta" $?
+subirPropuesta ana "$T/propuesta.docx"; enviar ana; [[ "$DESTINO" == *"ok=propuesta-enviada"* ]]; revisar "Con la versión 3 sí la envía" $?
+pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "Versión 3" && contiene "Falta el presupuesto"; revisar "El comité ve las versiones y las observaciones" $?
+
+echo "== Seminario no usa el F-DC-124 (RF17)"
+$MYSQL -e "UPDATE proyectos SET modalidad_id=5 WHERE id=$PC"
+subirPropuesta caro "$T/propuesta.docx"; [[ "$DESTINO" == *"error=seminario-sin-124"* ]]; revisar "Seminario: no sube el FDC-124" $?
+pedir caro GET /estudiante/proyecto.jsp; contiene "no usa el F-DC-124" && ! contiene "propuesta-guardar.jsp"; revisar "Seminario: se le explica, sin formulario" $?
+
 echo "== Diseño"
 MOJIBAKE=0
-for R in "admin /admin/proyectos.jsp" "admin /admin/proyecto.jsp?id=$PA" "admin /panel/inicio.jsp" "ana /estudiante/proyecto.jsp"; do
+for R in "admin /admin/proyectos.jsp" "admin /admin/proyecto.jsp?id=$PA" "admin /panel/inicio.jsp" "ana /estudiante/proyecto.jsp" "doc /director/proyectos.jsp" "doc /director/proyecto.jsp?id=$PA" "doc /panel/inicio.jsp"; do
     set -- $R; pedir "$1" GET "$2"; grep -q "Ã" "$T/cuerpo.html" && MOJIBAKE=1
 done
 [ "$MOJIBAKE" = 0 ]; revisar "Ninguna página nueva muestra letras raras (Ã)" $?
 pedir admin GET /panel/inicio.jsp; contiene 'admin/proyectos.jsp" class'; revisar "El menú del comité tiene Proyectos" $?
+pedir doc GET /panel/inicio.jsp; contiene 'director/proyectos.jsp" class' && ! contiene 'admin/proyectos.jsp'; revisar "El menú del director tiene Mis proyectos" $?
 
 # Borra solo los recibos que crearon estas pruebas
 ls "$ARCHIVOS" | grep -vxF -f "$T/archivos-antes.txt" | while read -r A; do rm -f "$ARCHIVOS/$A"; done

@@ -22,7 +22,7 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | 2 | Crear la base de datos del proyecto, hacer funcionar el login y gestionar usuarios y roles. | 2026-09-30 | 2026-09-30 | Hecho (falta la revisión del equipo) |
 | 3 | Incorporar la segunda entrevista: requerimientos, base de datos versión 2, login institucional y créditos del estudiante. | 2026-10-05 | 2026-10-05 | Hecho (falta la revisión del equipo) |
 | 4 | Registro del estudiante, habilitación, periodos, calendario y sesiones del comité, modalidades, banco de ideas, pago de la fase 1 y diseño nuevo. | 2026-10-08 | 2026-10-10 | Hecho (falta la revisión del equipo) |
-| 5 | Fases 2 y 3: propuesta (FDC-124) con versiones y la revisión del director. | 2026-10-10 | Por definir | En progreso (revisión del pago y asignación del director hechas) |
+| 5 | Fases 2 y 3: propuesta (FDC-124) con versiones y la revisión del director. | 2026-10-10 | Por definir | En progreso (revisión del pago, asignación del director y fase 2 hechas) |
 | 6 | Fases 4, 5 y final: evaluación con las rejillas, FDC-125, plazos, prórrogas y sustentación. | Por definir | Por definir | Propuesto |
 | 7 | Buscador, informes de estado, PQR, historial y avisos. | Por definir | Por definir | Propuesto |
 
@@ -152,7 +152,7 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 - **Objetivo:** que el comité revise el pago y asigne el director y el evaluador, y que el proyecto avance por las fases 2 y 3 (propuesta FDC-124 y revisión del director).
 - **Inicio:** 2026-10-10
 - **Cierre:** por definir
-- **Requerimientos:** primera parte: RF9, RF11 y RF32. Lo demás está en la [propuesta](#propuesta-para-los-siguientes-sprints).
+- **Requerimientos:** hechos hasta ahora: RF9, RF11, RF19 y RF32, y parte de RF18, RF26, RF30 y RF43. Lo demás está en la [propuesta](#propuesta-para-los-siguientes-sprints).
 
 | Tarea | Estado | Notas |
 | --- | --- | --- |
@@ -160,9 +160,10 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | Revisión del pago (`admin/pago-revisar.jsp`, `WEB-INF/jspf/estado-pago.jspf`) | Hecho | RF32, RF34. El comité aprueba o devuelve el último recibo, con observación (queda en `revisiones`, rol Comité). El estudiante ve el estado y la observación; si se devuelve, sube otro; si se aprueba, ya no. |
 | Asignar director y evaluador (`admin/proyecto-asignar.jsp`) | Hecho | RF11, RF27. Docentes activos con el rol Director o Evaluador; nunca el mismo docente. El evaluador es opcional y no aparece en el historial. El estudiante no puede pedir director (decisión del equipo). |
 | Paso a la fase 2 (`WEB-INF/jspf/avanzar-fase-2.jspf`) | Hecho | Con el pago aprobado (o no aplica) y el director asignado, el proyecto pasa a la fase 2, "En curso", con fecha de inicio. **Por confirmar con el profesor.** |
-| Pruebas (`pruebas/sprint5.sh`) | Hecho | 43/43. Siguen pasando: base 72/72, Sprints 2 y 3 63/63, Sprint 4 127/127. |
+| Fase 2: el estudiante sube el FDC-124 con sus versiones y lo envía al director (`estudiante/propuesta-guardar.jsp`, `estudiante/propuesta-enviar.jsp`, `WEB-INF/jspf/propuesta-versiones.jspf`) | Hecho | RF26, RF30, RF43. Word de hasta 15 MB; cada archivo es una versión nueva. Al enviarla, el proyecto pasa a la fase 3. Si el director la devuelve, hay que subir otra versión antes de reenviar. Seminario no sube el F-DC-124. Los Word se descargan con su nombre original. |
+| Mis proyectos del director (`director/proyectos.jsp`, `director/proyecto.jsp`) | Hecho | RF18 (en parte), RF19. Los proyectos que dirige, las propuestas por revisar (también en su inicio), las versiones y la información de sus estudiantes. |
+| Pruebas (`pruebas/sprint5.sh`) | Hecho | 73/73. Siguen pasando: base 72/72, Sprints 2 y 3 63/63, Sprint 4 127/127. |
 | Codirectores e integrantes (RF13, RF35, RF36) | Pendiente | |
-| Fase 2: el estudiante sube el FDC-124 con sus versiones y lo envía al director (RF26, RF43) | Pendiente | |
 | Fase 3: el director revisa, deja observaciones, pasa Turnitin, devuelve o envía al evaluador y al comité (RF18, RF19) | Pendiente | |
 | Evaluación con la rejilla del F-DC-124 y decisión del comité (RF14, RF22, RF23) | Pendiente | |
 

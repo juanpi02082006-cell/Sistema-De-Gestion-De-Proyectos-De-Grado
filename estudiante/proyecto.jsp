@@ -1,6 +1,7 @@
 <%-- Mi proyecto (estudiante): los datos del proyecto vigente, su avance por fases
-     (RF2, RF37) y el pago de la fase 1 (RF29, RF32), con la revisión del comité. El
-     estudiante no ve a su evaluador (RF27). --%>
+     (RF2, RF37), el pago de la fase 1 (RF29, RF32), con la revisión del comité, y la
+     propuesta de la fase 2 (FDC-124 con sus versiones, RF26, RF30, RF43), que envía a
+     su director. El estudiante no ve a su evaluador (RF27). --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <c:set var="titulo" value="Mi proyecto" />
@@ -11,7 +12,11 @@
     SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.modalidad_id, f.orden AS fase,
            m.nombre AS modalidad, n.nombre AS nivel, pe2.nombre AS periodo, pe2.id AS periodo_id,
            pe2.fecha_limite_pago, (pe2.fecha_limite_pago IS NULL OR CURDATE() <= pe2.fecha_limite_pago) AS pago_a_tiempo,
-           d.nombre AS director, ${sqlEstadoPago} AS estado_pago
+           d.nombre AS director, ${sqlEstadoPago} AS estado_pago, pe2.fecha_limite_propuestas,
+           (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version_propuesta,
+           (SELECT COUNT(*) FROM entregas e JOIN revisiones r ON r.entrega_id = e.id
+            WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.estado = 'Enviada' AND r.decision = 'Devuelto'
+              AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')) AS propuesta_devuelta
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
     JOIN modalidades m ON m.id = p.modalidad_id
@@ -78,6 +83,55 @@
                         <span class="app-requisito ${empty p.director ? '' : 'cumple'}">${empty p.director ? 'Pendiente' : 'Listo'}</span>
                     </li>
                 </ul>
+            </div>
+        </c:if>
+
+        <%-- Propuesta (FDC-124): desde la fase 2. Seminario no usa el F-DC-124 (RF17). --%>
+        <c:if test="${p.fase >= 2}">
+            <div class="app-tarjeta mb-4 app-formulario">
+                <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
+                <c:choose>
+                    <c:when test="${p.modalidad_id == 5}">
+                        <p class="mb-0">La modalidad Seminario no usa el F-DC-124.</p>
+                    </c:when>
+                    <c:otherwise>
+                        <c:choose>
+                            <c:when test="${p.fase == 2}">
+                                <p class="text-secondary">
+                                    Diligencia el FDC-124 en Word (.doc o .docx, hasta 15 MB) y súbelo. Cada vez que lo subes queda una versión nueva;
+                                    cuando esté lista, envíasela a tu director: él la revisa en la fase 3.
+                                    <c:if test="${not empty p.fecha_limite_propuestas}">La propuesta debe quedar aprobada a más tardar el <fmt:formatDate value="${p.fecha_limite_propuestas}" pattern="dd/MM/yyyy" />.</c:if>
+                                </p>
+                                <c:if test="${p.propuesta_devuelta > 0}">
+                                    <div class="alert alert-warning app-aviso" role="status">Tu director devolvió la última versión. Revisa sus observaciones y sube una versión corregida antes de enviarla otra vez.</div>
+                                </c:if>
+                            </c:when>
+                            <c:when test="${p.fase == 3}">
+                                <p class="text-secondary">Enviaste la versión <c:out value="${p.version_propuesta}" /> a tu director. Está en revisión.</p>
+                            </c:when>
+                        </c:choose>
+
+                        <c:set var="idProyectoPropuesta" value="${p.id}" />
+                        <%@ include file="/WEB-INF/jspf/propuesta-versiones.jspf" %>
+
+                        <c:if test="${p.fase == 2}">
+                            <div class="row g-3 align-items-end mt-1">
+                                <form class="col-lg-8" method="post" action="${ctx}/estudiante/propuesta-guardar.jsp" enctype="multipart/form-data">
+                                    <label class="form-label" for="propuesta">${empty p.version_propuesta ? 'FDC-124 (Word) *' : 'Subir una versión nueva (Word)'}</label>
+                                    <input class="form-control" type="file" id="propuesta" name="propuesta" required
+                                           accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                                    <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Subir versión</button>
+                                </form>
+                                <c:if test="${not empty p.version_propuesta and p.propuesta_devuelta == 0}">
+                                    <form class="col-lg-4 text-lg-end" method="post" action="${ctx}/estudiante/propuesta-enviar.jsp"
+                                          onsubmit="return confirm('¿Enviar la versión ${p.version_propuesta} a tu director? Mientras la revisa no podrás subir otra.');">
+                                        <button type="submit" class="btn btn-primary rounded-pill app-boton">Enviar versión <c:out value="${p.version_propuesta}" /> al director</button>
+                                    </form>
+                                </c:if>
+                            </div>
+                        </c:if>
+                    </c:otherwise>
+                </c:choose>
             </div>
         </c:if>
 

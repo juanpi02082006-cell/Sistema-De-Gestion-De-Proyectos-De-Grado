@@ -21,6 +21,15 @@
         <sql:param value="${sessionScope.usuario.id}" />
     </sql:query>
 </c:if>
+<c:if test="${rol == 3}">
+    <%-- Propuestas que el estudiante ya le envió (fase 3) --%>
+    <sql:query var="porRevisar">
+        SELECT COUNT(*) AS total FROM proyectos p JOIN fases f ON f.id = p.fase_id
+        WHERE f.orden = 3 AND (p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_codirectores pc WHERE pc.proyecto_id = p.id AND pc.docente_id = ?))
+        <sql:param value="${sessionScope.usuario.id}" />
+        <sql:param value="${sessionScope.usuario.id}" />
+    </sql:query>
+</c:if>
 <c:if test="${rol == 5}">
     <c:set var="idEstudiante" value="${sessionScope.usuario.id}" />
     <%@ include file="/WEB-INF/jspf/habilitacion.jspf" %>
@@ -90,15 +99,25 @@
 </c:if>
 
 <c:if test="${rol == 3 or rol == 4}">
+    <c:set var="columnaDocente" value="${rol == 3 ? 'col-md-6 col-xl-4' : 'col-md-6'}" />
     <div class="row g-4">
-        <div class="col-md-6">
+        <c:if test="${rol == 3}">
+            <div class="${columnaDocente}">
+                <a class="app-acceso" href="${ctx}/director/proyectos.jsp">
+                    <span class="app-acceso-numero"><c:out value="${porRevisar.rows[0].total}" /></span>
+                    <span class="app-acceso-titulo">Propuestas por revisar</span>
+                    <span class="app-acceso-texto">Los proyectos que diriges y las propuestas que te enviaron.</span>
+                </a>
+            </div>
+        </c:if>
+        <div class="${columnaDocente}">
             <a class="app-acceso" href="${ctx}/ideas/banco.jsp">
                 <span class="app-acceso-numero"><c:out value="${misIdeas.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Mis ideas</span>
                 <span class="app-acceso-texto">Registrar ideas para el banco y ver si el comité las aprobó.</span>
             </a>
         </div>
-        <div class="col-md-6">
+        <div class="${columnaDocente}">
             <a class="app-acceso" href="${ctx}/panel/calendario.jsp">
                 <span class="app-acceso-numero"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
                 <span class="app-acceso-titulo">Calendario</span>

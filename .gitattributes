@@ -1,0 +1,9 @@
+# Los scripts de bash deben quedar con fin de línea LF también en Windows:
+# con CRLF, bash falla ("$'\r': command not found").
+*.sh text eol=lf
+
+# Archivos binarios: git no debe tocarlos.
+*.jar binary
+*.png binary
+*.pdf binary
+*.docx binary
