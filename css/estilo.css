@@ -1320,3 +1320,235 @@ a.app-limpiar {
     height: auto;
     padding: 0.75rem;
 }
+
+/* Encabezado de tarjeta con ícono y contador (datos del proyecto, estudiantes) */
+.app-tarjeta-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.app-tarjeta-cabecera .app-tarjeta-titulo {
+    margin: 0;
+}
+
+.app-tarjeta-icono {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    background-color: var(--verde-lima);
+    border-radius: 0.85rem;
+}
+
+.app-tarjeta-icono svg,
+.app-dato-icono svg,
+.app-persona-contacto svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.app-contador {
+    margin-left: auto;
+    padding: 0.15rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background-color: var(--fondo-pagina);
+    border-radius: 999px;
+}
+
+/* Descripción destacada, con una franja lima a la izquierda */
+.app-descripcion {
+    padding: 0.9rem 1.1rem;
+    margin: 0 0 1.25rem;
+    line-height: 1.55;
+    color: #2E2E2E;
+    background-color: var(--verde-lima-suave);
+    border-left: 4px solid var(--verde-lima);
+    border-radius: 0.5rem 1rem 1rem 0.5rem;
+}
+
+/* Datos en mosaicos: ícono, etiqueta y valor */
+.app-datos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.75rem;
+}
+
+.app-dato {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0.8rem 0.9rem;
+    background-color: var(--fondo-pagina);
+    border: 1px solid #ECECE6;
+    border-radius: 1rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.app-dato:hover {
+    background-color: var(--verde-lima-suave);
+    border-color: var(--campo-borde);
+}
+
+.app-dato-icono {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background-color: var(--blanco);
+    border: 1px solid var(--campo-borde);
+    border-radius: 0.75rem;
+}
+
+.app-dato-texto {
+    min-width: 0;
+}
+
+.app-dato-etiqueta {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gris-texto);
+}
+
+.app-dato-valor {
+    display: block;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+/* Tarjeta de una persona (estudiante): avatar, contacto, etiquetas y créditos */
+.app-persona {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    background-color: var(--blanco);
+    border: 1px solid #ECECE6;
+    border-radius: 1.1rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.03);
+}
+
+.app-persona + .app-persona {
+    margin-top: 0.75rem;
+}
+
+.app-persona-avatar {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 3.1rem;
+    height: 3.1rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    background-color: var(--verde-lima);
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px var(--verde-lima-suave);
+}
+
+.app-persona-cuerpo {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.app-persona-nombre {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.app-persona-contacto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.1rem;
+    margin: 0.3rem 0 0.7rem;
+    font-size: 0.85rem;
+    color: var(--gris-texto);
+}
+
+.app-persona-contacto span,
+.app-persona-contacto a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: inherit;
+    text-decoration: none;
+}
+
+.app-persona-contacto a:hover {
+    color: var(--negro);
+    text-decoration: underline;
+    text-decoration-color: var(--verde-lima);
+    text-decoration-thickness: 2px;
+}
+
+.app-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.app-chip {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background-color: var(--fondo-pagina);
+    border: 1px solid #E6E6DF;
+    border-radius: 999px;
+}
+
+.app-chip.destacado {
+    background-color: var(--verde-lima-suave);
+    border-color: var(--campo-borde);
+}
+
+/* Barra de progreso (porcentaje de créditos) */
+.app-progreso {
+    margin-top: 0.85rem;
+}
+
+.app-progreso-cabecera {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.app-progreso-cabecera span:first-child {
+    color: var(--gris-texto);
+}
+
+.app-progreso-pista {
+    height: 0.55rem;
+    overflow: hidden;
+    background-color: #ECECE6;
+    border-radius: 999px;
+}
+
+.app-progreso-barra {
+    height: 100%;
+    background-color: var(--verde-lima);
+    border-radius: 999px;
+}
+
+@media (max-width: 575.98px) {
+    .app-persona {
+        flex-direction: column;
+    }
+}

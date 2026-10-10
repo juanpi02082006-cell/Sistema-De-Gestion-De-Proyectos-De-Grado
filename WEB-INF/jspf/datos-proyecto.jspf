@@ -1,0 +1,57 @@
+<%-- Tarjeta "Datos del proyecto": la descripción destacada y los datos en mosaicos con
+     ícono. Antes de incluirlo, definir p (la fila del proyecto). Usa las columnas que
+     tenga: descripcion, codigo, estado, modalidad, nivel, periodo, fecha_inicio,
+     fecha_limite_propuestas y director; las que falten no se muestran. El mosaico del
+     director solo sale si se define datosConDirector = true (sale "Por asignar" si no
+     tiene). datosTitulo cambia el título de la tarjeta (por defecto "Datos del proyecto"). --%>
+<div class="app-tarjeta-cabecera">
+    <span class="app-tarjeta-icono" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span>
+    <h2 class="app-tarjeta-titulo"><c:out value="${empty datosTitulo ? 'Datos del proyecto' : datosTitulo}" /></h2>
+</div>
+<c:if test="${not empty p.descripcion}"><p class="app-descripcion"><c:out value="${p.descripcion}" /></p></c:if>
+<div class="app-datos-grid">
+    <div class="app-dato">
+        <span class="app-dato-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg></span>
+        <span class="app-dato-texto"><span class="app-dato-etiqueta">Código</span><span class="app-dato-valor"><c:out value="${empty p.codigo ? 'Sin asignar' : p.codigo}" /></span></span>
+    </div>
+    <div class="app-dato">
+        <span class="app-dato-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+        <span class="app-dato-texto"><span class="app-dato-etiqueta">Estado</span><span class="app-dato-valor"><c:out value="${p.estado}" /></span></span>
+    </div>
+    <c:if test="${not empty p.modalidad}">
+        <div class="app-dato">
+            <span class="app-dato-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></span>
+            <span class="app-dato-texto"><span class="app-dato-etiqueta">Modalidad</span><span class="app-dato-valor"><c:out value="${p.modalidad}" /></span></span>
+        </div>
+    </c:if>
+    <c:if test="${not empty p.nivel}">
+        <div class="app-dato">
+            <span class="app-dato-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg></span>
+            <span class="app-dato-texto"><span class="app-dato-etiqueta">Nivel</span><span class="app-dato-valor"><c:out value="${p.nivel}" /></span></span>
+        </div>
+    </c:if>
+    <c:if test="${not empty p.periodo}">
+        <div class="app-dato">
+            <span class="app-dato-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+            <span class="app-dato-texto"><span class="app-dato-etiqueta">Periodo</span><span class="app-dato-valor"><c:out value="${p.periodo}" /></span></span>
+        </div>
+    </c:if>
+    <c:if test="${datosConDirector}">
+        <div class="app-dato">
+            <span class="app-dato-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+            <span class="app-dato-texto"><span class="app-dato-etiqueta">Director</span><span class="app-dato-valor"><c:out value="${empty p.director ? 'Por asignar' : p.director}" /></span></span>
+        </div>
+    </c:if>
+    <c:if test="${not empty p.fecha_inicio}">
+        <div class="app-dato">
+            <span class="app-dato-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 21V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></span>
+            <span class="app-dato-texto"><span class="app-dato-etiqueta">Inicio</span><span class="app-dato-valor"><fmt:formatDate value="${p.fecha_inicio}" pattern="dd/MM/yyyy" /></span></span>
+        </div>
+    </c:if>
+    <c:if test="${not empty p.fecha_limite_propuestas}">
+        <div class="app-dato">
+            <span class="app-dato-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+            <span class="app-dato-texto"><span class="app-dato-etiqueta">Límite de la propuesta</span><span class="app-dato-valor"><fmt:formatDate value="${p.fecha_limite_propuestas}" pattern="dd/MM/yyyy" /></span></span>
+        </div>
+    </c:if>
+</div>

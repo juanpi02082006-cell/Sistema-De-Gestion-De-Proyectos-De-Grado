@@ -33,12 +33,8 @@
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
 
-<sql:query var="integrantes">
-    SELECT u.nombre, u.correo, u.celular, u.carrera, n.nombre AS nivel, u.plan_estudios, u.porcentaje_creditos
-    FROM proyecto_estudiantes pe
-    JOIN usuarios u ON u.id = pe.estudiante_id
-    LEFT JOIN niveles n ON n.id = u.nivel_id
-    WHERE pe.proyecto_id = ? AND pe.vigente = 1 ORDER BY u.nombre
+<sql:query var="totalIntegrantes">
+    SELECT COUNT(*) AS total FROM proyecto_estudiantes WHERE proyecto_id = ? AND vigente = 1
     <sql:param value="${p.id}" />
 </sql:query>
 <sql:query var="reportesTurnitin">
@@ -105,41 +101,30 @@
                     <input class="form-control" type="file" id="turnitin" name="turnitin" accept="application/pdf,.pdf">
                 </div>
             </div>
-            <div class="app-acciones mt-3">
+            <div class="d-flex flex-wrap gap-2 mt-3">
                 <button type="submit" name="decision" value="devolver" class="btn btn-outline-dark rounded-pill">Devolver al estudiante</button>
-                <button type="submit" name="decision" value="aprobar" class="btn btn-primary rounded-pill app-boton" ${p.tiene_evaluador == 1 ? '' : 'disabled'}>Aprobar y enviar al evaluador y al comité</button>
+                <button type="submit" name="decision" value="aprobar" class="btn btn-primary rounded-pill app-boton text-wrap" ${p.tiene_evaluador == 1 ? '' : 'disabled'}>Aprobar y enviar al evaluador y al comité</button>
             </div>
         </form>
     </c:if>
 </c:if>
 
 <div class="row g-4">
-    <div class="col-lg-5">
+    <div class="col-lg-6">
         <div class="app-tarjeta h-100">
-            <h2 class="app-tarjeta-titulo">Datos del proyecto</h2>
-            <c:if test="${not empty p.descripcion}"><p class="text-secondary"><c:out value="${p.descripcion}" /></p></c:if>
-            <dl class="app-datos">
-                <dt>Código</dt><dd><c:out value="${empty p.codigo ? 'Sin asignar' : p.codigo}" /></dd>
-                <dt>Estado</dt><dd><c:out value="${p.estado}" /></dd>
-                <c:if test="${not empty p.fecha_inicio}"><dt>Inicio</dt><dd><fmt:formatDate value="${p.fecha_inicio}" pattern="dd/MM/yyyy" /></dd></c:if>
-                <c:if test="${not empty p.fecha_limite_propuestas}"><dt>Aprobar la propuesta antes del</dt><dd><fmt:formatDate value="${p.fecha_limite_propuestas}" pattern="dd/MM/yyyy" /></dd></c:if>
-            </dl>
+            <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
         </div>
     </div>
-    <div class="col-lg-7">
+    <div class="col-lg-6">
         <div class="app-tarjeta h-100">
-            <h2 class="app-tarjeta-titulo">Estudiantes</h2>
-            <ul class="app-lista">
-                <c:forEach var="i" items="${integrantes.rows}">
-                    <li>
-                        <span>
-                            <span class="app-lista-dato"><c:out value="${i.nombre}" /></span>
-                            <span class="app-lista-nota"><c:out value="${i.correo}" /><c:if test="${not empty i.celular}"> · <c:out value="${i.celular}" /></c:if></span>
-                            <span class="app-lista-nota"><c:out value="${i.carrera}" /> · <c:out value="${i.nivel}" /> · plan <c:out value="${empty i.plan_estudios ? 'sin registrar' : fn:toLowerCase(i.plan_estudios)}" /><c:if test="${not empty i.porcentaje_creditos}"> · <c:out value="${i.porcentaje_creditos}" /> % de créditos</c:if></span>
-                        </span>
-                    </li>
-                </c:forEach>
-            </ul>
+            <div class="app-tarjeta-cabecera">
+                <span class="app-tarjeta-icono" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 20a6 6 0 0 0-3-5.2"/></svg></span>
+                <h2 class="app-tarjeta-titulo">Estudiantes</h2>
+                <span class="app-contador"><c:out value="${totalIntegrantes.rows[0].total}" /></span>
+            </div>
+            <c:set var="idProyectoIntegrantes" value="${p.id}" />
+            <c:set var="integrantesDetalle" value="true" />
+            <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
         </div>
     </div>
 </div>

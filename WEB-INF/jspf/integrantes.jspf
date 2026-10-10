@@ -1,0 +1,45 @@
+<%-- Estudiantes de un proyecto en tarjetas: avatar con iniciales, correo y celular,
+     carrera, nivel y plan, y una barra con el porcentaje de créditos. Antes de
+     incluirlo, definir:
+       idProyectoIntegrantes  el proyecto
+       integrantesDetalle     true para el director y el comité (datos académicos y
+                              celular, RF19); false para el estudiante, que de sus
+                              compañeros solo ve el nombre y el correo. --%>
+<sql:query var="consultaIntegrantes">
+    SELECT u.nombre, u.correo, u.celular, u.carrera, n.nombre AS nivel, u.plan_estudios, u.porcentaje_creditos
+    FROM proyecto_estudiantes pe
+    JOIN usuarios u ON u.id = pe.estudiante_id
+    LEFT JOIN niveles n ON n.id = u.nivel_id
+    WHERE pe.proyecto_id = ? AND pe.vigente = 1 ORDER BY u.nombre
+    <sql:param value="${idProyectoIntegrantes}" />
+</sql:query>
+<c:forEach var="i" items="${consultaIntegrantes.rows}">
+    <c:set var="partesNombre" value="${fn:split(fn:trim(i.nombre), ' ')}" />
+    <div class="app-persona">
+        <span class="app-persona-avatar" aria-hidden="true"><c:out value="${fn:toUpperCase(fn:substring(partesNombre[0], 0, 1))}${fn:length(partesNombre) > 1 ? fn:toUpperCase(fn:substring(partesNombre[1], 0, 1)) : ''}" /></span>
+        <div class="app-persona-cuerpo">
+            <p class="app-persona-nombre"><c:out value="${i.nombre}" /></p>
+            <div class="app-persona-contacto">
+                <a href="mailto:${fn:escapeXml(i.correo)}"><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><c:out value="${i.correo}" /></a>
+                <c:if test="${integrantesDetalle and not empty i.celular}">
+                    <span><svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg><c:out value="${i.celular}" /></span>
+                </c:if>
+            </div>
+            <c:if test="${integrantesDetalle}">
+                <div class="app-chips">
+                    <c:if test="${not empty i.carrera}"><span class="app-chip destacado"><c:out value="${i.carrera}" /></span></c:if>
+                    <c:if test="${not empty i.nivel}"><span class="app-chip"><c:out value="${i.nivel}" /></span></c:if>
+                    <span class="app-chip">Plan <c:out value="${empty i.plan_estudios ? 'sin registrar' : fn:toLowerCase(i.plan_estudios)}" /></span>
+                </div>
+                <c:if test="${not empty i.porcentaje_creditos}">
+                    <div class="app-progreso">
+                        <div class="app-progreso-cabecera"><span>Créditos aprobados</span><span><c:out value="${i.porcentaje_creditos}" /> %</span></div>
+                        <div class="app-progreso-pista" role="progressbar" aria-label="Créditos aprobados" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${i.porcentaje_creditos}">
+                            <div class="app-progreso-barra" style="width: ${i.porcentaje_creditos}%"></div>
+                        </div>
+                    </div>
+                </c:if>
+            </c:if>
+        </div>
+    </div>
+</c:forEach>

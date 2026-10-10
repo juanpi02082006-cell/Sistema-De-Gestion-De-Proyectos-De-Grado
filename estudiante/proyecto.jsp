@@ -31,11 +31,6 @@
 
 <c:if test="${tieneProyecto}">
     <c:set var="p" value="${consulta.rows[0]}" />
-    <sql:query var="integrantes">
-        SELECT u.nombre, u.correo FROM proyecto_estudiantes pe JOIN usuarios u ON u.id = pe.estudiante_id
-        WHERE pe.proyecto_id = ? AND pe.vigente = 1 ORDER BY u.nombre
-        <sql:param value="${p.id}" />
-    </sql:query>
     <%-- Recibos, del más reciente al más antiguo, con la revisión del comité si la tienen --%>
     <sql:query var="recibos">
         SELECT e.id, e.nombre_archivo, e.subido_en, r.decision, r.observacion
@@ -141,18 +136,13 @@
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="app-tarjeta h-100">
-                    <h2 class="app-tarjeta-titulo"><c:out value="${p.titulo}" /></h2>
-                    <c:if test="${not empty p.descripcion}"><p class="text-secondary"><c:out value="${p.descripcion}" /></p></c:if>
-                    <dl class="app-datos">
-                        <dt>Código</dt><dd><c:out value="${empty p.codigo ? 'Sin asignar' : p.codigo}" /></dd>
-                        <dt>Modalidad</dt><dd><c:out value="${p.modalidad}" /></dd>
-                        <dt>Nivel</dt><dd><c:out value="${p.nivel}" /></dd>
-                        <dt>Periodo</dt><dd><c:out value="${empty p.periodo ? 'Sin periodo' : p.periodo}" /></dd>
-                        <dt>Estado</dt><dd><c:out value="${p.estado}" /></dd>
-                        <dt>Director</dt><dd><c:out value="${empty p.director ? 'Por asignar' : p.director}" /></dd>
-                        <dt>Integrantes</dt>
-                        <dd><c:forEach var="i" items="${integrantes.rows}" varStatus="s"><c:out value="${i.nombre}" />${s.last ? '' : ', '}</c:forEach></dd>
-                    </dl>
+                    <c:set var="datosTitulo" value="${p.titulo}" />
+                    <c:set var="datosConDirector" value="true" />
+                    <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
+                    <h3 class="h6 fw-bold mt-4 mb-3">Integrantes</h3>
+                    <c:set var="idProyectoIntegrantes" value="${p.id}" />
+                    <c:set var="integrantesDetalle" value="false" />
+                    <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
                 </div>
             </div>
 

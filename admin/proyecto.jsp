@@ -28,9 +28,8 @@
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
 
-<sql:query var="integrantes">
-    SELECT u.nombre, u.correo, u.carrera, u.plan_estudios FROM proyecto_estudiantes pe JOIN usuarios u ON u.id = pe.estudiante_id
-    WHERE pe.proyecto_id = ? AND pe.vigente = 1 ORDER BY u.nombre
+<sql:query var="totalIntegrantes">
+    SELECT COUNT(*) AS total FROM proyecto_estudiantes WHERE proyecto_id = ? AND vigente = 1
     <sql:param value="${p.id}" />
 </sql:query>
 <%-- Recibos, del más reciente al más antiguo, con la revisión del comité si la tienen --%>
@@ -111,20 +110,20 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="app-tarjeta h-100">
-            <h2 class="app-tarjeta-titulo">Datos del proyecto</h2>
-            <c:if test="${not empty p.descripcion}"><p class="text-secondary"><c:out value="${p.descripcion}" /></p></c:if>
-            <dl class="app-datos">
-                <dt>Código</dt><dd><c:out value="${empty p.codigo ? 'Sin asignar' : p.codigo}" /></dd>
-                <dt>Fase</dt><dd><c:choose><c:when test="${p.fase == 6}">Fase final</c:when><c:otherwise>Fase <c:out value="${p.fase}" /></c:otherwise></c:choose>: <c:out value="${p.nombre_fase}" /></dd>
-                <dt>Estado</dt><dd><c:out value="${p.estado}" /></dd>
-                <c:if test="${not empty p.fecha_inicio}"><dt>Inicio</dt><dd><fmt:formatDate value="${p.fecha_inicio}" pattern="dd/MM/yyyy" /></dd></c:if>
-                <dt>Integrantes</dt>
-                <dd>
-                    <c:forEach var="i" items="${integrantes.rows}">
-                        <span class="d-block"><c:out value="${i.nombre}" /> <span class="app-lista-nota d-inline">· <c:out value="${i.correo}" /> · plan <c:out value="${empty i.plan_estudios ? 'sin registrar' : fn:toLowerCase(i.plan_estudios)}" /></span></span>
-                    </c:forEach>
-                </dd>
-            </dl>
+            <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="app-tarjeta h-100">
+            <div class="app-tarjeta-cabecera">
+                <span class="app-tarjeta-icono" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 20a6 6 0 0 0-3-5.2"/></svg></span>
+                <h2 class="app-tarjeta-titulo">Estudiantes</h2>
+                <span class="app-contador"><c:out value="${totalIntegrantes.rows[0].total}" /></span>
+            </div>
+            <c:set var="idProyectoIntegrantes" value="${p.id}" />
+            <c:set var="integrantesDetalle" value="true" />
+            <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
         </div>
     </div>
 
@@ -171,13 +170,13 @@
         </div>
     </div>
 
-    <div class="col-12">
-        <form class="app-tarjeta app-formulario" method="post" action="${ctx}/admin/proyecto-asignar.jsp">
+    <div class="col-lg-6">
+        <form class="app-tarjeta app-formulario h-100" method="post" action="${ctx}/admin/proyecto-asignar.jsp">
             <input type="hidden" name="id" value="${p.id}">
             <h2 class="app-tarjeta-titulo">Director y evaluador</h2>
             <p class="text-secondary">Los asigna el comité. Un docente nunca evalúa el proyecto que dirige. El estudiante ve a su director, pero no a su evaluador.</p>
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-12">
                     <label class="form-label" for="director">Director *</label>
                     <select class="form-select" id="director" name="director" required>
                         <option value="">Escoge el director</option>
@@ -188,7 +187,7 @@
                     </select>
                     <c:if test="${directores.rowCount == 0}"><div class="form-text">No hay docentes activos con el rol Director. Asígnalo en Usuarios.</div></c:if>
                 </div>
-                <div class="col-md-6">
+                <div class="col-12">
                     <label class="form-label" for="evaluador">Evaluador</label>
                     <select class="form-select" id="evaluador" name="evaluador">
                         <option value="">Sin asignar todavía</option>
