@@ -33,10 +33,6 @@
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
 
-<sql:query var="totalIntegrantes">
-    SELECT COUNT(*) AS total FROM proyecto_estudiantes WHERE proyecto_id = ? AND vigente = 1
-    <sql:param value="${p.id}" />
-</sql:query>
 <sql:query var="reportesTurnitin">
     SELECT id, nombre_archivo, subido_en FROM entregas WHERE proyecto_id = ? AND tipo = 'Reporte Turnitin' ORDER BY id DESC
     <sql:param value="${p.id}" />
@@ -117,11 +113,7 @@
     </div>
     <div class="col-lg-6">
         <div class="app-tarjeta h-100">
-            <div class="app-tarjeta-cabecera">
-                <span class="app-tarjeta-icono" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 20a6 6 0 0 0-3-5.2"/></svg></span>
-                <h2 class="app-tarjeta-titulo">Estudiantes</h2>
-                <span class="app-contador"><c:out value="${totalIntegrantes.rows[0].total}" /></span>
-            </div>
+            <h2 class="app-tarjeta-titulo">Estudiantes</h2>
             <c:set var="idProyectoIntegrantes" value="${p.id}" />
             <c:set var="integrantesDetalle" value="true" />
             <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
