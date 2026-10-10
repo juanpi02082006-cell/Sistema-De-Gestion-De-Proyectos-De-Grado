@@ -109,6 +109,9 @@
                             <c:when test="${p.fase == 3}">
                                 <p class="text-secondary">Enviaste la versión <c:out value="${p.version_propuesta}" /> a tu director. Está en revisión.</p>
                             </c:when>
+                            <c:when test="${p.fase == 4}">
+                                <p class="text-secondary">Tu director aprobó la versión <c:out value="${p.version_propuesta}" />, la pasó por Turnitin y la envió al evaluador y al comité.</p>
+                            </c:when>
                         </c:choose>
 
                         <c:set var="idProyectoPropuesta" value="${p.id}" />

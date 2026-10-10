@@ -1,16 +1,17 @@
 <%-- Proyectos (RF9), para el comité (el administrador): la fase de cada uno, el estado
      del pago (RF32) y el director. Desde aquí se abre cada proyecto para revisar el
      pago y asignar director y evaluador (RF11). Filtros: ?filtro=pago (pagos por
-     revisar) o ?filtro=director (sin director). --%>
+     revisar), ?filtro=director (sin director) o ?filtro=evaluador (sin evaluador en las
+     fases 2 a 4: el director no puede enviarle la propuesta). --%>
 <%@ include file="/WEB-INF/jspf/solo-admin.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <c:set var="titulo" value="Proyectos" />
 <c:set var="seccion" value="proyectos" />
-<c:set var="filtro" value="${param.filtro == 'pago' or param.filtro == 'director' ? param.filtro : ''}" />
+<c:set var="filtro" value="${param.filtro == 'pago' or param.filtro == 'director' or param.filtro == 'evaluador' ? param.filtro : ''}" />
 
 <sql:query var="proyectos">
     SELECT * FROM (
-        SELECT p.id, p.titulo, p.estado, f.orden AS fase, f.nombre AS nombre_fase,
+        SELECT p.id, p.titulo, p.estado, p.evaluador_id, f.orden AS fase, f.nombre AS nombre_fase,
                m.nombre AS modalidad, n.nombre AS nivel, pr.nombre AS periodo, d.nombre AS director,
                (SELECT GROUP_CONCAT(u.nombre ORDER BY u.nombre SEPARATOR ', ')
                 FROM proyecto_estudiantes pe JOIN usuarios u ON u.id = pe.estudiante_id
@@ -23,8 +24,10 @@
         LEFT JOIN periodos pr ON pr.id = p.periodo_id
         LEFT JOIN usuarios d ON d.id = p.director_id
     ) t
-    WHERE (? = '' OR (? = 'pago' AND estado_pago = 'Por revisar') OR (? = 'director' AND director IS NULL))
+    WHERE (? = '' OR (? = 'pago' AND estado_pago = 'Por revisar') OR (? = 'director' AND director IS NULL)
+           OR (? = 'evaluador' AND evaluador_id IS NULL AND fase BETWEEN 2 AND 4))
     ORDER BY fase, titulo
+    <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
@@ -45,6 +48,7 @@
             <option value="">Todos los proyectos</option>
             <option value="pago" ${filtro == 'pago' ? 'selected' : ''}>Pagos por revisar</option>
             <option value="director" ${filtro == 'director' ? 'selected' : ''}>Sin director</option>
+            <option value="evaluador" ${filtro == 'evaluador' ? 'selected' : ''}>Sin evaluador (fases 2 a 4)</option>
         </select>
         <noscript><button type="submit" class="btn btn-outline-dark rounded-pill">Filtrar</button></noscript>
     </form>

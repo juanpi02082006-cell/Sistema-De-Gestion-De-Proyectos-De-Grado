@@ -89,6 +89,22 @@
         <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
         <c:set var="idProyectoPropuesta" value="${p.id}" />
         <%@ include file="/WEB-INF/jspf/propuesta-versiones.jspf" %>
+        <sql:query var="reportesTurnitin">
+            SELECT id, nombre_archivo, subido_en FROM entregas WHERE proyecto_id = ? AND tipo = 'Reporte Turnitin' ORDER BY id DESC
+            <sql:param value="${p.id}" />
+        </sql:query>
+        <c:if test="${reportesTurnitin.rowCount > 0}">
+            <h3 class="h6 fw-bold mt-4 mb-2">Reportes de Turnitin</h3>
+            <c:forEach var="t" items="${reportesTurnitin.rows}">
+                <div class="app-archivo">
+                    <span>
+                        <span class="app-lista-dato"><c:out value="${t.nombre_archivo}" /></span>
+                        <span class="app-lista-nota">Subido por el director el <fmt:formatDate value="${t.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
+                    </span>
+                    <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${t.id}" target="_blank" rel="noopener">Ver</a>
+                </div>
+            </c:forEach>
+        </c:if>
     </div>
 </c:if>
 

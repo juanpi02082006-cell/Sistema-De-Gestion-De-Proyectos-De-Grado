@@ -3,7 +3,9 @@
 # observación obligatoria RF34), asigna director y evaluador (RF11, RF27) y el proyecto
 # pasa a la fase 2 cuando tiene el pago aprobado (o no aplica) y director. En la fase 2 el
 # estudiante sube el FDC-124 por versiones (RF26, RF30, RF43) y lo envía al director, que
-# lo ve en sus proyectos (RF18, RF19); el proyecto pasa a la fase 3.
+# lo ve en sus proyectos (RF18, RF19); el proyecto pasa a la fase 3. En la fase 3 el
+# director la devuelve (vuelve a la fase 2) o la aprueba con el reporte de Turnitin y la
+# envía al evaluador y al comité (pasa a la fase 4).
 # Se corren sobre la base recién importada (usuarios de prueba con la clave 123456).
 B="http://localhost:8080/segundo-parcial"
 T="$(dirname "$0")/tmp/sprint5"; rm -rf "$T"; mkdir -p "$T"
@@ -147,13 +149,40 @@ pedir ana GET /estudiante/proyecto.jsp; contiene "Está en revisión" && ! conti
 pedir doc GET /panel/inicio.jsp; tr -d '\r\n' < "$T/cuerpo.html" | grep -q 'director/proyectos.jsp">[[:space:]]*<span class="app-acceso-numero">1</span>'; revisar "El inicio del director cuenta 1 propuesta por revisar" $?
 pedir doc GET /director/proyectos.jsp; contiene "Por revisar"; revisar "En sus proyectos aparece por revisar" $?
 
-echo "== Devolución del director: hay que subir una versión nueva (RF43)"
-# La pantalla del director para devolver es de la fase 3; aquí se simula en la base.
-$MYSQL -e "INSERT INTO revisiones (entrega_id, revisor_id, rol, estado, decision, observacion) VALUES ($V2, 6, 'Director', 'Enviada', 'Devuelto', 'Falta el presupuesto'); UPDATE proyectos SET fase_id=(SELECT id FROM fases WHERE orden=2) WHERE id=$PA"
-pedir ana GET /estudiante/proyecto.jsp; contiene "devolvió la última versión" && contiene "Falta el presupuesto" && ! contiene "propuesta-enviar.jsp"; revisar "Ve la devolución con la observación y sin el botón de enviar" $?
+echo "== Fase 3: el director devuelve la propuesta (RF18, RF34, RF43)"
+printf '%%PDF-1.4\n%% reporte de Turnitin\n' > "$T/turnitin.pdf"
+revisarPropuesta() { # quien, decision, observacion, [archivo]
+    pedir "$1" POST /director/propuesta-revisar.jsp -F "id=$PA" -F "decision=$2" -F "observacion=$3" ${4:+-F "turnitin=@$4"}
+}
+pedir doc GET "/director/proyecto.jsp?id=$PA"; contiene "propuesta-revisar.jsp" && contiene "Revisar la versión 2"; revisar "El director ve el formulario para revisar la versión 2" $?
+contiene "todavía no asigna el evaluador"; revisar "Sin evaluador se le avisa que no puede enviarla" $?
+revisarPropuesta doc devolver "  "; [[ "$DESTINO" == *"error=observacion-requerida"* ]]; revisar "Devolver sin observación: rechazado" $?
+revisarPropuesta dir devolver "x"; [[ "$DESTINO" == *"error=no-encontrado"* ]]; revisar "Otro director no la revisa" $?
+revisarPropuesta ana devolver "x"; [[ "$DESTINO" == *"error=denegado"* ]]; revisar "Un estudiante no la revisa" $?
+revisarPropuesta doc devolver "Falta el presupuesto"; [[ "$DESTINO" == *"ok=propuesta-devuelta-director"* ]]; revisar "El director la devuelve con observación" $?
+[ "$(fase $PA)" = "2" ] && [ "$($MYSQL -e "SELECT CONCAT(rol,'|',decision,'|',revisor_id) FROM revisiones WHERE entrega_id=$V2")" = "Director|Devuelto|6" ]; revisar "Vuelve a la fase 2 y la versión 2 queda devuelta" $?
+revisarPropuesta doc devolver "otra vez"; [[ "$DESTINO" == *"error=propuesta-no-revisable"* ]]; revisar "Fuera de la fase 3 no se revisa" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "devolvió la última versión" && contiene "Falta el presupuesto" && ! contiene "propuesta-enviar.jsp"; revisar "La estudiante ve la devolución con la observación y sin el botón de enviar" $?
 enviar ana; [[ "$DESTINO" == *"error=propuesta-devuelta"* ]]; revisar "No reenvía la versión devuelta" $?
 subirPropuesta ana "$T/propuesta.docx"; enviar ana; [[ "$DESTINO" == *"ok=propuesta-enviada"* ]]; revisar "Con la versión 3 sí la envía" $?
 pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "Versión 3" && contiene "Falta el presupuesto"; revisar "El comité ve las versiones y las observaciones" $?
+
+echo "== Fase 3 -> 4: el director aprueba, sube Turnitin y la envía al evaluador y al comité (RF14, RF30)"
+revisarPropuesta doc aprobar "Lista para evaluar" "$T/turnitin.pdf"; [[ "$DESTINO" == *"error=sin-evaluador"* ]]; revisar "Sin evaluador no la envía" $?
+asignar $PA 6 4
+revisarPropuesta doc aprobar "Lista para evaluar"; [[ "$DESTINO" == *"error=turnitin-requerido"* ]]; revisar "Aprobar sin el reporte de Turnitin: rechazado" $?
+revisarPropuesta doc aprobar "Lista para evaluar" "$T/propuesta.docx"; [[ "$DESTINO" == *"error=archivo-invalido"* ]]; revisar "Turnitin que no es PDF: rechazado" $?
+revisarPropuesta doc aprobar "" "$T/turnitin.pdf"; [[ "$DESTINO" == *"error=observacion-requerida"* ]]; revisar "Aprobar sin observación: rechazado" $?
+revisarPropuesta doc aprobar "Lista para evaluar" "$T/turnitin.pdf"; [[ "$DESTINO" == *"ok=propuesta-aprobada-director"* ]]; revisar "El director la aprueba y la envía" $?
+V3=$($MYSQL -e "SELECT id FROM entregas WHERE proyecto_id=$PA AND tipo='FDC-124' AND version=3")
+[ "$(fase $PA)" = "4" ] && [ "$($MYSQL -e "SELECT CONCAT(rol,'|',decision) FROM revisiones WHERE entrega_id=$V3")" = "Director|Aprobado" ]; revisar "Pasa a la fase 4 y la versión 3 queda aprobada por el director" $?
+[ "$($MYSQL -e "SELECT CONCAT(COUNT(*),'|',MAX(subido_por)) FROM entregas WHERE proyecto_id=$PA AND tipo='Reporte Turnitin'")" = "1|6" ]; revisar "El reporte de Turnitin queda guardado, subido por el director" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM historial WHERE proyecto_id=$PA AND descripcion LIKE '%evaluador y al comit%'")" = "1" ]; revisar "Queda en el historial" $?
+revisarPropuesta doc aprobar "Otra vez" "$T/turnitin.pdf"; [[ "$DESTINO" == *"error=propuesta-no-revisable"* ]]; revisar "No se aprueba dos veces" $?
+pedir doc GET "/director/proyecto.jsp?id=$PA"; contiene "Reportes de Turnitin" && ! contiene "propuesta-revisar.jsp" && ! contiene "Evaluador de Prueba"; revisar "El director ve el reporte, sin el formulario y sin el nombre del evaluador" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "Lista para evaluar" && contiene "la envió al evaluador" && ! contiene "Evaluador de Prueba"; revisar "La estudiante ve la aprobación del director, sin saber quién la evalúa" $?
+pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "Reportes de Turnitin"; revisar "El comité ve el reporte de Turnitin" $?
+pedir admin GET "/admin/proyectos.jsp?filtro=evaluador"; ! contiene "Idea A"; revisar "Con evaluador ya no sale en el filtro sin evaluador" $?
 
 echo "== Seminario no usa el F-DC-124 (RF17)"
 $MYSQL -e "UPDATE proyectos SET modalidad_id=5 WHERE id=$PC"

@@ -81,6 +81,19 @@
         <servlet-name>subirPropuesta</servlet-name>
         <url-pattern>/estudiante/propuesta-guardar.jsp</url-pattern>
     </servlet-mapping>
+    <!-- La revisión del director, con el reporte de Turnitin (PDF) -->
+    <servlet>
+        <servlet-name>revisarPropuesta</servlet-name>
+        <jsp-file>/director/propuesta-revisar.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>15728640</max-file-size>
+            <max-request-size>16777216</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>revisarPropuesta</servlet-name>
+        <url-pattern>/director/propuesta-revisar.jsp</url-pattern>
+    </servlet-mapping>
 
     <!-- La sesión viaja solo en una cookie (nunca como ;jsessionid=... en la URL) -->
     <session-config>
