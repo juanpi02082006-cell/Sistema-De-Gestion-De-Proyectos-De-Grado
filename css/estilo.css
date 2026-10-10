@@ -1350,27 +1350,38 @@ a.app-limpiar {
     font-weight: 700;
 }
 
-/* Estudiantes: lista simple con avatar */
-.app-personas {
-    padding: 0;
-    margin: 0;
-    list-style: none;
+/* Un dato que ocupa las dos columnas (carrera, correo) */
+.app-pares .ancho {
+    grid-column: 1 / -1;
 }
 
-.app-personas li {
+.app-pares dd {
+    overflow-wrap: anywhere;
+}
+
+.app-pares dd a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.app-pares dd a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--verde-lima);
+    text-decoration-thickness: 2px;
+}
+
+/* Estudiantes: iniciales y nombre, y debajo sus datos como en "Datos del proyecto" */
+.app-estudiante + .app-estudiante {
+    margin-top: 1.75rem;
+}
+
+.app-estudiante-nombre {
     display: flex;
-    gap: 0.9rem;
-    padding: 1rem 0;
-    border-bottom: 1px solid #ECECE6;
-}
-
-.app-personas li:first-child {
-    padding-top: 0;
-}
-
-.app-personas li:last-child {
-    padding-bottom: 0;
-    border-bottom: 0;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 800;
 }
 
 .app-iniciales {
@@ -1384,45 +1395,4 @@ a.app-limpiar {
     font-weight: 800;
     background-color: var(--verde-lima);
     border-radius: 50%;
-}
-
-.app-personas-nombre {
-    display: block;
-    font-weight: 700;
-}
-
-.app-personas-linea {
-    display: block;
-    font-size: 0.875rem;
-    line-height: 1.5;
-    color: var(--gris-texto);
-    overflow-wrap: anywhere;
-}
-
-.app-personas-linea a {
-    color: inherit;
-}
-
-/* Créditos: número y una barra delgada */
-.app-creditos {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-top: 0.4rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.app-creditos-pista {
-    flex: 0 1 9rem;
-    height: 0.3rem;
-    overflow: hidden;
-    background-color: #ECECE6;
-    border-radius: 999px;
-}
-
-.app-creditos-barra {
-    height: 100%;
-    background-color: var(--verde-lima);
 }

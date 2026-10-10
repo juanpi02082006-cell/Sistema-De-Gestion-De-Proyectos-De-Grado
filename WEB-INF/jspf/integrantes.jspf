@@ -1,5 +1,5 @@
-<%-- Estudiantes de un proyecto en una lista simple: iniciales, nombre, contacto, datos
-     académicos y créditos. Antes de incluirlo, definir:
+<%-- Estudiantes de un proyecto, con el mismo estilo de "Datos del proyecto": iniciales y
+     nombre, y debajo los datos como pares etiqueta / valor. Antes de incluirlo, definir:
        idProyectoIntegrantes  el proyecto
        integrantesDetalle     true para el director y el comité (datos académicos y
                               celular, RF19); false para el estudiante, que de sus
@@ -12,30 +12,22 @@
     WHERE pe.proyecto_id = ? AND pe.vigente = 1 ORDER BY u.nombre
     <sql:param value="${idProyectoIntegrantes}" />
 </sql:query>
-<ul class="app-personas">
-    <c:forEach var="i" items="${consultaIntegrantes.rows}">
-        <c:set var="partesNombre" value="${fn:split(fn:trim(i.nombre), ' ')}" />
-        <li>
+<c:forEach var="i" items="${consultaIntegrantes.rows}">
+    <c:set var="partesNombre" value="${fn:split(fn:trim(i.nombre), ' ')}" />
+    <div class="app-estudiante">
+        <div class="app-estudiante-nombre">
             <span class="app-iniciales" aria-hidden="true"><c:out value="${fn:toUpperCase(fn:substring(partesNombre[0], 0, 1))}${fn:length(partesNombre) > 1 ? fn:toUpperCase(fn:substring(partesNombre[1], 0, 1)) : ''}" /></span>
-            <span>
-                <span class="app-personas-nombre"><c:out value="${i.nombre}" /></span>
-                <span class="app-personas-linea">
-                    <a href="mailto:${fn:escapeXml(i.correo)}"><c:out value="${i.correo}" /></a><c:if test="${integrantesDetalle and not empty i.celular}"> · <c:out value="${i.celular}" /></c:if>
-                </span>
-                <c:if test="${integrantesDetalle}">
-                    <span class="app-personas-linea">
-                        <c:if test="${not empty i.carrera}"><c:out value="${i.carrera}" /> · </c:if><c:if test="${not empty i.nivel}"><c:out value="${i.nivel}" /> · </c:if>plan <c:out value="${empty i.plan_estudios ? 'sin registrar' : fn:toLowerCase(i.plan_estudios)}" />
-                    </span>
-                    <c:if test="${not empty i.porcentaje_creditos}">
-                        <span class="app-creditos">
-                            <span class="app-creditos-pista" role="progressbar" aria-label="Créditos aprobados" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${i.porcentaje_creditos}">
-                                <span class="app-creditos-barra d-block" style="width: ${i.porcentaje_creditos}%"></span>
-                            </span>
-                            <span><c:out value="${i.porcentaje_creditos}" /> % de créditos</span>
-                        </span>
-                    </c:if>
-                </c:if>
-            </span>
-        </li>
-    </c:forEach>
-</ul>
+            <span><c:out value="${i.nombre}" /></span>
+        </div>
+        <dl class="app-pares">
+            <div class="ancho"><dt>Correo</dt><dd><a href="mailto:${fn:escapeXml(i.correo)}"><c:out value="${i.correo}" /></a></dd></div>
+            <c:if test="${integrantesDetalle}">
+                <div><dt>Celular</dt><dd><c:out value="${empty i.celular ? 'Sin registrar' : i.celular}" /></dd></div>
+                <div><dt>Nivel</dt><dd><c:out value="${empty i.nivel ? 'Sin registrar' : i.nivel}" /></dd></div>
+                <div class="ancho"><dt>Carrera</dt><dd><c:out value="${empty i.carrera ? 'Sin registrar' : i.carrera}" /></dd></div>
+                <div><dt>Plan de estudios</dt><dd><c:out value="${empty i.plan_estudios ? 'Sin registrar' : (i.plan_estudios == 'Nuevo' ? 'Posterior al 1330' : 'Anterior al 1330')}" /></dd></div>
+                <div><dt>Créditos aprobados</dt><dd><c:out value="${empty i.porcentaje_creditos ? 'Sin registrar' : i.porcentaje_creditos}" /><c:if test="${not empty i.porcentaje_creditos}"> %</c:if></dd></div>
+            </c:if>
+        </dl>
+    </div>
+</c:forEach>

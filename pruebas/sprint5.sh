@@ -134,7 +134,7 @@ revisar "El Word se descarga con su nombre original y sin cambios" $?
 curl -s -D - -o /dev/null -b "$T/ana" "$B/archivos/ver.jsp?id=$R2" | grep -qi "content-disposition: inline"; revisar "El PDF se sigue abriendo en el navegador" $?
 entrar doc docente.prueba@uts.edu.co; pedir doc POST /acceso/elegir-rol.jsp --data-urlencode "rol=3"
 pedir doc GET /director/proyectos.jsp; contiene "Idea A" && contiene "Versión 2" && sinError; revisar "El director ve el proyecto que dirige, con la versión 2" $?
-pedir doc GET "/director/proyecto.jsp?id=$PA"; contiene "Estudiante 4000000001" && contiene "Créditos aprobados" && contiene 'aria-valuenow="80"' && ! contiene "Evaluador de Prueba" && sinError; revisar "El director ve la información del estudiante (RF19)" $?
+pedir doc GET "/director/proyecto.jsp?id=$PA"; contiene "Estudiante 4000000001" && contiene "Créditos aprobados" && contiene "80 %" && ! contiene "Evaluador de Prueba" && sinError; revisar "El director ve la información del estudiante (RF19)" $?
 pedir dir GET "/director/proyecto.jsp?id=$PA"; [[ "$DESTINO" == *"error=no-encontrado"* ]]; revisar "Otro director no ve el proyecto" $?
 pedir dir GET "/archivos/ver.jsp?id=$V2"; [[ "$DESTINO" == *"error=denegado"* ]]; revisar "Ni descarga su propuesta" $?
 pedir ana GET /director/proyectos.jsp; [[ "$DESTINO" == *"error=denegado"* ]]; revisar "Un estudiante no entra a las páginas del director" $?
