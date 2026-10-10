@@ -278,9 +278,11 @@ pedir ana POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf"
 pedir ana GET /estudiante/proyecto.jsp; contiene "Ya pas"; revisar "Mi proyecto avisa que venció el plazo" $?
 $MYSQL -e "UPDATE periodos SET fecha_limite_pago='$EN30' WHERE id=$P1"
 $MYSQL -e "UPDATE proyectos p JOIN proyecto_estudiantes pe ON pe.proyecto_id=p.id SET p.fase_id=(SELECT id FROM fases WHERE orden=2) WHERE pe.estudiante_id=$ANA"
-pedir ana POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf"
-[[ "$DESTINO" == *"error=fase-no-permite"* ]]; revisar "Fuera de la fase 1: no se sube" $?
 pedir ana GET /panel/inicio.jsp; contiene "app-fase completa" && contiene "Fase 2: Propuesta I"; revisar "En la fase 2: las fases 0 y 1 salen completas" $?
+# Desde el Sprint 5 el recibo también se sube en la fase 2 (el compañero que se agrega después, RF36)
+$MYSQL -e "UPDATE proyectos p JOIN proyecto_estudiantes pe ON pe.proyecto_id=p.id SET p.fase_id=(SELECT id FROM fases WHERE orden=3) WHERE pe.estudiante_id=$ANA"
+pedir ana POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf"
+[[ "$DESTINO" == *"error=fase-no-permite"* ]]; revisar "Fuera de las fases 1 y 2: no se sube" $?
 $MYSQL -e "UPDATE proyectos p JOIN proyecto_estudiantes pe ON pe.proyecto_id=p.id SET p.fase_id=(SELECT id FROM fases WHERE orden=1) WHERE pe.estudiante_id=$ANA"
 pedir est GET /estudiante/pago-guardar.jsp
 [[ "$DESTINO" == *"/estudiante/proyecto.jsp" ]]; revisar "Por GET no sube nada" $?

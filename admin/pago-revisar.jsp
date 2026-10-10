@@ -1,7 +1,8 @@
-<%-- El comité (el administrador) aprueba o devuelve el recibo de pago de la fase 1
-     (RF32), por POST. Solo se revisa el último recibo del proyecto, una vez, y con
-     observación obligatoria (RF34). Si queda aprobado y el proyecto ya tiene director,
-     pasa a la fase 2 (avanzar-fase-2.jspf). --%>
+<%-- El comité (el administrador) aprueba o devuelve el recibo de pago de un estudiante
+     (RF32), por POST. Cada estudiante paga el suyo: se revisa solo su último recibo, una
+     vez, y con observación obligatoria (RF34), mientras el proyecto esté en la fase 1 o 2
+     (en la 2, el del compañero que se agregó después). Si con eso todos quedan al día y
+     el proyecto ya tiene director, pasa a la fase 2 (avanzar-fase-2.jspf). --%>
 <%@ include file="/WEB-INF/jspf/solo-admin.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <c:if test="${pageContext.request.method != 'POST' or empty param.id}">
@@ -10,7 +11,8 @@
 
 <sql:query var="consulta">
     SELECT e.id, e.proyecto_id, f.orden AS fase,
-           (e.id = (SELECT MAX(e2.id) FROM entregas e2 WHERE e2.proyecto_id = e.proyecto_id AND e2.tipo = 'Recibo de pago')) AS ultimo,
+           (e.id = (SELECT MAX(e2.id) FROM entregas e2
+                    WHERE e2.proyecto_id = e.proyecto_id AND e2.tipo = 'Recibo de pago' AND e2.subido_por = e.subido_por)) AS ultimo,
            (SELECT COUNT(*) FROM revisiones r WHERE r.entrega_id = e.id) AS revisiones
     FROM entregas e
     JOIN proyectos p ON p.id = e.proyecto_id
@@ -29,7 +31,7 @@
 <c:set var="observacion" value="${fn:trim(param.observacion)}" />
 <c:set var="motivo" value="" />
 <c:choose>
-    <c:when test="${recibo.fase != 1 or recibo.ultimo != 1 or recibo.revisiones > 0}"><c:set var="motivo" value="pago-ya-revisado" /></c:when>
+    <c:when test="${(recibo.fase != 1 and recibo.fase != 2) or recibo.ultimo != 1 or recibo.revisiones > 0}"><c:set var="motivo" value="pago-ya-revisado" /></c:when>
     <c:when test="${param.decision != 'aprobar' and param.decision != 'devolver'}"><c:set var="motivo" value="general" /></c:when>
     <c:when test="${empty observacion}"><c:set var="motivo" value="observacion-requerida" /></c:when>
 </c:choose>

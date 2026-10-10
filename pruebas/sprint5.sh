@@ -189,6 +189,79 @@ $MYSQL -e "UPDATE proyectos SET modalidad_id=5 WHERE id=$PC"
 subirPropuesta caro "$T/propuesta.docx"; [[ "$DESTINO" == *"error=seminario-sin-124"* ]]; revisar "Seminario: no sube el FDC-124" $?
 pedir caro GET /estudiante/proyecto.jsp; contiene "no usa el F-DC-124" && ! contiene "propuesta-guardar.jsp"; revisar "Seminario: se le explica, sin formulario" $?
 
+echo "== Integrantes: varios estudiantes en un proyecto (RF36, RF35, RF13)"
+id() { $MYSQL -e "SELECT id FROM usuarios WHERE correo='$1'"; }
+agregar() { pedir "$1" POST /estudiante/integrante-agregar.jsp --data-urlencode "correo=$2"; }
+quitar() { pedir "$1" POST /estudiante/integrante-quitar.jsp --data-urlencode "estudiante=$2"; }
+for N in gema hugo ines juan kike luz mia; do
+    registrar "$N@correo.uts.edu.co" "40000001${#N}$(printf '%d' "'$N")" Anterior; entrar "$N" "$N@correo.uts.edu.co" Clave123
+done
+$MYSQL -e "UPDATE usuarios SET porcentaje_creditos=60 WHERE correo='kike@correo.uts.edu.co'; UPDATE usuarios SET nivel_id=2 WHERE correo='luz@correo.uts.edu.co'"
+pedir dir POST /ideas/idea-guardar.jsp --data-urlencode "titulo=Idea C" --data-urlencode "nivel=1" --data-urlencode "modalidad=2"
+IC=$($MYSQL -e "SELECT id FROM ideas WHERE titulo='Idea C'")
+pedir admin POST /ideas/idea-revisar.jsp --data-urlencode "id=$IC" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
+pedir gema POST /ideas/idea-tomar.jsp --data-urlencode "id=$IC"
+PG=$($MYSQL -e "SELECT id FROM proyectos WHERE titulo='Idea C'")
+pedir gema GET /estudiante/proyecto.jsp; contiene "Agregar un compañero" && contiene "1 de 3"; revisar "En la fase 1 puede agregar compañeros (1 de 3 en Desarrollo tecnológico)" $?
+agregar gema nadie@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrante-no-existe"* ]]; revisar "Un correo sin cuenta: rechazado" $?
+agregar gema ana@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrante-con-proyecto"* ]]; revisar "Un estudiante con otro proyecto: rechazado (RF35)" $?
+agregar gema gema@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrante-con-proyecto"* ]]; revisar "No se agrega a sí misma" $?
+agregar gema kike@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrante-no-habilitado"* ]]; revisar "Un estudiante no habilitado (60 %): rechazado" $?
+agregar gema luz@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrante-otro-nivel"* ]]; revisar "Un estudiante de otro nivel: rechazado" $?
+agregar gema director.prueba@uts.edu.co; [[ "$DESTINO" == *"error=integrante-no-existe"* ]]; revisar "Un docente no entra como integrante" $?
+agregar gema HUGO@correo.uts.edu.co; [[ "$DESTINO" == *"ok=integrante-agregado"* ]]; revisar "Agrega a un compañero (el correo sin importar mayúsculas)" $?
+agregar gema ines@correo.uts.edu.co; [[ "$DESTINO" == *"ok=integrante-agregado"* ]]; revisar "Agrega a otro" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM proyecto_estudiantes WHERE proyecto_id=$PG AND vigente=1")" = "3" ]; revisar "En la base: 3 integrantes vigentes" $?
+agregar gema juan@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrantes-completos"* ]]; revisar "El cuarto en Desarrollo tecnológico: rechazado (máximo 3)" $?
+pedir hugo GET /estudiante/proyecto.jsp; contiene "Idea C" && contiene "integrante-quitar.jsp" && contiene "(tú)"; revisar "El compañero ve el proyecto y puede quitar a los demás" $?
+pedir hugo GET /panel/inicio.jsp; contiene "Tu proyecto: Idea C"; revisar "Y lo ve en su inicio" $?
+quitar hugo "$(id hugo@correo.uts.edu.co)"; [[ "$DESTINO" == *"error=no-encontrado"* ]]; revisar "Nadie se quita a sí mismo" $?
+quitar ana "$(id ines@correo.uts.edu.co)"; [[ "$DESTINO" == *"error=no-encontrado"* ]]; revisar "Un estudiante de otro proyecto no quita a nadie" $?
+quitar gema "$(id ines@correo.uts.edu.co)"; [[ "$DESTINO" == *"ok=integrante-quitado"* ]]; revisar "Quita a una compañera" $?
+[ "$($MYSQL -e "SELECT CONCAT(estado,'|',IFNULL(vigente,'NULL')) FROM proyecto_estudiantes WHERE proyecto_id=$PG AND estudiante_id=$(id ines@correo.uts.edu.co)")" = "Excluido|NULL" ]; revisar "Queda Excluida y sin vigencia (se conserva el historial)" $?
+pedir ines GET /estudiante/proyecto.jsp; contiene "Todavía no tienes un proyecto"; revisar "Ella ya no tiene proyecto (puede empezar otro)" $?
+agregar gema ines@correo.uts.edu.co; [[ "$DESTINO" == *"ok=integrante-agregado"* ]]; revisar "Se puede volver a agregar" $?
+pedir admin POST /admin/proyecto-asignar.jsp --data-urlencode "id=$PG" --data-urlencode "director=3" --data-urlencode "interdisciplinario=on"
+[[ "$DESTINO" == *"ok=asignacion-guardada"* ]] && [ "$($MYSQL -e "SELECT interdisciplinario FROM proyectos WHERE id=$PG")" = "1" ]; revisar "El comité marca el proyecto como interdisciplinario y asigna director (RF13)" $?
+agregar gema juan@correo.uts.edu.co; [[ "$DESTINO" == *"ok=integrante-agregado"* ]]; revisar "Interdisciplinario: entra el cuarto" $?
+agregar gema mia@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrantes-completos"* ]]; revisar "Interdisciplinario: el quinto no (máximo 4)" $?
+pedir admin POST /admin/proyecto-asignar.jsp --data-urlencode "id=$PG" --data-urlencode "director=3"
+[[ "$DESTINO" == *"error=demasiados-integrantes"* ]]; revisar "Con 4 integrantes no se desmarca el interdisciplinario" $?
+pedir admin POST /admin/proyecto-asignar.jsp --data-urlencode "id=$PC" --data-urlencode "director=6" --data-urlencode "interdisciplinario=on"
+[ "$($MYSQL -e "SELECT interdisciplinario FROM proyectos WHERE id=$PC")" = "0" ]; revisar "Seminario no puede ser interdisciplinario" $?
+
+echo "== Pago: cada estudiante sube su recibo (RF32)"
+subir gema; subir hugo
+[ "$($MYSQL -e "SELECT COUNT(DISTINCT subido_por) FROM entregas WHERE proyecto_id=$PG AND tipo='Recibo de pago'")" = "2" ]; revisar "Cada uno sube su propio recibo" $?
+pedir hugo GET /estudiante/proyecto.jsp; contiene "En revisión" && contiene "El comité aprueba el pago de todos los integrantes"; revisar "Cada uno ve su recibo y que deben pagar todos" $?
+pedir admin GET "/admin/proyecto.jsp?id=$PG"; [ "$(grep -c 'pago-revisar.jsp' "$T/cuerpo.html")" = "2" ] && contiene "Estudiante 40000001"; revisar "El comité ve un formulario por cada recibo por revisar" $?
+for N in gema hugo; do revisarPago admin "$($MYSQL -e "SELECT MAX(id) FROM entregas WHERE proyecto_id=$PG AND subido_por=$(id $N@correo.uts.edu.co)")" aprobar "Ok"; done
+[[ "$DESTINO" == *"ok=pago-aprobado"* && "$DESTINO" != *"fase-2"* ]] && [ "$(fase $PG)" = "1" ]; revisar "Con dos de cuatro pagos aprobados, sigue en la fase 1" $?
+subir gema; [[ "$DESTINO" == *"error=pago-aprobado"* ]]; revisar "Quien ya tiene su pago aprobado no sube otro" $?
+subir ines; subir juan
+revisarPago admin "$($MYSQL -e "SELECT MAX(id) FROM entregas WHERE proyecto_id=$PG AND subido_por=$(id ines@correo.uts.edu.co)")" aprobar "Ok"
+revisarPago admin "$($MYSQL -e "SELECT MAX(id) FROM entregas WHERE proyecto_id=$PG AND subido_por=$(id juan@correo.uts.edu.co)")" aprobar "Ok"
+[[ "$DESTINO" == *"ok=pago-aprobado-fase-2"* ]] && [ "$(fase $PG)" = "2" ]; revisar "Con el último pago aprobado (y director), pasa a la fase 2" $?
+
+echo "== Fase 2: el grupo se puede cambiar hasta enviar la propuesta"
+quitar gema "$(id juan@correo.uts.edu.co)"; [[ "$DESTINO" == *"ok=integrante-quitado"* ]]; revisar "En la fase 2 todavía se quita a un compañero" $?
+agregar gema mia@correo.uts.edu.co; [[ "$DESTINO" == *"ok=integrante-agregado"* ]]; revisar "Y se agrega a otro" $?
+subirPropuesta gema "$T/propuesta.docx"
+pedir gema GET /estudiante/proyecto.jsp; contiene "todos los integrantes deben tener el pago aprobado"; revisar "Se avisa que falta el pago de la nueva compañera" $?
+enviar gema; [[ "$DESTINO" == *"error=pagos-pendientes"* ]]; revisar "Sin el pago de todos no se envía la propuesta" $?
+subir mia; [[ "$DESTINO" == *"ok=pago-subido"* ]]; revisar "La nueva compañera sube su recibo en la fase 2" $?
+revisarPago admin "$($MYSQL -e "SELECT MAX(id) FROM entregas WHERE proyecto_id=$PG AND subido_por=$(id mia@correo.uts.edu.co)")" aprobar "Ok"
+[[ "$DESTINO" == *"ok=pago-aprobado"* ]] && [ "$(fase $PG)" = "2" ]; revisar "El comité aprueba su pago en la fase 2 (sigue en la 2)" $?
+$MYSQL -e "UPDATE usuarios SET metodologia_aprobada=0 WHERE correo='hugo@correo.uts.edu.co'"
+enviar gema; [[ "$DESTINO" == *"error=integrante-no-habilitado"* ]]; revisar "Si un integrante deja de estar habilitado, no se envía" $?
+$MYSQL -e "UPDATE usuarios SET metodologia_aprobada=1 WHERE correo='hugo@correo.uts.edu.co'"
+enviar mia; [[ "$DESTINO" == *"ok=propuesta-enviada"* ]] && [ "$(fase $PG)" = "3" ]; revisar "Con todo al día, cualquier integrante la envía (pasa a la fase 3)" $?
+agregar gema juan@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrantes-cerrados"* ]]; revisar "En la fase 3 ya no se agregan compañeros" $?
+quitar gema "$(id mia@correo.uts.edu.co)"; [[ "$DESTINO" == *"error=integrantes-cerrados"* ]]; revisar "Ni se quitan" $?
+pedir gema GET /estudiante/proyecto.jsp; ! contiene "integrante-quitar.jsp" && ! contiene "Agregar un compañero"; revisar "Sin formulario ni botón de quitar" $?
+entrar dir2 director.prueba@uts.edu.co
+pedir dir2 GET "/director/proyecto.jsp?id=$PG"; [ "$(grep -c 'class="app-estudiante"' "$T/cuerpo.html")" = "4" ]; revisar "El director ve a los 4 integrantes" $?
+
 echo "== Diseño"
 MOJIBAKE=0
 for R in "admin /admin/proyectos.jsp" "admin /admin/proyecto.jsp?id=$PA" "admin /panel/inicio.jsp" "ana /estudiante/proyecto.jsp" "doc /director/proyectos.jsp" "doc /director/proyecto.jsp?id=$PA" "doc /panel/inicio.jsp"; do

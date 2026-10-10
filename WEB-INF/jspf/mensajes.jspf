@@ -29,6 +29,8 @@
             <c:when test="${param.ok == 'propuesta-enviada'}">Enviaste la propuesta a tu director: el proyecto pasó a la fase 3 (Propuesta II).</c:when>
             <c:when test="${param.ok == 'propuesta-devuelta-director'}">Devolviste la propuesta al estudiante con tus observaciones: el proyecto volvió a la fase 2.</c:when>
             <c:when test="${param.ok == 'propuesta-aprobada-director'}">Aprobaste la propuesta y la enviaste al evaluador y al comité: el proyecto pasó a la fase 4.</c:when>
+            <c:when test="${param.ok == 'integrante-agregado'}">Tu compañero quedó en el proyecto. Recuerda que cada uno sube su propio recibo de pago.</c:when>
+            <c:when test="${param.ok == 'integrante-quitado'}">El compañero salió del proyecto.</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
             <c:when test="${param.ok == 'sesion-eliminada'}">La sesión se quitó del calendario.</c:when>
@@ -56,7 +58,7 @@
             <c:when test="${param.error == 'proyecto-vigente'}">Ya tienes un proyecto vigente. Un estudiante solo puede tener uno a la vez.</c:when>
             <c:when test="${param.error == 'modalidad-requerida'}">Escoge la modalidad de tu proyecto.</c:when>
             <c:when test="${param.error == 'pago-no-aplica'}">En tu plan de estudios el pago lo cubre la matrícula del Seminario de Grado: no necesitas subir un recibo.</c:when>
-            <c:when test="${param.error == 'fase-no-permite'}">El recibo de pago se sube en la fase 1.</c:when>
+            <c:when test="${param.error == 'fase-no-permite'}">El recibo de pago se sube en la fase 1 (o en la 2, si te agregaron después al proyecto).</c:when>
             <c:when test="${param.error == 'pago-vencido'}">Ya pasó la fecha límite de pago de este periodo.</c:when>
             <c:when test="${param.error == 'archivo-requerido'}">Escoge el archivo que vas a subir.</c:when>
             <c:when test="${param.error == 'archivo-grande'}">El archivo pesa más de 15 MB.</c:when>
@@ -75,6 +77,14 @@
             <c:when test="${param.error == 'propuesta-no-revisable'}">Esa propuesta no está esperando tu revisión: ya la revisaste o el proyecto no está en la fase 3.</c:when>
             <c:when test="${param.error == 'sin-evaluador'}">El comité todavía no asigna el evaluador: puedes devolver la propuesta, pero no enviarla.</c:when>
             <c:when test="${param.error == 'turnitin-requerido'}">Para aprobar la propuesta, sube el reporte de Turnitin en PDF.</c:when>
+            <c:when test="${param.error == 'integrantes-cerrados'}">Los integrantes solo se cambian en las fases 1 y 2: al enviar la propuesta al director, el grupo queda cerrado.</c:when>
+            <c:when test="${param.error == 'integrante-no-existe'}">No hay un estudiante registrado y activo con ese correo. Tu compañero debe crear su cuenta primero.</c:when>
+            <c:when test="${param.error == 'integrante-con-proyecto'}">Ese estudiante ya tiene un proyecto vigente: solo se puede tener uno a la vez.</c:when>
+            <c:when test="${param.error == 'integrante-otro-nivel'}">Ese estudiante es de otro nivel (tecnológico o ingeniería) que el proyecto.</c:when>
+            <c:when test="${param.error == 'integrante-no-habilitado'}">Hay un integrante que no está habilitado (créditos o Metodología). Debe revisar su habilitación.</c:when>
+            <c:when test="${param.error == 'integrantes-completos'}">El proyecto ya tiene el máximo de integrantes de su modalidad.</c:when>
+            <c:when test="${param.error == 'demasiados-integrantes'}">El proyecto tiene más integrantes de los que permite su modalidad.</c:when>
+            <c:when test="${param.error == 'pagos-pendientes'}">Todos los integrantes deben tener el pago aprobado por el comité antes de enviar la propuesta.</c:when>
             <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
             <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
             <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>

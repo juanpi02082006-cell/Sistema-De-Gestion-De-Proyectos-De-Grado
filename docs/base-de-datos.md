@@ -209,7 +209,9 @@ bash pruebas/sprint5.sh      # revisión del pago, director y evaluador, paso a 
 
 Importar la base borra los datos que haya. Para conservarlos, hacer antes una copia con `C:/xampp/mysql/bin/mysqldump.exe -u root --databases sistemas_proyectos_grado > copia.sql` (y de `WEB-INF/archivos`, porque `sprint4.sh` borra los recibos), y devolverla al final con `mysql -u root < copia.sql`.
 
-**Estado del pago (Sprint 5, 2026-10-10):** no hay columna nueva. La revisión del comité queda en `revisiones` (rol `Comité`, decisión `Aprobado` o `Devuelto`) sobre la entrega del recibo, y el estado (No aplica, Sin recibo, Por revisar, Devuelto, Aprobado) se calcula con la consulta de `WEB-INF/jspf/estado-pago.jspf`, que usan todas las páginas.
+**Estado del pago (Sprint 5, 2026-10-10):** no hay columna nueva. La revisión del comité queda en `revisiones` (rol `Comité`, decisión `Aprobado` o `Devuelto`) sobre la entrega del recibo, y el estado (No aplica, Sin recibo, Por revisar, Devuelto, Aprobado) se calcula con la consulta de `WEB-INF/jspf/estado-pago.jspf`, que usan todas las páginas. Cada estudiante paga el suyo: el recibo de cada uno es la entrega que él subió (`entregas.subido_por`), y el pago del proyecto suma el de todos sus estudiantes vigentes.
+
+**Integrantes (Sprint 5, 2026-10-10):** tampoco hay columnas nuevas. Agregar un compañero inserta su fila en `proyecto_estudiantes` (o la vuelve a activar si ya había estado); quitarlo la deja en `estado = 'Excluido'` y `vigente = NULL`, así que se conserva el historial y él puede empezar otro proyecto. El máximo es `modalidades.max_integrantes`, o 4 si `proyectos.interdisciplinario = 1`.
 
 ## Pendientes
 

@@ -1,6 +1,7 @@
 <%-- Mi proyecto (estudiante): los datos del proyecto vigente, su avance por fases
-     (RF2, RF37), el pago de la fase 1 (RF29, RF32), con la revisión del comité, y la
-     propuesta de la fase 2 (FDC-124 con sus versiones, RF26, RF30, RF43), que envía a
+     (RF2, RF37), los integrantes (en las fases 1 y 2 se agregan o se quitan, RF36), el
+     pago de la fase 1 (RF29, RF32; cada estudiante sube el suyo y el comité lo revisa) y
+     la propuesta de la fase 2 (FDC-124 con sus versiones, RF26, RF30, RF43), que envía a
      su director. El estudiante no ve a su evaluador (RF27). --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
@@ -12,13 +13,17 @@
     SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.modalidad_id, f.orden AS fase,
            m.nombre AS modalidad, n.nombre AS nivel, pe2.nombre AS periodo, pe2.id AS periodo_id,
            pe2.fecha_limite_pago, (pe2.fecha_limite_pago IS NULL OR CURDATE() <= pe2.fecha_limite_pago) AS pago_a_tiempo,
-           d.nombre AS director, ${sqlEstadoPago} AS estado_pago, pe2.fecha_limite_propuestas,
+           d.nombre AS director, ${sqlEstadoPago} AS estado_pago, ${sqlEstadoPagoEstudiante} AS mi_pago,
+           pe2.fecha_limite_propuestas,
+           CASE WHEN p.interdisciplinario = 1 THEN 4 ELSE m.max_integrantes END AS maximo,
+           (SELECT COUNT(*) FROM proyecto_estudiantes x WHERE x.proyecto_id = p.id AND x.vigente = 1) AS integrantes,
            (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version_propuesta,
            (SELECT COUNT(*) FROM entregas e JOIN revisiones r ON r.entrega_id = e.id
             WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.estado = 'Enviada' AND r.decision = 'Devuelto'
               AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')) AS propuesta_devuelta
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
+    JOIN usuarios ue ON ue.id = pe.estudiante_id
     JOIN modalidades m ON m.id = p.modalidad_id
     JOIN niveles n ON n.id = p.nivel_id
     LEFT JOIN fases f ON f.id = p.fase_id
@@ -31,18 +36,23 @@
 
 <c:if test="${tieneProyecto}">
     <c:set var="p" value="${consulta.rows[0]}" />
-    <%-- Recibos, del más reciente al más antiguo, con la revisión del comité si la tienen --%>
+    <%-- Mis recibos (cada estudiante sube el suyo), del más reciente al más antiguo, con
+         la revisión del comité si la tienen --%>
     <sql:query var="recibos">
         SELECT e.id, e.nombre_archivo, e.subido_en, r.decision, r.observacion
         FROM entregas e
         LEFT JOIN revisiones r ON r.entrega_id = e.id AND r.rol = 'Comité' AND r.estado = 'Enviada'
-        WHERE e.proyecto_id = ? AND e.tipo = 'Recibo de pago' ORDER BY e.id DESC
+        WHERE e.proyecto_id = ? AND e.tipo = 'Recibo de pago' AND e.subido_por = ? ORDER BY e.id DESC
         <sql:param value="${p.id}" />
+        <sql:param value="${idEstudiante}" />
     </sql:query>
     <%-- RF32: en los planes nuevos el pago lo cubre la matrícula del Seminario de Grado,
-         salvo en la modalidad Seminario (estado-pago.jspf). --%>
-    <c:set var="pagoCubierto" value="${p.estado_pago == 'No aplica'}" />
-    <c:set var="pagoListo" value="${pagoCubierto or p.estado_pago == 'Aprobado'}" />
+         salvo en la modalidad Seminario (estado-pago.jspf). mi_pago es el del estudiante;
+         estado_pago, el de todo el grupo. --%>
+    <c:set var="pagoCubierto" value="${p.mi_pago == 'No aplica'}" />
+    <c:set var="miPagoListo" value="${pagoCubierto or p.mi_pago == 'Aprobado'}" />
+    <c:set var="pagoListo" value="${p.estado_pago == 'No aplica' or p.estado_pago == 'Aprobado'}" />
+    <c:set var="integrantesAbiertos" value="${p.fase == 1 or p.fase == 2}" />
     <c:set var="faseActual" value="${p.fase}" />
 </c:if>
 
@@ -69,8 +79,8 @@
                 <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>
                 <ul class="app-lista">
                     <li>
-                        <span><span class="app-lista-dato">El comité aprueba tu pago</span>
-                            <span class="app-lista-nota">${pagoCubierto ? 'Lo cubre tu matrícula.' : (p.estado_pago == 'Por revisar' ? 'Tu recibo está en revisión.' : (p.estado_pago == 'Devuelto' ? 'El comité devolvió tu recibo: revisa la observación y súbelo otra vez.' : 'Sube tu recibo de pago.'))}</span></span>
+                        <span><span class="app-lista-dato">${p.integrantes > 1 ? 'El comité aprueba el pago de todos los integrantes' : 'El comité aprueba tu pago'}</span>
+                            <span class="app-lista-nota">${pagoCubierto ? 'El tuyo lo cubre tu matrícula.' : (p.mi_pago == 'Aprobado' ? 'El tuyo ya está aprobado.' : (p.mi_pago == 'Por revisar' ? 'Tu recibo está en revisión.' : (p.mi_pago == 'Devuelto' ? 'El comité devolvió tu recibo: revisa la observación y súbelo otra vez.' : 'Sube tu recibo de pago.')))}${p.integrantes > 1 and miPagoListo and not pagoListo ? ' Falta el de algún compañero.' : ''}</span></span>
                         <span class="app-requisito ${pagoListo ? 'cumple' : ''}">${pagoListo ? 'Listo' : 'Pendiente'}</span>
                     </li>
                     <li>
@@ -99,6 +109,9 @@
                                 </p>
                                 <c:if test="${p.propuesta_devuelta > 0}">
                                     <div class="alert alert-warning app-aviso" role="status">Tu director devolvió la última versión. Revisa sus observaciones y sube una versión corregida antes de enviarla otra vez.</div>
+                                </c:if>
+                                <c:if test="${not pagoListo}">
+                                    <div class="alert alert-warning app-aviso" role="status">Antes de enviarla, todos los integrantes deben tener el pago aprobado por el comité. Revisa el pago de cada uno en "Integrantes".</div>
                                 </c:if>
                             </c:when>
                             <c:when test="${p.fase == 3}">
@@ -139,10 +152,27 @@
                     <c:set var="datosTitulo" value="${p.titulo}" />
                     <c:set var="datosConDirector" value="true" />
                     <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
-                    <h3 class="h6 fw-bold mt-4 mb-3">Integrantes</h3>
+                    <h3 class="h6 fw-bold mt-4 mb-3">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> de <c:out value="${p.maximo}" /></span></h3>
                     <c:set var="idProyectoIntegrantes" value="${p.id}" />
                     <c:set var="integrantesDetalle" value="false" />
+                    <c:set var="integrantesQuitar" value="${integrantesAbiertos}" />
                     <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
+                    <c:choose>
+                        <c:when test="${integrantesAbiertos and p.integrantes < p.maximo}">
+                            <form class="mt-4" method="post" action="${ctx}/estudiante/integrante-agregar.jsp">
+                                <label class="form-label" for="correoCompanero">Agregar un compañero</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <input class="form-control flex-grow-1 w-auto" type="email" id="correoCompanero" name="correo" required
+                                           placeholder="correo@correo.uts.edu.co" pattern=".+@(uts\.edu\.co|correo\.uts\.edu\.co)">
+                                    <button type="submit" class="btn btn-outline-dark rounded-pill">Agregar</button>
+                                </div>
+                                <div class="form-text">Debe tener cuenta, estar habilitado, ser de tu mismo nivel y no tener otro proyecto. Después sube su propio recibo de pago.</div>
+                            </form>
+                        </c:when>
+                        <c:when test="${integrantesAbiertos}">
+                            <p class="app-total mt-3">El proyecto ya tiene el máximo de integrantes de su modalidad.</p>
+                        </c:when>
+                    </c:choose>
                 </div>
             </div>
 
@@ -174,10 +204,10 @@
                                 </c:if>
                             </c:forEach>
                             <c:choose>
-                                <c:when test="${p.estado_pago == 'Aprobado'}">
+                                <c:when test="${p.mi_pago == 'Aprobado'}">
                                     <p class="app-total">El comité aprobó tu pago.</p>
                                 </c:when>
-                                <c:when test="${p.fase != 1}">
+                                <c:when test="${not integrantesAbiertos}">
                                     <p class="app-total">El pago se sube en la fase 1.</p>
                                 </c:when>
                                 <c:when test="${p.pago_a_tiempo != 1}">

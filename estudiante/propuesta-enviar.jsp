@@ -2,29 +2,46 @@
      POST: el proyecto pasa de la fase 2 (Propuesta I) a la 3 (Propuesta II), donde el
      director la revisa (RF18, RF37). Reglas: proyecto vigente en la fase 2, con director
      y con al menos una versión subida; si el director devolvió la última versión, hay
-     que subir una nueva antes de volver a enviarla (RF43). --%>
+     que subir una nueva antes de volver a enviarla (RF43). Antes de enviarla se revisa
+     el grupo (RF36): que no pase del máximo de integrantes, que todos tengan el pago al
+     día (RF32) y que todos sigan habilitados (RF33). Al enviarla, el grupo se cierra. --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
+<%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <c:if test="${pageContext.request.method != 'POST'}">
     <c:redirect url="/estudiante/proyecto.jsp" />
 </c:if>
 
-<c:set var="idEstudiante" value="${sessionScope.usuario.id}" />
 <sql:query var="consulta">
-    SELECT p.id, p.modalidad_id, p.director_id, f.orden AS fase,
+    SELECT p.id, p.modalidad_id, p.director_id, f.orden AS fase, ${sqlEstadoPago} AS estado_pago,
+           CASE WHEN p.interdisciplinario = 1 THEN 4 ELSE m.max_integrantes END AS maximo,
+           (SELECT COUNT(*) FROM proyecto_estudiantes x WHERE x.proyecto_id = p.id AND x.vigente = 1) AS integrantes,
            (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version,
            (SELECT COUNT(*) FROM entregas e JOIN revisiones r ON r.entrega_id = e.id
             WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.estado = 'Enviada' AND r.decision = 'Devuelto'
               AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')) AS devuelta
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
+    JOIN modalidades m ON m.id = p.modalidad_id
     LEFT JOIN fases f ON f.id = p.fase_id
     WHERE pe.estudiante_id = ? AND pe.vigente = 1
-    <sql:param value="${idEstudiante}" />
+    <sql:param value="${sessionScope.usuario.id}" />
 </sql:query>
 <c:if test="${consulta.rowCount == 0}">
     <c:redirect url="/estudiante/proyecto.jsp" />
 </c:if>
 <c:set var="p" value="${consulta.rows[0]}" />
+
+<%-- ¿Todos los integrantes siguen habilitados? (habilitacion.jspf deja "habilitado") --%>
+<sql:query var="grupo">
+    SELECT estudiante_id FROM proyecto_estudiantes WHERE proyecto_id = ? AND vigente = 1
+    <sql:param value="${p.id}" />
+</sql:query>
+<c:set var="todosHabilitados" value="true" />
+<c:forEach var="g" items="${grupo.rows}">
+    <c:set var="idEstudiante" value="${g.estudiante_id}" />
+    <%@ include file="/WEB-INF/jspf/habilitacion.jspf" %>
+    <c:if test="${not habilitado}"><c:set var="todosHabilitados" value="false" /></c:if>
+</c:forEach>
 
 <c:set var="motivo" value="" />
 <c:choose>
@@ -33,6 +50,9 @@
     <c:when test="${empty p.director_id}"><c:set var="motivo" value="sin-director" /></c:when>
     <c:when test="${empty p.version}"><c:set var="motivo" value="propuesta-requerida" /></c:when>
     <c:when test="${p.devuelta > 0}"><c:set var="motivo" value="propuesta-devuelta" /></c:when>
+    <c:when test="${p.integrantes > p.maximo}"><c:set var="motivo" value="demasiados-integrantes" /></c:when>
+    <c:when test="${p.estado_pago != 'Aprobado' and p.estado_pago != 'No aplica'}"><c:set var="motivo" value="pagos-pendientes" /></c:when>
+    <c:when test="${not todosHabilitados}"><c:set var="motivo" value="integrante-no-habilitado" /></c:when>
 </c:choose>
 <c:if test="${not empty motivo}">
     <c:redirect url="/estudiante/proyecto.jsp">
@@ -51,7 +71,7 @@
             INSERT INTO historial (proyecto_id, usuario_id, accion, descripcion)
             VALUES (?, ?, 'Fase', ?)
             <sql:param value="${p.id}" />
-            <sql:param value="${idEstudiante}" />
+            <sql:param value="${sessionScope.usuario.id}" />
             <sql:param value="El estudiante envió la versión ${p.version} del FDC-124 al director. El proyecto pasó a la fase 3 (Propuesta II)." />
         </sql:update>
     </c:if>

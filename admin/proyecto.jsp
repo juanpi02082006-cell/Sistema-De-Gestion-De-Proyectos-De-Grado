@@ -10,6 +10,7 @@
 
 <sql:query var="consulta">
     SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.director_id, p.evaluador_id, p.fecha_inicio, p.modalidad_id,
+           p.interdisciplinario,
            f.orden AS fase, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
            pr.nombre AS periodo, pr.fecha_limite_pago, ${sqlEstadoPago} AS estado_pago
     FROM proyectos p
@@ -28,14 +29,18 @@
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
 
-<%-- Recibos, del más reciente al más antiguo, con la revisión del comité si la tienen --%>
+<%-- Recibos de los estudiantes vigentes (cada uno sube el suyo), agrupados por estudiante
+     y del más reciente al más antiguo, con la revisión del comité si la tienen --%>
 <sql:query var="recibos">
-    SELECT e.id, e.nombre_archivo, e.subido_en, r.decision, r.observacion, r.revisado_en, u.nombre AS revisor
+    SELECT e.id, e.subido_por, est.nombre AS estudiante, e.nombre_archivo, e.subido_en,
+           r.decision, r.observacion, r.revisado_en, u.nombre AS revisor
     FROM entregas e
+    JOIN proyecto_estudiantes px ON px.proyecto_id = e.proyecto_id AND px.estudiante_id = e.subido_por AND px.vigente = 1
+    JOIN usuarios est ON est.id = e.subido_por
     LEFT JOIN revisiones r ON r.entrega_id = e.id AND r.rol = 'Comité' AND r.estado = 'Enviada'
     LEFT JOIN usuarios u ON u.id = r.revisor_id
     WHERE e.proyecto_id = ? AND e.tipo = 'Recibo de pago'
-    ORDER BY e.id DESC
+    ORDER BY est.nombre, e.subido_por, e.id DESC
     <sql:param value="${p.id}" />
 </sql:query>
 <%-- Docentes activos con rol Director (3) y con rol Evaluador (4) --%>
@@ -68,7 +73,7 @@
         <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>
         <ul class="app-lista">
             <li>
-                <span><span class="app-lista-dato">Pago aprobado por el comité</span><span class="app-lista-nota">En los planes nuevos lo cubre la matrícula, salvo en Seminario.</span></span>
+                <span><span class="app-lista-dato">Pago de todos los estudiantes aprobado</span><span class="app-lista-nota">Cada estudiante paga el suyo. En los planes nuevos lo cubre la matrícula, salvo en Seminario.</span></span>
                 <span class="app-requisito ${pagoListo ? 'cumple' : ''}">${pagoListo ? 'Listo' : 'Pendiente'}</span>
             </li>
             <li>
@@ -121,23 +126,28 @@
 
     <div class="col-lg-6">
         <div class="app-tarjeta h-100">
-            <h2 class="app-tarjeta-titulo">Pago de la modalidad (fase 1)</h2>
+            <h2 class="app-tarjeta-titulo">Pagos de la modalidad</h2>
             <c:choose>
                 <c:when test="${p.estado_pago == 'No aplica'}">
-                    <p class="mb-0">Plan posterior al decreto 1330: el pago lo cubre la matrícula del Seminario de Grado. No hay recibo que revisar.</p>
+                    <p class="mb-0">Planes posteriores al decreto 1330: el pago lo cubre la matrícula del Seminario de Grado. No hay recibos que revisar.</p>
                 </c:when>
                 <c:when test="${recibos.rowCount == 0}">
-                    <p class="app-vacio mt-0">El estudiante todavía no ha subido el recibo.<c:if test="${not empty p.fecha_limite_pago}"> Tiene plazo hasta el <fmt:formatDate value="${p.fecha_limite_pago}" pattern="dd/MM/yyyy" />.</c:if></p>
+                    <p class="app-vacio mt-0">Ningún estudiante ha subido su recibo.<c:if test="${not empty p.fecha_limite_pago}"> Tienen plazo hasta el <fmt:formatDate value="${p.fecha_limite_pago}" pattern="dd/MM/yyyy" />.</c:if></p>
                 </c:when>
                 <c:otherwise>
-                    <c:forEach var="r" items="${recibos.rows}" varStatus="s">
+                    <p class="text-secondary">Cada estudiante sube su propio recibo; el estado de cada uno sale en "Estudiantes".</p>
+                    <c:set var="estudianteAnterior" value="" />
+                    <c:forEach var="r" items="${recibos.rows}">
+                        <c:set var="idSubio">${r.subido_por}</c:set>
+                        <c:set var="esUltimo" value="${idSubio != estudianteAnterior}" />
+                        <c:if test="${esUltimo}"><h3 class="h6 fw-bold mt-3 mb-2"><c:out value="${r.estudiante}" /></h3></c:if>
                         <div class="app-archivo">
                             <span>
                                 <span class="app-lista-dato"><c:out value="${r.nombre_archivo}" /></span>
                                 <span class="app-lista-nota">Subido el <fmt:formatDate value="${r.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
                             </span>
                             <span class="app-acciones">
-                                <span class="app-estado ${r.decision == 'Aprobado' ? 'activo' : 'inactivo'}">${empty r.decision ? (s.first ? 'Por revisar' : 'Reemplazado') : r.decision}</span>
+                                <span class="app-estado ${r.decision == 'Aprobado' ? 'activo' : 'inactivo'}">${empty r.decision ? (esUltimo ? 'Por revisar' : 'Reemplazado') : r.decision}</span>
                                 <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${r.id}" target="_blank" rel="noopener">Ver</a>
                             </span>
                         </div>
@@ -145,18 +155,16 @@
                             <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${r.observacion}" />
                                 <span class="app-lista-nota"><c:out value="${r.revisor}" />, <fmt:formatDate value="${r.revisado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
                         </c:if>
+                        <c:if test="${esUltimo and empty r.decision and (p.fase == 1 or p.fase == 2)}">
+                            <form class="app-revision mb-3" method="post" action="${ctx}/admin/pago-revisar.jsp">
+                                <input type="hidden" name="id" value="${r.id}">
+                                <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre el recibo de ${fn:escapeXml(r.estudiante)}" required></textarea>
+                                <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar pago</button>
+                                <button type="submit" name="decision" value="devolver" class="btn btn-sm btn-outline-dark rounded-pill">Devolver al estudiante</button>
+                            </form>
+                        </c:if>
+                        <c:set var="estudianteAnterior" value="${idSubio}" />
                     </c:forEach>
-                    <c:if test="${p.fase == 1 and p.estado_pago == 'Por revisar'}">
-                        <form class="app-revision" method="post" action="${ctx}/admin/pago-revisar.jsp">
-                            <input type="hidden" name="id" value="${recibos.rows[0].id}">
-                            <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación" required></textarea>
-                            <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar pago</button>
-                            <button type="submit" name="decision" value="devolver" class="btn btn-sm btn-outline-dark rounded-pill">Devolver al estudiante</button>
-                        </form>
-                    </c:if>
-                    <c:if test="${p.estado_pago == 'Devuelto'}">
-                        <p class="app-total">El estudiante debe subir el recibo otra vez.</p>
-                    </c:if>
                 </c:otherwise>
             </c:choose>
         </div>
@@ -190,6 +198,15 @@
                     </select>
                     <div class="form-text">Se puede asignar después: la propuesta le llega cuando el director la envía (fase 3).</div>
                 </div>
+                <%-- RF13: solo Proyecto de investigación (1) y Desarrollo tecnológico (2) --%>
+                <c:if test="${p.modalidad_id == 1 or p.modalidad_id == 2}">
+                    <div class="col-12">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="interdisciplinario" name="interdisciplinario" ${p.interdisciplinario == 1 ? 'checked' : ''}>
+                            <label class="form-check-label" for="interdisciplinario">Proyecto interdisciplinario (hasta 4 estudiantes)</label>
+                        </div>
+                    </div>
+                </c:if>
             </div>
             <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Guardar</button>
         </form>
