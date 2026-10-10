@@ -1,0 +1,83 @@
+<%-- Inicio de las páginas internas: <head>, menú lateral según el rol y cabecera con
+     el usuario (diseño inspirado en el sistema actual de la UTS).
+     Antes de incluirlo, definir:
+       <c:set var="titulo"  value="..." />   título de la pestaña
+       <c:set var="seccion" value="..." />   opción del menú que se marca (inicio, usuarios, roles,
+                                             periodos, proyectos, ideas, habilitacion, proyecto, calendario,
+                                             modalidades) --%>
+<c:set var="ctx" value="${pageContext.request.contextPath}" />
+<c:set var="rolMenu" value="${sessionScope.rolActivo.id}" />
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.1.0/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="${ctx}/css/estilo.css?v=${initParam.versionEstilos}">
+    <title><c:out value="${titulo}" /> · Proyectos de Grado</title>
+</head>
+<body class="app">
+<div class="app-layout">
+    <aside class="app-lateral" id="menuLateral" aria-label="Menú principal">
+        <a class="app-lateral-marca" href="${ctx}/panel/inicio.jsp">
+            <img src="${ctx}/img/logo-uts.png" alt="Unidades Tecnológicas de Santander" width="136">
+            <span>Proyectos de Grado<small>Trabajos de grado UTS</small></span>
+        </a>
+
+        <nav class="app-lateral-menu">
+            <a href="${ctx}/panel/inicio.jsp" class="${seccion == 'inicio' ? 'activo' : ''}">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>Inicio</a>
+            <c:if test="${rolMenu == 1}">
+                <a href="${ctx}/admin/usuarios.jsp" class="${seccion == 'usuarios' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 20a6 6 0 0 0-3-5.2"/></svg>Usuarios</a>
+                <a href="${ctx}/admin/roles.jsp" class="${seccion == 'roles' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>Roles</a>
+                <a href="${ctx}/admin/periodos.jsp" class="${seccion == 'periodos' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Periodos</a>
+                <a href="${ctx}/admin/proyectos.jsp" class="${seccion == 'proyectos' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Proyectos</a>
+            </c:if>
+            <c:if test="${rolMenu == 5}">
+                <a href="${ctx}/estudiante/habilitacion.jsp" class="${seccion == 'habilitacion' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>Habilitación</a>
+                <a href="${ctx}/estudiante/proyecto.jsp" class="${seccion == 'proyecto' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Mi proyecto</a>
+            </c:if>
+            <a href="${ctx}/ideas/banco.jsp" class="${seccion == 'ideas' ? 'activo' : ''}">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V18h6v-1.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg>Banco de ideas</a>
+            <a href="${ctx}/panel/calendario.jsp" class="${seccion == 'calendario' ? 'activo' : ''}">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Calendario</a>
+            <a href="${ctx}/panel/modalidades.jsp" class="${seccion == 'modalidades' ? 'activo' : ''}">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg>Modalidades</a>
+        </nav>
+
+        <div class="app-lateral-pie">
+            <c:if test="${fn:length(sessionScope.roles) > 1}">
+                <a href="${ctx}/acceso/elegir-rol.jsp">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3"/><path d="M17 17H6l3 3"/></svg>Cambiar rol</a>
+            </c:if>
+            <a href="${ctx}/acceso/salir.jsp">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5"/><path d="M5 12h11"/></svg>Salir</a>
+        </div>
+    </aside>
+    <div class="app-velo" id="veloMenu" hidden></div>
+
+    <div class="app-principal">
+        <header class="app-cabecera">
+            <button type="button" class="app-boton-menu" id="botonMenu" aria-controls="menuLateral" aria-expanded="false" aria-label="Abrir el menú">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+            <span class="app-cabecera-saludo">Bienvenido</span>
+            <div class="app-usuario">
+                <span class="app-avatar" aria-hidden="true"><c:out value="${fn:toUpperCase(fn:substring(sessionScope.usuario.nombre, 0, 1))}" /></span>
+                <span class="app-usuario-datos">
+                    <strong><c:out value="${sessionScope.usuario.nombre}" /></strong>
+                    <span><c:out value="${sessionScope.rolActivo.nombre}" /></span>
+                </span>
+            </div>
+        </header>
+
+        <main class="app-contenido">

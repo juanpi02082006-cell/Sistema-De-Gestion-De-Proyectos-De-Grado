@@ -1,0 +1,10 @@
+<%-- Protege una página: exige haber iniciado sesión y tener un rol activo.
+     Incluir antes de cualquier HTML: <%@ include file="/WEB-INF/jspf/sesion.jspf" %> --%>
+<c:if test="${empty sessionScope.usuario or empty sessionScope.rolActivo}">
+    <c:redirect url="/index.jsp">
+        <c:param name="aviso" value="sesion" />
+    </c:redirect>
+</c:if>
+<%-- Que el navegador no guarde la página: así, después de salir,
+     el botón "atrás" no muestra datos. --%>
+<c:set var="sinCache" value="${pageContext.response.setHeader('Cache-Control', 'no-store')}" />

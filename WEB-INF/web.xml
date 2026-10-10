@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <display-name>Sistemas de Información Proyectos de Grado</display-name>
+
+    <!-- Conexión a la base de datos que usan por defecto todas las etiquetas
+         <sql:query> y <sql:update> de JSTL. Formato: url,driver,usuario,contraseña
+         (la contraseña de root en XAMPP está vacía).
+         useOldAliasMetadataBehavior: JSTL nombra las columnas del resultado con
+         getColumnName; sin esta opción el driver devuelve el nombre original y se
+         pierden los alias (SELECT f.orden AS fase quedaría como "orden"). -->
+    <context-param>
+        <param-name>jakarta.servlet.jsp.jstl.sql.dataSource</param-name>
+        <param-value>jdbc:mysql://localhost:3306/sistemas_proyectos_grado?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;characterEncoding=UTF-8&amp;useOldAliasMetadataBehavior=true,com.mysql.cj.jdbc.Driver,root,</param-value>
+    </context-param>
+
+    <!-- Idioma de las etiquetas fmt de JSTL (fechas y números). Sin esto, si el
+         navegador no manda su idioma, fmt:formatDate muestra la fecha sin formato. -->
+    <context-param>
+        <param-name>jakarta.servlet.jsp.jstl.fmt.locale</param-name>
+        <param-value>es-CO</param-value>
+    </context-param>
+
+    <!-- Versión de css/estilo.css. Las páginas la piden como estilo.css?v=...; al cambiar
+         el CSS hay que subir este valor para que el navegador no use la copia vieja
+         que tiene guardada (si no, el menú lateral sale sin estilo). -->
+    <context-param>
+        <param-name>versionEstilos</param-name>
+        <param-value>2026-10-10c</param-value>
+    </context-param>
+
+    <!-- Los formularios llegan en UTF-8 (tildes y eñes) -->
+    <request-character-encoding>UTF-8</request-character-encoding>
+    <response-character-encoding>UTF-8</response-character-encoding>
+
+    <!-- Todas las páginas JSP: UTF-8 y librerías JSTL incluidas automáticamente -->
+    <jsp-config>
+        <jsp-property-group>
+            <url-pattern>*.jsp</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+            <include-prelude>/WEB-INF/jspf/taglibs.jspf</include-prelude>
+        </jsp-property-group>
+        <!-- Los fragmentos .jspf también son UTF-8 (sin esto Tomcat los lee como
+             ISO-8859-1 y las tildes del menú salen como "HabilitaciÃ³n"). -->
+        <jsp-property-group>
+            <url-pattern>*.jspf</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+        </jsp-property-group>
+    </jsp-config>
+
+    <!-- Páginas que reciben archivos (formularios multipart/form-data). JSTL no lee
+         archivos: con multipart-config, la página toma el archivo con
+         pageContext.request.getPart(...). Hasta 15 MB por archivo (RNF15).
+         Los archivos se guardan en WEB-INF/archivos, que no se puede abrir desde
+         el navegador; se ven con archivos/ver.jsp, que revisa los permisos. -->
+    <servlet>
+        <servlet-name>subirPago</servlet-name>
+        <jsp-file>/estudiante/pago-guardar.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>15728640</max-file-size>
+            <max-request-size>16777216</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>subirPago</servlet-name>
+        <url-pattern>/estudiante/pago-guardar.jsp</url-pattern>
+    </servlet-mapping>
+
+    <!-- La sesión viaja solo en una cookie (nunca como ;jsessionid=... en la URL) -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
+
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+</web-app>

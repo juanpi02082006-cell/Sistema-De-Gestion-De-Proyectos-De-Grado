@@ -1,0 +1,1322 @@
+/* ==========================================================================
+   Paleta del proyecto: verde lima + negro.
+
+   Regla de uso de colores (decisión del equipo):
+   - No usar colores fuera del verde lima y el negro (y sus tonos de esta lista).
+   - NEGRO para las fuentes; VERDE LIMA para fondos y animaciones: botones
+     principales, estados activos, efectos al pasar el mouse y el borde de foco.
+     El lima puro no sirve como texto sobre blanco (contraste 1.6:1); si hace
+     falta texto verde, usar --verde-lima-oscuro.
+   - ACCIONES CON SIGNIFICADO PROPIO (eliminar, advertencias, éxito) usan
+     su color convencional con las clases de Bootstrap: btn-danger / text-danger
+     (eliminar), alert-warning (advertencia), alert-success (éxito).
+
+   Contraste (WCAG): negro sobre lima 13:1; blanco sobre negro 21:1.
+
+   Tipografía: Plus Jakarta Sans para toda la interfaz.
+   ========================================================================== */
+
+:root {
+    --verde-lima: #C1D72F;
+    --verde-lima-hover: #AEC22A;
+    --verde-lima-oscuro: #606C18;   /* verde legible sobre blanco (5.7:1) */
+    --verde-lima-suave: #F3F7D5;
+    --verde-lima-rgb: 193, 215, 47;
+    --negro: #000000;
+    --negro-suave: #1A1A1A;
+    --blanco: #FFFFFF;
+    --gris-texto: #5C5C5C;
+    --gris-borde: #D4D4D4;
+    --fondo-pagina: #F5F5F0;
+    --campo-fondo: #F4F7DC;
+    --campo-borde: #DDE3B4;
+
+    --fuente-interfaz: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    --fuente-titulos: var(--fuente-interfaz);
+}
+
+body {
+    font-family: var(--fuente-interfaz);
+    color: var(--negro);
+    background-color: var(--blanco);
+}
+
+::selection {
+    color: var(--negro);
+    background-color: var(--verde-lima);
+}
+
+/* ---------- Enlaces: texto negro, fondo lima al pasar el mouse ---------- */
+
+a:not(.btn) {
+    color: var(--negro);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    border-radius: 2px;
+    transition: background-color 0.15s;
+}
+
+a:not(.btn):hover {
+    color: var(--negro);
+    background-color: var(--verde-lima);
+}
+
+/* ---------- Utilidades de fondo ---------- */
+
+.fondo-lima {
+    background-color: var(--verde-lima) !important;
+    color: var(--negro) !important;
+}
+
+.fondo-lima-suave {
+    background-color: var(--verde-lima-suave) !important;
+    color: var(--negro) !important;
+}
+
+.fondo-negro {
+    background-color: var(--negro) !important;
+    color: var(--blanco) !important;
+}
+
+/* ---------- Bootstrap: color "primary" = verde lima (como fondo) ---------- */
+
+.bg-primary {
+    background-color: var(--verde-lima) !important;
+    color: var(--negro) !important;
+}
+
+/* El texto "primary" queda en negro para no mostrar el azul de Bootstrap */
+.text-primary {
+    color: var(--negro) !important;
+}
+
+.border-primary {
+    border-color: var(--verde-lima) !important;
+}
+
+.badge.bg-primary {
+    color: var(--negro) !important;
+}
+
+.btn-primary {
+    color: var(--negro);
+    background-color: var(--verde-lima);
+    border-color: var(--verde-lima);
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.show > .btn-primary.dropdown-toggle {
+    color: var(--negro);
+    background-color: var(--verde-lima-hover);
+    border-color: var(--verde-lima-hover);
+}
+
+.btn-primary:focus,
+.btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--verde-lima-rgb), 0.5);
+}
+
+.btn-outline-primary {
+    color: var(--negro);
+    border-color: var(--verde-lima-oscuro);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:active,
+.btn-outline-primary.active {
+    color: var(--negro);
+    background-color: var(--verde-lima);
+    border-color: var(--verde-lima);
+}
+
+/* ---------- Bootstrap: "dark" = negro puro del proyecto ---------- */
+
+.btn-dark {
+    color: var(--blanco);
+    background-color: var(--negro);
+    border-color: var(--negro);
+}
+
+.btn-dark:hover,
+.btn-dark:focus,
+.btn-dark:active {
+    color: var(--blanco);
+    background-color: #333333;
+    border-color: #333333;
+}
+
+.bg-dark {
+    background-color: var(--negro) !important;
+}
+
+.table-dark {
+    --bs-table-bg: var(--negro);
+    border-color: #333333;
+}
+
+/* ---------- Formularios ---------- */
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--negro);
+    box-shadow: 0 0 0 0.25rem rgba(var(--verde-lima-rgb), 0.45);
+}
+
+.form-check-input:checked {
+    background-color: var(--negro);
+    border-color: var(--negro);
+}
+
+.form-check-input:focus {
+    border-color: var(--negro);
+    box-shadow: 0 0 0 0.25rem rgba(var(--verde-lima-rgb), 0.45);
+}
+
+/* ---------- Navegación: el activo lleva fondo lima y texto negro ---------- */
+
+.navbar-dark .navbar-nav .nav-link {
+    border-radius: 0.5rem;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.navbar-dark .navbar-nav .nav-link.active,
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: var(--negro);
+    background-color: var(--verde-lima);
+}
+
+.nav-pills .nav-link {
+    color: var(--negro);
+}
+
+.nav-pills .nav-link.active {
+    color: var(--negro);
+    background-color: var(--verde-lima);
+}
+
+.page-link {
+    color: var(--negro);
+}
+
+.page-link:hover {
+    color: var(--negro);
+    background-color: var(--verde-lima-suave);
+}
+
+.page-link:focus {
+    box-shadow: 0 0 0 0.25rem rgba(var(--verde-lima-rgb), 0.45);
+}
+
+.page-item.active .page-link {
+    color: var(--negro);
+    background-color: var(--verde-lima);
+    border-color: var(--verde-lima);
+}
+
+/* ==========================================================================
+   Inicio de sesión (index.jsp)
+   ========================================================================== */
+
+/* Resplandor lima: luz suave del color de marca detrás de la tarjeta */
+body.login {
+    background:
+        radial-gradient(ellipse 55rem 38rem at 50% 38%, rgba(var(--verde-lima-rgb), 0.30), transparent 70%),
+        var(--fondo-pagina);
+}
+
+.login-contenedor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+.login-tarjeta {
+    width: 100%;
+    max-width: 32rem;
+    padding: 2.75rem 2.5rem 2.5rem;
+    background-color: var(--blanco);
+    border: 1px solid #ECECE6;
+    border-radius: 1.5rem;
+    box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.06);
+}
+
+.login-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.login-logo img {
+    display: block;
+    width: 11.5rem;
+    height: auto;
+}
+
+.login-tarjeta h1 {
+    margin: 0 0 2rem;
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-align: center;
+    color: #111111;
+}
+
+/* ---------- Campos ---------- */
+
+.login-campo {
+    margin-bottom: 1.5rem;
+}
+
+.login-campo label {
+    display: block;
+    margin-bottom: 0.625rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #111111;
+}
+
+.login-entrada {
+    position: relative;
+}
+
+.login-entrada input {
+    width: 100%;
+    height: 3.5rem;
+    padding: 0 3.25rem 0 3.25rem;
+    font-size: 1rem;
+    color: #111111;
+    background-color: var(--campo-fondo);
+    border: 1px solid var(--campo-borde);
+    border-radius: 1rem;
+    transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.login-entrada input:hover {
+    border-color: #C9D38A;
+}
+
+.login-entrada input:focus {
+    outline: none;
+    background-color: var(--blanco);
+    border-color: #111111;
+    box-shadow: 0 0 0 4px rgba(var(--verde-lima-rgb), 0.55);
+}
+
+/* Autocompletado del navegador: Chrome pinta el campo de azul claro.
+   Se tapa con una sombra interna del mismo tono lima del campo. */
+.login-entrada input:-webkit-autofill,
+.login-entrada input:-webkit-autofill:hover {
+    -webkit-text-fill-color: #111111;
+    caret-color: #111111;
+    -webkit-box-shadow: 0 0 0 100px var(--campo-fondo) inset;
+    transition: background-color 9999s ease-out 0s;
+}
+
+.login-entrada input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #111111;
+    -webkit-box-shadow: 0 0 0 100px var(--blanco) inset, 0 0 0 4px rgba(var(--verde-lima-rgb), 0.55);
+}
+
+.login-entrada svg {
+    width: 1.35rem;
+    height: 1.35rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.login-icono {
+    position: absolute;
+    top: 50%;
+    left: 1.1rem;
+    transform: translateY(-50%);
+    color: #4A4A4A;
+    pointer-events: none;
+}
+
+/* Botón del ojo */
+.login-ver {
+    position: absolute;
+    top: 50%;
+    right: 0.6rem;
+    transform: translateY(-50%);
+    display: flex;
+    padding: 0.5rem;
+    color: #4A4A4A;
+    background: none;
+    border: 0;
+    border-radius: 0.6rem;
+}
+
+.login-ver:hover {
+    color: #111111;
+}
+
+.login-ver:focus-visible {
+    outline: 2px solid #111111;
+}
+
+.login-ver .icono-visible,
+.login-ver.visible .icono-oculta {
+    display: none;
+}
+
+.login-ver.visible .icono-visible {
+    display: block;
+}
+
+/* ---------- Recordarme y enlace ---------- */
+
+.login-opciones {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.25rem 0 1.75rem;
+}
+
+.login-interruptor {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #111111;
+    cursor: pointer;
+}
+
+.login-interruptor input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.login-interruptor-pista {
+    position: relative;
+    flex: none;
+    width: 2.6rem;
+    height: 1.5rem;
+    background-color: #D9D9D3;
+    border-radius: 999px;
+    transition: background-color 0.2s;
+}
+
+.login-interruptor-pista::after {
+    content: "";
+    position: absolute;
+    top: 0.2rem;
+    left: 0.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    background-color: var(--blanco);
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.login-interruptor input:checked + .login-interruptor-pista {
+    background-color: var(--verde-lima);
+}
+
+.login-interruptor input:checked + .login-interruptor-pista::after {
+    transform: translateX(1.1rem);
+    background-color: #111111;
+}
+
+.login-interruptor input:focus-visible + .login-interruptor-pista {
+    outline: 2px solid #111111;
+    outline-offset: 2px;
+}
+
+.login-enlace {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #111111;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+a.login-enlace:hover {
+    color: var(--verde-lima-oscuro);
+    background-color: transparent;
+}
+
+/* ---------- Botón principal ---------- */
+
+.login-boton {
+    width: 100%;
+    height: 3.5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111111;
+    background-color: var(--verde-lima);
+    border: 0;
+    border-radius: 999px;
+    box-shadow: 0 0.6rem 1.4rem rgba(var(--verde-lima-rgb), 0.45);
+    transition: background-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.login-boton:hover {
+    background-color: var(--verde-lima-hover);
+    box-shadow: 0 0.8rem 1.6rem rgba(var(--verde-lima-rgb), 0.55);
+}
+
+.login-boton:active {
+    transform: translateY(1px);
+}
+
+.login-boton:focus-visible {
+    outline: 2px solid #111111;
+    outline-offset: 3px;
+}
+
+/* ---------- Celular ---------- */
+
+@media (max-width: 575.98px) {
+    .login-tarjeta {
+        padding: 2rem 1.5rem 1.75rem;
+        border-radius: 1.25rem;
+    }
+
+    .login-tarjeta h1 {
+        font-size: 1.9rem;
+    }
+}
+
+/* ---------- Avisos dentro del inicio de sesión ---------- */
+
+.login-aviso {
+    margin: -0.75rem 0 1.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.92rem;
+    border-radius: 0.875rem;
+}
+
+.login-subtitulo {
+    margin: -1.25rem 0 1.75rem;
+    text-align: center;
+    color: var(--gris-texto);
+}
+
+/* ---------- Elegir rol (acceso/elegir-rol.jsp) ---------- */
+
+.rol-opciones {
+    display: grid;
+    gap: 0.75rem;
+}
+
+a.rol-opcion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    font-weight: 700;
+    color: #111111;
+    text-decoration: none;
+    background-color: var(--campo-fondo);
+    border: 1px solid var(--campo-borde);
+    border-radius: 1rem;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+a.rol-opcion:hover,
+a.rol-opcion.actual {
+    color: #111111;
+    background-color: var(--verde-lima);
+    border-color: var(--verde-lima);
+}
+
+a.rol-opcion small {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+a.rol-salir {
+    display: block;
+    width: fit-content;
+    margin: 1.75rem auto 0;
+}
+
+/* ==========================================================================
+   Páginas internas (panel, administración)
+   ========================================================================== */
+
+body.app {
+    min-height: 100vh;
+    background-color: var(--fondo-pagina);
+}
+
+/* Diseño inspirado en el sistema actual de la UTS: menú lateral en una tarjeta
+   blanca, cabecera "Bienvenido" con el usuario y contenido en tarjetas. */
+.app-layout {
+    display: flex;
+    gap: 1.25rem;
+    min-height: 100vh;
+    padding: 1.25rem;
+}
+
+.app-lateral {
+    position: sticky;
+    top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    width: 16.5rem;
+    height: calc(100vh - 2.5rem);
+    padding: 1.25rem 1rem;
+    overflow-y: auto;
+    background-color: var(--blanco);
+    border: 1px solid #ECECE6;
+    border-radius: 1.25rem;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.04);
+}
+
+a.app-lateral-marca {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.25rem 0.5rem 1.25rem;
+    margin-bottom: 0.75rem;
+    color: #111111;
+    text-decoration: none;
+    border-bottom: 1px solid #EFEFE9;
+}
+
+a.app-lateral-marca:hover {
+    color: #111111;
+    background-color: transparent;
+}
+
+/* El logo de la UTS es ancho (texto): va arriba, a buen tamaño */
+.app-lateral-marca img {
+    width: 8.5rem;
+    height: auto;
+}
+
+.app-lateral-marca span {
+    display: flex;
+    flex-direction: column;
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+}
+
+.app-lateral-marca small {
+    margin-top: 0.2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gris-texto);
+}
+
+.app-lateral-menu,
+.app-lateral-pie {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.app-lateral-pie {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #EFEFE9;
+}
+
+.app-lateral-menu a,
+.app-lateral-pie a {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.7rem 0.9rem;
+    font-weight: 600;
+    color: #111111;
+    text-decoration: none;
+    border-radius: 0.85rem;
+    transition: background-color 0.15s;
+}
+
+.app-lateral-menu a:hover,
+.app-lateral-pie a:hover {
+    color: #111111;
+    background-color: var(--verde-lima-suave);
+}
+
+.app-lateral-menu a.activo {
+    background-color: var(--verde-lima);
+    box-shadow: 0 0.4rem 1rem rgba(var(--verde-lima-rgb), 0.45);
+}
+
+.app-lateral svg,
+.app-cabecera svg {
+    flex: none;
+    width: 1.3rem;
+    height: 1.3rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.app-principal {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.app-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1.5rem;
+    margin-bottom: 1.25rem;
+    background-color: var(--blanco);
+    border: 1px solid #ECECE6;
+    border-radius: 1.25rem;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.04);
+}
+
+.app-cabecera-saludo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.app-boton-menu {
+    display: none;
+    padding: 0.4rem;
+    color: #111111;
+    background: none;
+    border: 0;
+    border-radius: 0.6rem;
+}
+
+.app-boton-menu:hover {
+    background-color: var(--verde-lima-suave);
+}
+
+.app-usuario {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-left: auto;
+}
+
+.app-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    font-weight: 800;
+    background-color: var(--verde-lima);
+    border-radius: 50%;
+}
+
+.app-usuario-datos {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.app-usuario-datos strong {
+    font-size: 0.92rem;
+}
+
+.app-usuario-datos span {
+    font-size: 0.8rem;
+    color: var(--gris-texto);
+}
+
+.app-velo {
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.app-contenido {
+    padding: 0.75rem 0.5rem 2rem;
+}
+
+/* Menú lateral en pantallas pequeñas: se abre con el botón de la cabecera */
+@media (max-width: 991.98px) {
+    .app-layout {
+        padding: 0.75rem;
+    }
+
+    .app-lateral {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 20;
+        height: 100vh;
+        border-radius: 0 1.25rem 1.25rem 0;
+        transform: translateX(-105%);
+        transition: transform 0.2s;
+    }
+
+    body.menu-abierto .app-lateral {
+        transform: none;
+    }
+
+    .app-boton-menu {
+        display: inline-flex;
+    }
+}
+
+/* Encabezado de cada página */
+.app-encabezado {
+    margin-bottom: 1.5rem;
+}
+
+.app-encabezado h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.app-encabezado p {
+    margin: 0.35rem 0 0;
+    color: var(--gris-texto);
+}
+
+.app-encabezado-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+a.app-volver {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.app-boton {
+    padding: 0.6rem 1.5rem;
+    font-weight: 700;
+}
+
+.app-aviso {
+    border-radius: 1rem;
+}
+
+/* Tarjetas */
+.app-tarjeta {
+    padding: 1.75rem;
+    background-color: var(--blanco);
+    border: 1px solid #ECECE6;
+    border-radius: 1.25rem;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.04);
+}
+
+.app-tarjeta-titulo {
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.app-datos {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.5rem 1.5rem;
+    margin: 0;
+}
+
+.app-datos dt {
+    font-weight: 600;
+    color: var(--gris-texto);
+}
+
+.app-datos dd {
+    margin: 0;
+}
+
+/* Accesos del inicio del administrador */
+a.app-acceso {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.75rem;
+    color: #111111;
+    text-decoration: none;
+    background-color: var(--blanco);
+    border: 1px solid #ECECE6;
+    border-radius: 1.25rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+a.app-acceso:hover {
+    color: #111111;
+    background-color: var(--blanco);
+    border-color: var(--verde-lima);
+    box-shadow: 0 0 0 4px rgba(var(--verde-lima-rgb), 0.35);
+}
+
+.app-acceso-numero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-width: 3rem;
+    height: 3rem;
+    padding: 0 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    background-color: var(--verde-lima);
+    border-radius: 0.9rem;
+}
+
+.app-acceso-titulo {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.app-acceso-texto {
+    margin-top: 0.25rem;
+    color: var(--gris-texto);
+}
+
+/* Filtros y tablas */
+.app-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.app-filtros input {
+    flex: 1 1 18rem;
+}
+
+.app-filtros select {
+    flex: 0 1 14rem;
+}
+
+.app-filtros .form-control,
+.app-filtros .form-select,
+.app-formulario .form-control,
+.app-formulario .form-select {
+    height: 3rem;
+    background-color: var(--campo-fondo);
+    border-color: var(--campo-borde);
+    border-radius: 0.85rem;
+}
+
+.app-filtros .form-control:focus,
+.app-filtros .form-select:focus,
+.app-formulario .form-control:focus,
+.app-formulario .form-select:focus {
+    background-color: var(--blanco);
+}
+
+.app-filtros .btn {
+    height: 3rem;
+    padding: 0 1.5rem;
+    font-weight: 700;
+}
+
+a.app-limpiar {
+    font-weight: 600;
+}
+
+.app-tabla {
+    margin: 0;
+}
+
+.app-tabla thead th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--gris-texto);
+    border-bottom: 1px solid #E2E2DA;
+}
+
+.app-tabla td {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+    border-color: #EFEFE9;
+}
+
+.app-acciones {
+    white-space: nowrap;
+}
+
+.app-acciones .btn,
+.app-acciones form {
+    margin-left: 0.25rem;
+}
+
+.app-estado {
+    display: inline-block;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 999px;
+}
+
+.app-estado.activo {
+    background-color: var(--verde-lima);
+}
+
+.app-estado.inactivo {
+    color: var(--gris-texto);
+    background-color: #E9E9E4;
+}
+
+.app-etiqueta {
+    display: inline-block;      /* la etiqueta pasa entera al siguiente renglón, sin partirse */
+    margin: 0.15rem 0 0.15rem 0.4rem;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    vertical-align: middle;
+    background-color: var(--verde-lima-suave);
+    border: 1px solid var(--campo-borde);
+    border-radius: 999px;
+}
+
+.app-vacio,
+.app-total {
+    margin: 1rem 0 0;
+    color: var(--gris-texto);
+}
+
+/* Formularios */
+.app-formulario .form-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.app-casillas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.app-casilla {
+    position: relative;
+    cursor: pointer;
+}
+
+.app-casilla input {
+    position: absolute;
+    opacity: 0;
+}
+
+.app-casilla span {
+    display: inline-block;
+    padding: 0.55rem 1.1rem;
+    font-weight: 600;
+    background-color: var(--campo-fondo);
+    border: 1px solid var(--campo-borde);
+    border-radius: 999px;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.app-casilla input:checked + span {
+    background-color: var(--verde-lima);
+    border-color: var(--verde-lima);
+}
+
+.app-casilla input:focus-visible + span {
+    outline: 2px solid #111111;
+    outline-offset: 2px;
+}
+
+.app-formulario .form-switch .form-check-input {
+    width: 2.6rem;
+    height: 1.4rem;
+}
+
+.app-formulario .form-switch .form-check-input:checked {
+    background-color: var(--verde-lima);
+    border-color: var(--verde-lima);
+}
+
+.app-formulario .form-check-label {
+    margin-left: 0.5rem;
+}
+
+.app-formulario-botones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+/* Celular */
+@media (max-width: 767.98px) {
+    .app-usuario-datos {
+        display: none;
+    }
+
+    .app-cabecera-saludo {
+        font-size: 1.15rem;
+    }
+
+    .app-encabezado h1 {
+        font-size: 1.6rem;
+    }
+
+    .app-tarjeta {
+        padding: 1.25rem;
+    }
+}
+
+/* ==========================================================================
+   Sprint 4: registro, calendario, modalidades, banco de ideas y habilitación
+   ========================================================================== */
+
+/* Registro del estudiante: la tarjeta del inicio de sesión, más ancha */
+.registro-tarjeta {
+    max-width: 46rem;
+}
+
+.registro-tarjeta .login-subtitulo {
+    margin-top: -1.5rem;
+}
+
+.login-registro {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    color: var(--gris-texto);
+}
+
+/* Listas de datos con su estado (calendario, habilitación) */
+.app-lista {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.app-lista li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #EFEFE9;
+}
+
+.app-lista li:last-child {
+    border-bottom: 0;
+}
+
+.app-lista-dato {
+    font-weight: 700;
+}
+
+.app-lista-nota {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--gris-texto);
+}
+
+/* Requisito cumplido (lima) o pendiente (gris) */
+.app-requisito {
+    display: inline-block;
+    padding: 0.2rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 999px;
+    background-color: #E9E9E4;
+    color: #111111;
+}
+
+.app-requisito.cumple {
+    background-color: var(--verde-lima);
+}
+
+/* Resultado destacado (habilitado o no) */
+.app-resultado {
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 1.25rem;
+    border: 1px solid var(--campo-borde);
+    background-color: var(--verde-lima-suave);
+}
+
+.app-resultado.cumple {
+    background-color: var(--verde-lima);
+    border-color: var(--verde-lima);
+}
+
+.app-resultado h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.app-resultado p {
+    margin: 0.35rem 0 0;
+}
+
+/* Tarjetas de ideas y de modalidades */
+.app-ficha {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.5rem;
+    background-color: var(--blanco);
+    border: 1px solid #ECECE6;
+    border-radius: 1.25rem;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.04);
+}
+
+.app-ficha h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.app-ficha p {
+    color: var(--gris-texto);
+}
+
+.app-ficha-datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+}
+
+.app-ficha-pie {
+    margin-top: auto;
+    padding-top: 0.75rem;
+}
+
+.app-observacion {
+    padding: 0.75rem 1rem;
+    margin: 0.5rem 0 0;
+    font-size: 0.9rem;
+    background-color: var(--fondo-pagina);
+    border-radius: 0.85rem;
+}
+
+.app-seccion-titulo {
+    margin: 2rem 0 1rem;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+/* Formulario corto dentro de una tabla (revisión del comité) */
+.app-revision {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.app-revision textarea {
+    flex: 1 1 100%;
+    min-height: 4rem;
+    background-color: var(--campo-fondo);
+    border-color: var(--campo-borde);
+    border-radius: 0.85rem;
+}
+
+.app-formulario textarea.form-control {
+    height: auto;
+    min-height: 8rem;
+}
+
+/* Íconos de línea dentro de los accesos del inicio (negro, sin colores) */
+.app-acceso-numero svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Seguimiento por fases (como en el sistema actual de la UTS) */
+.app-fases {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.app-fase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    background-color: var(--blanco);
+    border: 1px solid #ECECE6;
+    border-radius: 1.1rem;
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.04);
+}
+
+.app-fase.completa {
+    background-color: var(--verde-lima);
+    border-color: var(--verde-lima);
+}
+
+.app-fase.actual {
+    background-color: var(--verde-lima-suave);
+    border-color: var(--verde-lima);
+    box-shadow: 0 0 0 3px rgba(var(--verde-lima-rgb), 0.45);
+}
+
+.app-fase-icono svg {
+    width: 1.9rem;
+    height: 1.9rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.app-fase-nombre {
+    font-weight: 800;
+}
+
+.app-fase-texto {
+    font-size: 0.82rem;
+    line-height: 1.35;
+    color: #3A3A3A;
+}
+
+/* Archivo subido (recibo de pago, documentos) */
+.app-archivo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+    background-color: var(--fondo-pagina);
+    border-radius: 0.85rem;
+}
+
+.app-formulario input[type="file"].form-control {
+    height: auto;
+    padding: 0.75rem;
+}

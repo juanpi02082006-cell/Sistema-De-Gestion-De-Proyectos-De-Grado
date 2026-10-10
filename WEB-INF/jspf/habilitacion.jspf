@@ -1,0 +1,31 @@
+<%-- Habilitación del estudiante para la fase 1 (RF33, RF29). Antes de incluirlo,
+     definir idEstudiante. Deja:
+       est                datos académicos del estudiante (fila de la consulta)
+       planNuevo          plan posterior al decreto 1330
+       faltaNivel, faltaCarrera, faltaPlan, faltanCreditosDato, faltaMetodologiaDato
+       cumpleCreditos     planes anteriores: al menos minimoCreditos % de créditos
+       cumpleMetodologia  planes anteriores: Metodología de la investigación aprobada
+       habilitado         puede tomar una idea y empezar su proyecto
+     Planes anteriores: 75 % de créditos y Metodología (el 90 % es de prácticas, que
+     están fuera del sistema). Planes nuevos: la matrícula de Seminario de Grado I o III,
+     que el sistema no puede verificar. --%>
+<c:set var="minimoCreditos" value="75" />
+<sql:query var="consultaHabilitacion">
+    SELECT u.nivel_id, n.nombre AS nivel, u.carrera, u.plan_estudios,
+           u.porcentaje_creditos, u.metodologia_aprobada
+    FROM usuarios u
+    LEFT JOIN niveles n ON n.id = u.nivel_id
+    WHERE u.id = ?
+    <sql:param value="${idEstudiante}" />
+</sql:query>
+<c:set var="est" value="${consultaHabilitacion.rows[0]}" />
+<c:set var="planNuevo" value="${est.plan_estudios == 'Nuevo'}" />
+<c:set var="faltaNivel" value="${empty est.nivel_id}" />
+<c:set var="faltaCarrera" value="${empty est.carrera}" />
+<c:set var="faltaPlan" value="${empty est.plan_estudios}" />
+<c:set var="faltanCreditosDato" value="${not planNuevo and empty est.porcentaje_creditos}" />
+<c:set var="faltaMetodologiaDato" value="${not planNuevo and empty est.metodologia_aprobada}" />
+<c:set var="cumpleCreditos" value="${not empty est.porcentaje_creditos and est.porcentaje_creditos >= minimoCreditos}" />
+<c:set var="cumpleMetodologia" value="${est.metodologia_aprobada == true}" />
+<c:set var="datosCompletos" value="${not (faltaNivel or faltaCarrera or faltaPlan or faltanCreditosDato or faltaMetodologiaDato)}" />
+<c:set var="habilitado" value="${datosCompletos and (planNuevo or (cumpleCreditos and cumpleMetodologia))}" />

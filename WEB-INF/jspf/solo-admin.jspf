@@ -1,0 +1,7 @@
+<%-- Protege una página del administrador (rol con id 1). --%>
+<%@ include file="/WEB-INF/jspf/sesion.jspf" %>
+<c:if test="${sessionScope.rolActivo.id != 1}">
+    <c:redirect url="/panel/inicio.jsp">
+        <c:param name="error" value="denegado" />
+    </c:redirect>
+</c:if>

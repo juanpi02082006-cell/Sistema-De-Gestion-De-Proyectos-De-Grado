@@ -1,0 +1,29 @@
+<%-- Estado del pago de la fase 1 de un proyecto (RF32), para usarlo dentro de una consulta:
+       SELECT ..., ${sqlEstadoPago} AS estado_pago FROM proyectos p ...
+     (la consulta debe llamar "p" a la tabla proyectos). Es texto fijo, sin datos del
+     usuario, así que se puede pegar en la consulta. Valores:
+       No aplica    planes nuevos: lo cubre la matrícula, salvo en Seminario (modalidad 5)
+       Sin recibo   todavía no han subido el recibo
+       Por revisar  el último recibo espera la revisión del comité
+       Devuelto     el comité devolvió el último recibo: hay que subirlo otra vez
+       Aprobado     el comité aprobó el pago --%>
+<c:set var="sqlEstadoPago">
+    CASE
+        WHEN p.modalidad_id <> 5 AND NOT EXISTS (
+                SELECT 1 FROM proyecto_estudiantes pp JOIN usuarios uu ON uu.id = pp.estudiante_id
+                WHERE pp.proyecto_id = p.id AND pp.vigente = 1 AND (uu.plan_estudios IS NULL OR uu.plan_estudios <> 'Nuevo'))
+            THEN 'No aplica'
+        WHEN EXISTS (
+                SELECT 1 FROM entregas ee JOIN revisiones rr ON rr.entrega_id = ee.id
+                WHERE ee.proyecto_id = p.id AND ee.tipo = 'Recibo de pago'
+                  AND rr.rol = 'Comité' AND rr.estado = 'Enviada' AND rr.decision = 'Aprobado')
+            THEN 'Aprobado'
+        WHEN NOT EXISTS (SELECT 1 FROM entregas ee WHERE ee.proyecto_id = p.id AND ee.tipo = 'Recibo de pago')
+            THEN 'Sin recibo'
+        WHEN EXISTS (
+                SELECT 1 FROM revisiones rr
+                WHERE rr.entrega_id = (SELECT MAX(ee.id) FROM entregas ee WHERE ee.proyecto_id = p.id AND ee.tipo = 'Recibo de pago'))
+            THEN 'Devuelto'
+        ELSE 'Por revisar'
+    END
+</c:set>

@@ -1,0 +1,71 @@
+<%-- Avisos de éxito (?ok=...) y de error (?error=...) de las páginas internas. --%>
+<c:if test="${not empty param.ok}">
+    <div class="alert alert-success app-aviso" role="status">
+        <c:choose>
+            <c:when test="${param.ok == 'usuario-creado'}">El usuario se creó correctamente.</c:when>
+            <c:when test="${param.ok == 'usuario-actualizado'}">Los cambios del usuario se guardaron.</c:when>
+            <c:when test="${param.ok == 'usuario-eliminado'}">El usuario se eliminó.</c:when>
+            <c:when test="${param.ok == 'rol-creado'}">El rol se creó correctamente.</c:when>
+            <c:when test="${param.ok == 'rol-actualizado'}">Los cambios del rol se guardaron.</c:when>
+            <c:when test="${param.ok == 'rol-eliminado'}">El rol se eliminó.</c:when>
+            <c:when test="${param.ok == 'periodo-creado'}">El periodo se creó. Queda como "Planeado" hasta que lo actives.</c:when>
+            <c:when test="${param.ok == 'periodo-actualizado'}">Los cambios del periodo se guardaron.</c:when>
+            <c:when test="${param.ok == 'periodo-eliminado'}">El periodo se eliminó.</c:when>
+            <c:when test="${param.ok == 'periodo-activado'}">El periodo quedó activo: su calendario es el vigente.</c:when>
+            <c:when test="${param.ok == 'periodo-cerrado'}">El periodo quedó cerrado.</c:when>
+            <c:when test="${param.ok == 'modalidad-actualizada'}">Los cambios de la modalidad se guardaron.</c:when>
+            <c:when test="${param.ok == 'idea-creada'}">La idea se registró. Queda pendiente hasta que el comité la revise.</c:when>
+            <c:when test="${param.ok == 'idea-actualizada'}">Los cambios de la idea se guardaron. Vuelve a quedar pendiente de revisión.</c:when>
+            <c:when test="${param.ok == 'idea-eliminada'}">La idea se eliminó.</c:when>
+            <c:when test="${param.ok == 'idea-aprobada'}">La idea quedó aprobada y disponible en el banco.</c:when>
+            <c:when test="${param.ok == 'idea-rechazada'}">La idea quedó rechazada.</c:when>
+            <c:when test="${param.ok == 'idea-tomada'}">Tomaste la idea: tu proyecto quedó creado en la fase 1.</c:when>
+            <c:when test="${param.ok == 'pago-subido'}">El recibo de pago se subió correctamente. Queda en revisión del comité.</c:when>
+            <c:when test="${param.ok == 'pago-aprobado'}">El pago quedó aprobado. El proyecto pasa a la fase 2 cuando tenga director.</c:when>
+            <c:when test="${param.ok == 'pago-aprobado-fase-2'}">El pago quedó aprobado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
+            <c:when test="${param.ok == 'pago-devuelto'}">El recibo se devolvió al estudiante con la observación.</c:when>
+            <c:when test="${param.ok == 'asignacion-guardada'}">El director y el evaluador quedaron guardados.</c:when>
+            <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
+            <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
+            <c:when test="${param.ok == 'sesion-eliminada'}">La sesión se quitó del calendario.</c:when>
+            <c:otherwise>Listo.</c:otherwise>
+        </c:choose>
+    </div>
+</c:if>
+<c:if test="${not empty param.error}">
+    <div class="alert alert-danger app-aviso" role="alert">
+        <c:choose>
+            <c:when test="${param.error == 'denegado'}">No tienes permiso para entrar a esa página.</c:when>
+            <c:when test="${param.error == 'eliminar-propio'}">No puedes eliminar tu propio usuario.</c:when>
+            <c:when test="${param.error == 'usuario-con-registros'}">No se puede eliminar el usuario porque tiene información asociada (proyectos, ideas, entregas…). Puedes desactivarlo desde "Editar".</c:when>
+            <c:when test="${param.error == 'rol-base'}">Los roles base del sistema no se pueden eliminar.</c:when>
+            <c:when test="${param.error == 'rol-con-usuarios'}">No se puede eliminar el rol porque tiene usuarios asignados.</c:when>
+            <c:when test="${param.error == 'no-encontrado'}">El registro que buscas no existe.</c:when>
+            <c:when test="${param.error == 'periodo-con-registros'}">No se puede eliminar el periodo porque tiene ideas o proyectos asociados. Puedes cerrarlo.</c:when>
+            <c:when test="${param.error == 'otro-periodo-activo'}">Ya hay un periodo activo. Ciérralo antes de activar otro.</c:when>
+            <c:when test="${param.error == 'idea-no-editable'}">Esa idea ya no se puede modificar: solo se modifican las ideas propias pendientes o rechazadas.</c:when>
+            <c:when test="${param.error == 'idea-no-disponible'}">Esa idea no está disponible para ti.</c:when>
+            <c:when test="${param.error == 'observacion-requerida'}">Escribe una observación: es obligatoria al aprobar o rechazar.</c:when>
+            <c:when test="${param.error == 'no-habilitado'}">Todavía no cumples los requisitos para tomar una idea. Revisa tu habilitación.</c:when>
+            <c:when test="${param.error == 'sin-periodo-activo'}">No hay un periodo activo: el banco de ideas está cerrado.</c:when>
+            <c:when test="${param.error == 'banco-cerrado'}">El banco de ideas ya cerró para este periodo.</c:when>
+            <c:when test="${param.error == 'proyecto-vigente'}">Ya tienes un proyecto vigente. Un estudiante solo puede tener uno a la vez.</c:when>
+            <c:when test="${param.error == 'modalidad-requerida'}">Escoge la modalidad de tu proyecto.</c:when>
+            <c:when test="${param.error == 'pago-no-aplica'}">En tu plan de estudios el pago lo cubre la matrícula del Seminario de Grado: no necesitas subir un recibo.</c:when>
+            <c:when test="${param.error == 'fase-no-permite'}">El recibo de pago se sube en la fase 1.</c:when>
+            <c:when test="${param.error == 'pago-vencido'}">Ya pasó la fecha límite de pago de este periodo.</c:when>
+            <c:when test="${param.error == 'archivo-requerido'}">Escoge el archivo que vas a subir.</c:when>
+            <c:when test="${param.error == 'archivo-grande'}">El archivo pesa más de 15 MB.</c:when>
+            <c:when test="${param.error == 'archivo-invalido'}">El archivo debe ser un PDF.</c:when>
+            <c:when test="${param.error == 'pago-aprobado'}">El comité ya aprobó tu pago: no necesitas subir otro recibo.</c:when>
+            <c:when test="${param.error == 'pago-ya-revisado'}">Ese recibo ya se revisó o ya no es el último que subió el estudiante.</c:when>
+            <c:when test="${param.error == 'director-invalido'}">Escoge un director: debe ser un docente activo con el rol Director.</c:when>
+            <c:when test="${param.error == 'evaluador-invalido'}">El evaluador debe ser un docente activo con el rol Evaluador.</c:when>
+            <c:when test="${param.error == 'director-evaluador'}">Un docente no puede evaluar el proyecto que dirige. Escoge otro evaluador.</c:when>
+            <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
+            <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
+            <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>
+            <c:otherwise>Ocurrió un error. Inténtalo de nuevo.</c:otherwise>
+        </c:choose>
+    </div>
+</c:if>

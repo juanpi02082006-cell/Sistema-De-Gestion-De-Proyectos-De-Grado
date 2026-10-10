@@ -1,0 +1,40 @@
+# --- Sistema operativo ---
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# --- Editores ---
+# Se sube la lista de extensiones recomendadas; lo demás de VS Code es personal.
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.iml
+*.swp
+*~
+
+# --- Configuración local de Claude Code (permisos de cada equipo) ---
+.claude/settings.local.json
+
+# --- Office: archivos temporales que crea Word o Excel con el documento abierto ---
+~$*
+*.tmp
+
+# --- Java / Tomcat ---
+# Tomcat compila las JSP en C:\xampp\tomcat\work (fuera del proyecto), pero por si acaso:
+work/
+*.class
+*.log
+logs/
+
+# --- Archivos que suben los usuarios (propuestas, informes, recibos…) ---
+# Son datos, no código. Se guardan en WEB-INF/archivos; solo se sube su LEEME.
+/WEB-INF/archivos/*
+!/WEB-INF/archivos/LEEME.txt
+
+# Los .jar de WEB-INF/lib SÍ se suben: el proyecto no usa gestor de paquetes
+# y sin ellos (JSTL y el driver de MySQL) no funciona al clonarlo.
+
+# --- Archivos temporales de las pruebas de punta a punta ---
+pruebas/tmp/

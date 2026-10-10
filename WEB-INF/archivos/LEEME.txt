@@ -1,0 +1,2 @@
+Aquí se guardan los archivos que suben los usuarios (recibos, propuestas, informes).
+No se suben a Git y no se pueden abrir desde el navegador: se ven con archivos/ver.jsp.

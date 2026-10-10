@@ -1,0 +1,23 @@
+<%-- Tarjetas con las fases del proyecto (RF2, RF37), como el seguimiento del sistema
+     actual de la UTS: las fases pasadas en lima con un chulo, la actual en lima suave
+     con un reloj de arena y las que faltan en blanco. Antes de incluirlo, definir
+     faseActual (el número de la fase, fases.orden). --%>
+<sql:query var="fasesTodas">SELECT orden, nombre, descripcion FROM fases ORDER BY orden</sql:query>
+<div class="app-fases">
+    <c:forEach var="f" items="${fasesTodas.rows}">
+        <c:set var="estadoFase" value="${f.orden < faseActual ? 'completa' : (f.orden == faseActual ? 'actual' : 'pendiente')}" />
+        <div class="app-fase ${estadoFase}">
+            <span class="app-fase-icono" aria-hidden="true">
+                <c:choose>
+                    <c:when test="${estadoFase == 'completa'}"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></c:when>
+                    <c:when test="${estadoFase == 'actual'}"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 5 10 9s-10 4-10 9"/><path d="M17 3c0 5-10 5-10 9s10 4 10 9"/></svg></c:when>
+                    <c:when test="${f.orden == 6}"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg></c:when>
+                    <c:otherwise><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></c:otherwise>
+                </c:choose>
+            </span>
+            <span class="app-fase-nombre"><c:choose><c:when test="${f.orden == 6}">Fase final</c:when><c:otherwise>Fase ${f.orden}</c:otherwise></c:choose>: <c:out value="${f.nombre}" /></span>
+            <span class="app-fase-texto"><c:out value="${f.descripcion}" /></span>
+            <span class="visually-hidden">${estadoFase == 'completa' ? '(completada)' : (estadoFase == 'actual' ? '(fase actual)' : '(pendiente)')}</span>
+        </div>
+    </c:forEach>
+</div>

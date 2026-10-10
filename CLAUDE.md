@@ -1,0 +1,67 @@
+# Contexto del proyecto para Claude
+
+Este archivo es la memoria permanente del proyecto. Claude Code lo lee al iniciar cada sesión.
+Mantenlo corto y actualizado.
+
+## Resumen
+
+- Proyecto: "Sistemas de Información Proyectos de Grado", segundo parcial de Programación en Java (tema: JSTL).
+- Objetivo (de la presentación): diseño e implementación de un sistema para gestión y seguimiento de los trabajos de grado de la UTS.
+- Estado actual: Sprints 2, 3 y 4 hechos (login, usuarios y roles; registro del estudiante, habilitación, periodos, calendario y sesiones del comité, modalidades, banco de ideas y pago de la fase 1), con el diseño parecido al sistema actual de la UTS; falta que el equipo los revise. Sprint 5 en progreso: hecho el comité que revisa el pago y asigna director y evaluador (el proyecto pasa a la fase 2); falta la propuesta FDC-124 (fase 2) y la revisión del director (fase 3). Base de datos en versión 4 (2026-10-08), ajustada al reglamento, a las decisiones del equipo y a lo que se tomó de la lista de otro equipo. Hay una propuesta para los sprints 4 a 7 en `docs/sprints.md`. Requerimientos: lista oficial RF1–RF43 y RNF1–RNF26 (notas, audios, reglamento, lista de no funcionales del equipo y lista de otro equipo), cada uno con su rol.
+
+## Documentos clave
+
+- Requerimientos: `docs/requerimientos.md` (fuente de verdad). La lista oficial es la tabla "Requerimientos" (RF1–RF43, RNF1–RNF26) con columnas Rol, Origen, Sprint y Estado; las notas (puntos 1–55), los audios (A-01–A-31), el reglamento (artículos, "Reg. N"), los estímulos de Saber TyT, la lista de no funcionales ("Lista RNF-xx") y la lista de otro equipo ("Otro equipo RF-xx", con dónde quedó cada uno) están en los anexos A, B, C, D, F e I; el F-DC-124, en el J; el F-DC-125 y el F-DC-129, en el K. La tabla oficial va resumida; **al programar un requerimiento, leer su versión completa en el Anexo E**. Las notas del 26 en adelante y los audios son la misma sesión con el profesor.
+- Reglamento de Trabajo de Grado de la UTS (Acuerdo 01-026 de 2021): `C:\Users\juanp\Desktop\Universidad\QUINTO SEMESTRE\PROGRAMACION EN JAVA\SEGUNDO CORTE\reglamento de trabajo de grado.pdf`. Es la fuente oficial: **donde no coincide con la entrevista, manda el reglamento**.
+- Formato F-DC-124 versión 2.0 (2023), propuesta de trabajo de grado, con la rejilla de evaluación: resumido en el Anexo J de `docs/requerimientos.md`. **Es más nuevo que el reglamento: donde no coinciden, manda el formato** (decisión del 2026-10-08: concepto aprobado, aplazado o no aprobado; hasta 3 prórrogas). Los 180 días para el FDC-125 se cuentan desde que el comité aprueba totalmente el FDC-124 (decisión del equipo, 2026-10-10).
+- Sprints y plan de trabajo: `docs/sprints.md`. Los requerimientos se asignan a un sprint a medida que avanza el proyecto; lo decide el equipo.
+- Base de datos: `docs/base-de-datos.md` (diseño, usuarios de prueba y pendientes) y el diagrama entidad-relación `bd/diagrama-entidad-relacion.png`, más su versión para draw.io `bd/diagrama-drawio.txt` (se pega en Extras → Edit Diagram). Los dos se generan desde el script SQL (el PNG con Mermaid y Chrome); si la base cambia, hay que regenerarlos.
+- Enunciado original: `C:\Users\juanp\Desktop\Universidad\QUINTO SEMESTRE\PROGRAMACION EN JAVA\SEGUNDO CORTE\Parcial Java Sistema de Informacion Proyecto Segundo Corte.pptx`
+- Instalación y uso: `README.md`
+
+## Tecnología
+
+- Lenguaje y framework: Java con JSP + JSTL (tema del parcial), sobre Tomcat 11 (Jakarta, `jakarta.*`) de XAMPP
+- Base de datos: `sistemas_proyectos_grado` en MySQL (RNF22), versión 4 con 28 tablas; en local, MariaDB 10.4 de XAMPP. Script: `bd/sistemas_proyectos_grado.sql`. Sin tablas de Laravel; 4 roles (un usuario puede tener varios); login con correo institucional y contraseña `SHA2(clave, 256)`. MariaDB de XAMPP **no está en modo estricto**: por eso cada ENUM lleva `CHECK (columna <> '')`; seguir ese patrón en columnas nuevas. Usuarios de prueba en `docs/base-de-datos.md` (contraseña `123456`). Referencia: `C:\Users\juanp\Downloads\segundoparcial.sql` (base `sistemastg`, la original de la UTS; tiene datos reales, no copiarlos).
+- Gestor de paquetes: ninguno; los `.jar` van en `WEB-INF/lib` (JSTL 3.0 y mysql-connector-j)
+
+## Estructura
+
+- `index.jsp`: inicio de sesión. `registro.jsp`: registro del estudiante. `acceso/`: validar, registrar, elegir rol, salir. `panel/`: inicio, calendario y modalidades (todos los roles). `admin/`: usuarios, roles, periodos, modalidades y proyectos (revisar el pago, asignar director y evaluador; solo rol Administrador). `ideas/`: banco de ideas (cada rol ve lo suyo). `estudiante/`: habilitación, mi proyecto y pago. `archivos/ver.jsp`: muestra un archivo subido si el usuario tiene permiso. `WEB-INF/archivos/`: archivos subidos (no se abren desde el navegador ni van a Git). `pruebas/`: pruebas de la base y de punta a punta.
+- `WEB-INF/web.xml`: conexión a la base que usan por defecto todas las etiquetas `<sql:...>`, UTF-8, sesión solo por cookie, y el prelude `WEB-INF/jspf/taglibs.jspf`, que declara `c`, `fmt`, `fn` y `sql` en todas las JSP.
+- `WEB-INF/jspf/`: `sesion.jspf` (exige sesión), `solo-admin.jspf` (exige rol 1), `solo-estudiante.jspf` (exige rol 5), `habilitacion.jspf` (requisitos del estudiante; definir antes `idEstudiante`), `fases-proyecto.jspf` (tarjetas de las fases; definir antes `faseActual`), `estado-pago.jspf` (deja `sqlEstadoPago`, el estado del pago como expresión SQL sobre el alias `p` de `proyectos`), `avanzar-fase-2.jspf` (pasa el proyecto `idProyecto` a la fase 2 si tiene pago y director), `cabecera.jspf` y `pie.jspf` (plantilla de las páginas internas: menú lateral y cabecera "Bienvenido"), `mensajes.jspf` (avisos `?ok=` y `?error=`).
+- Sesión: `usuario` (id, nombre, correo), `roles` (lista) y `rolActivo` (id, nombre). Las páginas deciden por el **id** del rol (1 Administrador, 3 Director, 4 Evaluador, 5 Estudiante; el 2 era Coordinación y ya no se usa), no por el nombre.
+- Patrón de cada módulo: `lista.jsp` → `x-form.jsp` (crear o editar) → `x-guardar.jsp` (POST; si hay error, `<jsp:forward>` al formulario con `?error=`) → redirección a la lista con `?ok=`. Eliminar siempre por POST.
+- Reglas al escribir JSP: datos del usuario siempre con `<c:out>` o `fn:escapeXml`; SQL siempre con `<sql:param>`; comparar un id con un parámetro como texto (`<c:set var="x">${r.id}</c:set>`), porque comparar números con texto no numérico da error en EL. Los alias de columnas (`SELECT f.orden AS fase`) funcionan porque la conexión de `web.xml` tiene `useOldAliasMetadataBehavior=true`; las fechas se formatean con `fmt` porque `web.xml` fija el idioma `es-CO`. Un resultado booleano de SQL llega como número: comparar con `== 1`. Para recibir archivos: declarar la página en `web.xml` con `multipart-config` y leerlo con `${pageContext.request.getPart('nombre')}`; guardarlo en `WEB-INF/archivos` con un nombre generado. Los `.jspf` son UTF-8 por `web.xml`.
+
+## Comandos
+
+- Instalar dependencias: copiar los `.jar` a `WEB-INF/lib`
+- Ejecutar en desarrollo: iniciar Tomcat desde el panel de XAMPP y abrir `http://localhost:8080/segundo-parcial/`
+- Crear la base (borra y recrea; MySQL encendido en XAMPP): `C:\xampp\mysql\bin\mysql.exe -u root < bd\sistemas_proyectos_grado.sql`
+- Si hay que encender MySQL desde la consola (no desde el panel), lanzarlo independiente: `cmd /c 'start "MySQL XAMPP" /min C:\xampp\mysql\bin\mysqld.exe --defaults-file=C:\xampp\mysql\bin\my.ini --standalone'`. Lanzado como proceso hijo se cierra solo. Apagarlo con `C:\xampp\mysql\bin\mysqladmin.exe -u root shutdown`.
+- Ejecutar pruebas (MySQL y Tomcat encendidos; importar la base antes de cada una y al final): `mysql -u root --default-character-set=utf8mb4 < pruebas/base-de-datos.sql` (restricciones, 72), `bash pruebas/sprints2-3.sh` (63), `bash pruebas/sprint4.sh` (127) y `bash pruebas/sprint5.sh` (43). Detalle en `docs/base-de-datos.md`. Si la base tiene datos que el usuario quiere conservar, copiarla antes con `mysqldump` (y `WEB-INF/archivos`, porque `sprint4.sh` borra los recibos) y devolverla al final.
+- Si se cambia `css/estilo.css`, subir `versionEstilos` en `web.xml` (las páginas piden `estilo.css?v=...`); si no, los navegadores siguen usando la copia vieja y el diseño se ve roto.
+- Si se cambia la configuración JSP de `web.xml`, las páginas ya compiladas no se recompilan solas: actualizar la fecha de los `.jsp` o borrar `C:\xampp\tomcat\work\Catalina\localhost\segundo-parcial`.
+
+## Convenciones
+
+- Idioma de la documentación: español
+- Los requerimientos se identifican como RF1, RF2… (funcionales) y RNF1, RNF2… (no funcionales); referenciarlos así en documentos, commits y comentarios. Se numeran seguidos en el orden de los grupos por rol (Todos, Administrador, Director, Evaluador, Estudiante, Sistema, Equipo de desarrollo); se renumeraron el 2026-10-06 y el 2026-10-08 (al agregar RF23, RF33 y RF43), y la equivalencia con los números anteriores está en el Anexo G. Los comentarios viejos del código y del SQL usan "punto N" o "A-xx": se traducen con la columna Origen.
+- Antes de implementar algo nuevo, verificar que esté en `docs/requerimientos.md`; si no está, proponer agregarlo.
+- Registrar decisiones importantes en la sección "Registro de decisiones y notas" de los requerimientos.
+
+## Notas
+
+- El segundo parcial es de JSTL. No tomar como referencia el primer parcial (`webapps/proyecto-parcial`), que era de JSP y tiene otro enfoque.
+- No suponer ni crear requerimientos, historias de usuario ni reglas: se levantan en la entrevista y el usuario los entrega. Documentar solo lo que diga la fuente.
+- Estilo visual aprobado: ver la decisión del 2026-09-24 en `docs/requerimientos.md` y `css/estilo.css`. Las pantallas nuevas deben seguirlo. Desde el 2026-10-10 las páginas internas usan el diseño parecido al sistema actual de la UTS (menú lateral, cabecera "Bienvenido", tarjetas).
+- Director y evaluador: un docente puede tener los dos roles, pero **nunca evalúa el proyecto que dirige**, sin excepciones (decisión del equipo; en este punto prevalece sobre el reglamento).
+- Estímulos por Saber TyT (Acuerdo 01-009): solo para el nivel tecnológico; están en RNF14 y en el Anexo D de `docs/requerimientos.md`. Ingeniería presenta Saber Pro, que es aparte y no está en el sistema.
+- **El administrador es el comité de trabajos de grado** (decisión final del 2026-10-06, después de probar un rol Comité aparte y luego Coordinación como comité): no hay roles Comité ni Coordinación; son 4 roles (Administrador, Director, Evaluador, Estudiante). El administrador registra a los docentes y aprueba ideas y propuestas; es el último filtro, después del director y el evaluador.
+- Registro: los estudiantes se registran solos (RF24; un profesor lo explicó: un administrador no puede registrar a más de 500 estudiantes), y el administrador puede actualizar sus datos académicos (RF7); los docentes registran las ideas del banco y el estudiante puede formular su propia propuesta; el comité aprueba ambas (RF10).
+- Fases del proyecto (2026-10-10, como en el sistema actual de la UTS, Anexo H): 0 aprobación de la idea, 1 pago, 2 propuesta I (el estudiante envía el FDC-124 al director), 3 propuesta II (el director revisa, pasa por Turnitin, puede devolver a la 2 y envía al evaluador y al comité), 4 informe I (el evaluador puede devolver a la 3; con el FDC-124 aprobado empieza el FDC-125), 5 informe II (el director envía el informe al evaluador y al comité) y fase final (programar la sustentación). En la tabla `fases`, el número es `orden` (0 a 6), no el `id`. El proyecto se crea en la fase 1, cuando el estudiante toma una idea aprobada. El informe final se evalúa con la rejilla del F-DC-129 (con N/A). Seminario no usa el F-DC-124. El FDC-126 y el 90 % de créditos son de prácticas (fuera del sistema).
+- RNF de la lista del equipo: sin los de correo y con los de tecnología adaptados a JSP + JSTL, Tomcat 11, SHA-256 y `<sql:param>`; nunca Servlets con DAO, Tomcat 9 ni bcrypt (ver el Anexo F de `docs/requerimientos.md`).
+- Decisiones de la segunda entrevista: solo correos `@uts.edu.co` y `@correo.uts.edu.co`; integrantes según el reglamento: individual o hasta 2, hasta 3 en investigación y desarrollo tecnológico, y hasta 4 en los interdisciplinarios (decisión del equipo); el sistema maneja los dos regímenes del reglamento (planes anteriores y posteriores al decreto 1330); **el estudiante no ve a su evaluador**; firma del director y Turnitin sí van; prefijo del código 65 (tecnología) y 125 (ingeniería); **sin correos**: los avisos van dentro del sistema (lo decidió el profesor). Prácticas no se incluyen.
+- Lista de requerimientos de otro equipo (2026-10-08, Anexo I): se tomó solo lo que no choca con las decisiones del equipo (sin rol Comité, sin Práctica ni Técnico Profesional, sin repositorio, sin la excepción director = evaluador). Entraron la rejilla del F-DC-124 (RF23), la habilitación (RF33), las versiones (RF43), la solicitud de cambio de modalidad (RF12) y la auditoría con filtros (RNF12).
+- Regla de colores: no usar colores fuera del verde lima y el negro (y sus tonos). En general, negro para las fuentes y lima para fondos y animaciones. Eliminar, advertencias y éxito llevan su color convencional (`btn-danger`, `alert-warning`, `alert-success`). No cambiar elementos ya aprobados en nombre de esta regla.

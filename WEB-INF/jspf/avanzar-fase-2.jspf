@@ -1,0 +1,29 @@
+<%-- Paso de la fase 1 (pago) a la fase 2 (propuesta I). Antes de incluirlo, definir
+     idProyecto e incluir estado-pago.jspf. El proyecto pasa cuando el comité aprobó el
+     pago (o el pago no aplica) y le asignó el director (RF11, RF32); queda "En curso",
+     con la fecha de inicio de hoy. Deja avanzoFase2 = true si el proyecto pasó. --%>
+<c:set var="avanzoFase2" value="false" />
+<sql:query var="listoFase2">
+    SELECT p.id FROM proyectos p JOIN fases f ON f.id = p.fase_id
+    WHERE p.id = ? AND f.orden = 1 AND p.director_id IS NOT NULL
+      AND (${sqlEstadoPago}) IN ('Aprobado', 'No aplica')
+    <sql:param value="${idProyecto}" />
+</sql:query>
+<c:if test="${listoFase2.rowCount > 0}">
+    <sql:transaction>
+        <sql:update var="pasoFase2">
+            UPDATE proyectos SET fase_id = (SELECT id FROM fases WHERE orden = 2), estado = 'En curso', fecha_inicio = CURDATE()
+            WHERE id = ? AND fase_id = (SELECT id FROM fases WHERE orden = 1)
+            <sql:param value="${idProyecto}" />
+        </sql:update>
+        <c:if test="${pasoFase2 == 1}">
+            <sql:update>
+                INSERT INTO historial (proyecto_id, usuario_id, accion, descripcion)
+                VALUES (?, ?, 'Fase', 'El proyecto pasó a la fase 2 (Propuesta I): pago al día y director asignado.')
+                <sql:param value="${idProyecto}" />
+                <sql:param value="${sessionScope.usuario.id}" />
+            </sql:update>
+        </c:if>
+    </sql:transaction>
+    <c:set var="avanzoFase2" value="${pasoFase2 == 1}" />
+</c:if>

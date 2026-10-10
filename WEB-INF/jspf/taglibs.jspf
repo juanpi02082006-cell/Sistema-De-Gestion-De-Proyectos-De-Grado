@@ -1,0 +1,5 @@
+<%-- Se incluye automáticamente al inicio de cada JSP (ver web.xml). --%>
+<%@ taglib prefix="c"   uri="jakarta.tags.core" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn"  uri="jakarta.tags.functions" %>
+<%@ taglib prefix="sql" uri="jakarta.tags.sql" %>
