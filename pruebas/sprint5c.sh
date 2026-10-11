@@ -189,6 +189,7 @@ revisar "Fecha de aprobación, notificación y límite a 180 días (RF31, RF38)"
 decidir $PA aprobar "16" "$HOY" "Otra vez"; [[ "$DESTINO" == *"error=decision-no-disponible"* ]]; revisar "No se decide dos veces" $?
 pedir ana GET /estudiante/proyecto.jsp; contiene "Informe final (FDC-125)" && contiene "informe-guardar.jsp" && ! contiene "informe-enviar.jsp" && sinError
 revisar "El estudiante ve el informe final, sin botón de enviar todavía" $?
+contiene "exoneracion-solicitar.jsp"; revisar "Con la propuesta aprobada (fase 4) ya puede pedir la exoneración por Saber TyT" $?
 
 echo "== Seguimientos del director (RF20)"
 pedir dir POST /director/seguimiento-registrar.jsp --data-urlencode "id=$PB" --data-urlencode "observacion=x"; [[ "$DESTINO" == *"error=seguimiento-no-aplica"* ]]; revisar "Sin el FDC-124 aprobado no hay seguimientos" $?

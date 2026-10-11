@@ -549,6 +549,9 @@
                             <c:when test="${terminado or p.fase >= 5}">
                                 <p class="mb-0">La exoneración se pide antes de entregar el informe final.</p>
                             </c:when>
+                            <c:when test="${p.fase < 4 or empty p.fecha_aprobacion_124}">
+                                <p class="mb-0">Si obtuviste 120 puntos o más en Saber TyT, podrás pedir que te exoneren del informe final cuando el comité apruebe tu propuesta (fase 4): 120–150, nota 4.5; 151–170, 4.7 y 50 % de beca; 171 o más, 5.0 y 100 % de beca (Acuerdo 01-009).</p>
+                            </c:when>
                             <c:otherwise>
                                 <c:if test="${not empty ex and ex.estado == 'Rechazada'}">
                                     <p class="app-observacion mt-0 mb-3"><strong>El comité rechazó tu solicitud:</strong> <c:out value="${ex.observacion}" /></p>

@@ -2,8 +2,10 @@
      multipart: escribe su puntaje y sube el certificado en PDF; el comité lo verifica
      (decisión del equipo, 2026-10-10). Reglas:
        - solo nivel tecnológico (ingeniería y demás universitarios presentan Saber Pro);
-       - proyecto vigente que no esté terminado, y sin el informe final (FDC-125)
-         entregado al director (fase 5): se puede pedir en cualquier fase hasta entonces;
+       - proyecto vigente que no esté terminado, con la propuesta (FDC-124) aprobada por
+         el comité y sin el informe final enviado al director: solo en la fase 4, porque
+         lo que se exime es el informe final (decisión del equipo, 2026-10-11; antes de
+         pagar y de aprobar la propuesta no se puede);
        - puntaje entero de 120 a 300 (los estímulos empiezan en 120);
        - una sola solicitud pendiente; quien ya está exonerado o renunció no pide otra
          (la renuncia no tiene vuelta atrás). --%>
@@ -13,7 +15,7 @@
 </c:if>
 
 <sql:query var="consulta">
-    SELECT p.id, p.estado, p.titulo, f.id AS fase_id, u.nivel_id, pe.exonerado, pe.renuncia_exoneracion,
+    SELECT p.id, p.estado, p.titulo, p.fecha_aprobacion_124, f.id AS fase_id, f.orden AS fase, u.nivel_id, pe.exonerado, pe.renuncia_exoneracion,
            (f.orden >= 5) AS informes,
            (SELECT COUNT(*) FROM exoneraciones x WHERE x.proyecto_id = p.id AND x.estudiante_id = pe.estudiante_id AND x.estado = 'Pendiente') AS pendientes
     FROM proyecto_estudiantes pe
@@ -50,6 +52,7 @@
     <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${p.nivel_id != 1}"><c:set var="motivo" value="exoneracion-solo-tecnologia" /></c:when>
     <c:when test="${p.informes > 0}"><c:set var="motivo" value="exoneracion-informe-entregado" /></c:when>
+    <c:when test="${p.fase != 4 or empty p.fecha_aprobacion_124}"><c:set var="motivo" value="exoneracion-sin-propuesta" /></c:when>
     <c:when test="${p.exonerado == true or p.renuncia_exoneracion == true}"><c:set var="motivo" value="exoneracion-ya-decidida" /></c:when>
     <c:when test="${p.pendientes > 0}"><c:set var="motivo" value="exoneracion-pendiente" /></c:when>
     <c:when test="${not puntajeValido}"><c:set var="motivo" value="puntaje-invalido" /></c:when>

@@ -130,6 +130,7 @@
             <c:when test="${param.error == 'motivo-requerido'}">Escribe el motivo del cambio de modalidad.</c:when>
             <c:when test="${param.error == 'modalidad-ya-decidida'}">Esa solicitud ya fue decidida.</c:when>
             <c:when test="${param.error == 'exoneracion-solo-tecnologia'}">La exoneración por Saber TyT es solo para el nivel tecnológico.</c:when>
+            <c:when test="${param.error == 'exoneracion-sin-propuesta'}">La exoneración se pide después de que el comité aprueba tu propuesta (fase 4) y antes de enviar el informe final: lo que se exime es el informe.</c:when>
             <c:when test="${param.error == 'exoneracion-informe-entregado'}">Ya se entregó el informe final: la exoneración se pide antes.</c:when>
             <c:when test="${param.error == 'exoneracion-ya-decidida'}">Ya tienes una exoneración aprobada o renunciaste a ella (no tiene vuelta atrás).</c:when>
             <c:when test="${param.error == 'exoneracion-pendiente'}">Ya tienes una solicitud de exoneración esperando la verificación del comité.</c:when>
