@@ -6,8 +6,11 @@
        aprobar   el director da su aval, sube el reporte de Turnitin (PDF) y envía la
                  propuesta al evaluador y al comité: el proyecto pasa a la fase 4, donde
                  el evaluador la analiza. Necesita que el comité ya haya asignado evaluador.
-     Solo el director del proyecto (no los codirectores) toma esta decisión. --%>
+     Solo el director del proyecto (no los codirectores) toma esta decisión. Si el
+     evaluador o el comité le devuelven la versión (fase 4 → 3), la revisa otra vez.
+     Al aprobarla, el evaluador tiene 3 días hábiles para evaluarla (RF21). --%>
 <%@ include file="/WEB-INF/jspf/solo-director.jspf" %>
+<%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:if test="${pageContext.request.method != 'POST'}">
     <c:redirect url="/director/proyectos.jsp" />
 </c:if>
@@ -15,8 +18,7 @@
 <%-- En multipart, los campos de texto también llegan como param --%>
 <sql:query var="consulta">
     SELECT p.id, p.estado, p.titulo, p.evaluador_id, f.orden AS fase, f.id AS fase_id,
-           e.id AS entrega_id, e.version,
-           (SELECT COUNT(*) FROM revisiones r WHERE r.entrega_id = e.id AND r.rol = 'Director' AND r.estado = 'Enviada') AS revisada
+           e.id AS entrega_id, e.version, ${sqlUltimaRevision} AS ultima
     FROM proyectos p
     LEFT JOIN fases f ON f.id = p.fase_id
     LEFT JOIN entregas e ON e.proyecto_id = p.id AND e.tipo = 'FDC-124'
@@ -44,7 +46,7 @@
 <c:set var="motivo" value="" />
 <c:choose>
     <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
-    <c:when test="${p.fase != 3 or empty p.entrega_id or p.revisada > 0}"><c:set var="motivo" value="propuesta-no-revisable" /></c:when>
+    <c:when test="${p.fase != 3 or empty p.entrega_id or not (empty p.ultima or p.ultima == 'Evaluador:Devuelto' or p.ultima == 'Comité:Devuelto')}"><c:set var="motivo" value="propuesta-no-revisable" /></c:when>
     <c:when test="${param.decision != 'aprobar' and param.decision != 'devolver'}"><c:set var="motivo" value="general" /></c:when>
     <c:when test="${empty observacion}"><c:set var="motivo" value="observacion-requerida" /></c:when>
     <c:when test="${aprobar and empty p.evaluador_id}"><c:set var="motivo" value="sin-evaluador" /></c:when>
@@ -67,6 +69,8 @@
 <c:if test="${aprobar}">
     <c:set var="nombreGuardado" value="turnitin-p${p.id}-v${p.version}-${System.currentTimeMillis()}.pdf" />
     <c:set var="carpeta" value="${pageContext.servletContext.getRealPath('/WEB-INF/archivos')}" />
+    <c:set var="diasHabiles" value="3" />
+    <%@ include file="/WEB-INF/jspf/plazo-habil.jspf" %>
 </c:if>
 
 <c:catch var="errorGuardar">
@@ -93,6 +97,11 @@
                 <sql:param value="${nombreGuardado}" />
                 <sql:param value="${sessionScope.usuario.id}" />
             </sql:update>
+            <sql:update>
+                UPDATE entregas SET fecha_limite_revision = ? WHERE id = ?
+                <sql:dateParam value="${fechaPlazo}" type="date" />
+                <sql:param value="${p.entrega_id}" />
+            </sql:update>
         </c:if>
         <sql:update>
             UPDATE proyectos SET fase_id = (SELECT id FROM fases WHERE orden = ?) WHERE id = ?
@@ -112,7 +121,7 @@
                 <c:set var="avisoMensaje">El director aprobó la versión ${p.version} de la propuesta y la envió al evaluador y al comité. Observación: ${observacion}</c:set>
                 <c:set var="avisoPara" value="estudiantes,codirectores,comite" />
                 <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
-                <c:set var="avisoMensaje">Te enviaron la propuesta de «${p.titulo}» para evaluarla con la rejilla del F-DC-124.</c:set>
+                <c:set var="avisoMensaje">Te enviaron la propuesta de «${p.titulo}» para evaluarla con la rejilla del F-DC-124. Tienes hasta el <fmt:formatDate value="${fechaPlazo}" pattern="dd/MM/yyyy" /> (3 días hábiles).</c:set>
                 <c:set var="avisoPara" value="evaluador" />
                 <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
             </c:when>

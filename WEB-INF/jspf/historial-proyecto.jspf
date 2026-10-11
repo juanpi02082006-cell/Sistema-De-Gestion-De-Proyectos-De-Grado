@@ -1,9 +1,11 @@
 <%-- Historial de un proyecto en orden cronológico (RNF12): quién hizo cada movimiento,
      qué y cuándo. Va plegado. Antes de incluirlo, definir idProyectoHistorial. Las
      descripciones nunca dicen quién es el evaluador (RF27), así que también lo ve el
-     estudiante. --%>
+     estudiante; a él, en los movimientos del evaluador sale "Evaluador" en vez del nombre. --%>
 <sql:query var="historialProyecto">
-    SELECT h.fecha, h.accion, h.descripcion, u.nombre AS usuario
+    SELECT h.fecha, h.accion, h.descripcion, u.nombre AS usuario,
+           EXISTS (SELECT 1 FROM revisiones r JOIN entregas e ON e.id = r.entrega_id
+                   WHERE e.proyecto_id = h.proyecto_id AND r.revisor_id = h.usuario_id AND r.rol = 'Evaluador') AS del_evaluador
     FROM historial h LEFT JOIN usuarios u ON u.id = h.usuario_id
     WHERE h.proyecto_id = ?
     ORDER BY h.fecha, h.id
@@ -18,7 +20,7 @@
                 <c:forEach var="h" items="${historialProyecto.rows}">
                     <li>
                         <c:out value="${h.descripcion}" />
-                        <span class="app-lista-nota"><fmt:formatDate value="${h.fecha}" pattern="dd/MM/yyyy h:mm a" /> · <c:out value="${empty h.usuario ? 'Sistema' : h.usuario}" /> · <c:out value="${h.accion}" /></span>
+                        <span class="app-lista-nota"><fmt:formatDate value="${h.fecha}" pattern="dd/MM/yyyy h:mm a" /> · <c:out value="${empty h.usuario ? 'Sistema' : (h.del_evaluador == 1 and sessionScope.rolActivo.id == 5 ? 'Evaluador' : h.usuario)}" /> · <c:out value="${h.accion}" /></span>
                     </li>
                 </c:forEach>
             </ol>

@@ -3,7 +3,7 @@
      Antes de incluirlo, definir:
        <c:set var="titulo"  value="..." />   título de la pestaña
        <c:set var="seccion" value="..." />   opción del menú que se marca (inicio, usuarios, roles,
-                                             periodos, proyectos, pqrs, auditoria, dirigidos, ideas,
+                                             periodos, proyectos, pqrs, auditoria, dirigidos, evaluaciones, ideas,
                                              habilitacion, proyecto, calendario, modalidades, avisos, pqr) --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="rolMenu" value="${sessionScope.rolActivo.id}" />
@@ -55,6 +55,10 @@
             <c:if test="${rolMenu == 3}">
                 <a href="${ctx}/director/proyectos.jsp" class="${seccion == 'dirigidos' ? 'activo' : ''}">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Mis proyectos</a>
+            </c:if>
+            <c:if test="${rolMenu == 4}">
+                <a href="${ctx}/evaluador/proyectos.jsp" class="${seccion == 'evaluaciones' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Mis evaluaciones</a>
             </c:if>
             <c:if test="${rolMenu == 5}">
                 <a href="${ctx}/estudiante/habilitacion.jsp" class="${seccion == 'habilitacion' ? 'activo' : ''}">

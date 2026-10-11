@@ -2,8 +2,11 @@
      de los estudiantes (RF19) y las versiones de la propuesta FDC-124 (RF18, RF43).
      En la fase 3 el director la revisa: la devuelve o la aprueba con el reporte de
      Turnitin y la envía al evaluador y al comité (propuesta-revisar.jsp). Aquí solo se
-     dice si ya hay evaluador, no quién es. --%>
+     dice si ya hay evaluador, no quién es. En la fase 4 ve el concepto del evaluador y
+     la decisión del comité; con el FDC-124 aprobado registra los seguimientos (RF20,
+     seguimiento-registrar.jsp) y ve las versiones del informe final. --%>
 <%@ include file="/WEB-INF/jspf/solo-director.jspf" %>
+<%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Proyecto" />
 <c:set var="seccion" value="dirigidos" />
 
@@ -17,7 +20,9 @@
             ORDER BY e.version DESC LIMIT 1) AS limite_director,
            (SELECT e.fecha_limite_revision < CURDATE() FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
             ORDER BY e.version DESC LIMIT 1) AS director_vencido,
-           DATEDIFF(pr.fecha_limite_propuestas, CURDATE()) AS dias_semana12
+           DATEDIFF(pr.fecha_limite_propuestas, CURDATE()) AS dias_semana12,
+           ${sqlUltimaRevision} AS ultima, p.fecha_aprobacion_124, p.fecha_limite,
+           p.fecha_aprobacion_124 + INTERVAL 90 DAY AS informe_desde
     FROM proyectos p
     JOIN modalidades m ON m.id = p.modalidad_id
     JOIN niveles n ON n.id = p.nivel_id
@@ -96,12 +101,17 @@
         <c:choose>
             <c:when test="${p.fase == 2}"><p class="text-secondary">El estudiante está diligenciando la propuesta; te llega cuando te la envíe.</p></c:when>
             <c:when test="${p.fase == 3}">
+                <c:if test="${p.ultima == 'Evaluador:Devuelto' or p.ultima == 'Comité:Devuelto'}">
+                    <div class="alert alert-warning app-aviso" role="status">${p.ultima == 'Evaluador:Devuelto' ? 'El evaluador' : 'El comité'} te devolvió la versión <c:out value="${p.version_propuesta}" /> porque le falta algo: revisa su observación abajo. Puedes devolverla al estudiante o, si ya está, aprobarla y enviarla otra vez.</div>
+                </c:if>
                 <p class="text-secondary">El estudiante te envió la versión <c:out value="${p.version_propuesta}" /> para revisarla.
                     <c:if test="${not empty p.limite_director}">Tienes hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> (5 días hábiles).</c:if>
                     <c:if test="${not empty p.dias_semana12 and p.dias_semana12 >= 0}">Faltan <c:out value="${p.dias_semana12}" /> días para el límite de la semana 12.</c:if></p>
                 <c:if test="${p.director_vencido == 1}"><div class="alert alert-warning app-aviso" role="status">Se venció el plazo para revisar esta propuesta. No hay aprobación automática: revísala cuanto antes.</div></c:if>
             </c:when>
-            <c:when test="${p.fase == 4}"><p class="text-secondary">Aprobaste la propuesta y la enviaste al evaluador y al comité.</p></c:when>
+            <c:when test="${not empty p.fecha_aprobacion_124}"><p class="text-secondary">El comité aprobó la propuesta: la versión oficial es la <c:out value="${p.version_propuesta}" />.</p></c:when>
+            <c:when test="${p.fase == 4 and p.ultima == 'Director:Aprobado'}"><p class="text-secondary">Aprobaste la propuesta y la enviaste al evaluador y al comité. El evaluador la está evaluando.</p></c:when>
+            <c:when test="${p.fase == 4}"><p class="text-secondary">El evaluador dio su concepto: falta la decisión del comité.</p></c:when>
         </c:choose>
         <c:set var="idProyectoPropuesta" value="${p.id}" />
         <%@ include file="/WEB-INF/jspf/propuesta-versiones.jspf" %>
@@ -118,7 +128,34 @@
                 </div>
             </c:forEach>
         </c:if>
+        <c:set var="idProyectoEvaluacion" value="${p.id}" />
+        <c:set var="evaluacionConEvaluador" value="false" />
+        <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
     </div>
+
+    <%-- Con el FDC-124 aprobado: plazos, seguimientos del director (RF20) e informe final --%>
+    <c:if test="${not empty p.fecha_aprobacion_124}">
+        <div class="app-tarjeta mb-4 app-formulario">
+            <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
+            <dl class="app-pares">
+                <div><dt>Propuesta aprobada</dt><dd><fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></dd></div>
+                <div><dt>Se entrega desde</dt><dd><fmt:formatDate value="${p.informe_desde}" pattern="dd/MM/yyyy" /></dd></div>
+                <div><dt>Fecha límite</dt><dd><fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /></dd></div>
+            </dl>
+            <c:if test="${p.fase == 5}"><p class="text-secondary mt-3 mb-0">El estudiante te envió el informe final (fase 5, Informe II).</p></c:if>
+            <c:set var="idProyectoInforme" value="${p.id}" />
+            <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
+            <c:if test="${p.fase == 4 and p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
+                <form class="mt-3" method="post" action="${ctx}/director/seguimiento-registrar.jsp">
+                    <input type="hidden" name="id" value="${p.id}">
+                    <label class="form-label" for="seguimiento">Registrar un seguimiento</label>
+                    <textarea class="form-control" id="seguimiento" name="observacion" required
+                              placeholder="Avance del trabajo, recomendaciones o cambios de rumbo"></textarea>
+                    <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Registrar seguimiento</button>
+                </form>
+            </c:if>
+        </div>
+    </c:if>
 
     <%-- Fase 3: los codirectores dejan observaciones; decide el director (RF13) --%>
     <c:if test="${p.fase == 3 and p.es_director != 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">

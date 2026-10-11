@@ -49,6 +49,16 @@
             <c:when test="${param.ok == 'inscripcion-devuelta'}">La inscripción se devolvió a los estudiantes con la observación.</c:when>
             <c:when test="${param.ok == 'nota-aprobada'}">La nota quedó registrada: aprobado, el proyecto terminó.</c:when>
             <c:when test="${param.ok == 'nota-reprobada'}">La nota quedó registrada: reprobado, el proyecto se canceló.</c:when>
+            <c:when test="${param.ok == 'evaluacion-borrador'}">El borrador de la evaluación quedó guardado. Puedes seguir después.</c:when>
+            <c:when test="${param.ok == 'evaluacion-enviada'}">Enviaste la evaluación: pasa al comité para la decisión final.</c:when>
+            <c:when test="${param.ok == 'evaluacion-devuelta'}">Devolviste la propuesta al director: el proyecto volvió a la fase 3.</c:when>
+            <c:when test="${param.ok == 'propuesta-aprobar-comite'}">La propuesta quedó aprobada: empiezan a correr los 180 días del informe final.</c:when>
+            <c:when test="${param.ok == 'propuesta-aplazar-comite'}">La propuesta quedó aplazada: el proyecto volvió a la fase 2 para que el estudiante la corrija.</c:when>
+            <c:when test="${param.ok == 'propuesta-no-aprobar-comite'}">La propuesta no se aprobó: el proyecto se canceló y la idea volvió al banco.</c:when>
+            <c:when test="${param.ok == 'propuesta-devolver-comite'}">La propuesta se devolvió al director: el proyecto volvió a la fase 3.</c:when>
+            <c:when test="${param.ok == 'seguimiento-registrado'}">El seguimiento quedó registrado.</c:when>
+            <c:when test="${param.ok == 'informe-subido'}">La versión del FDC-125 se subió correctamente.</c:when>
+            <c:when test="${param.ok == 'informe-enviado'}">Enviaste el informe final a tu director: el proyecto pasó a la fase 5 (Informe II).</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
             <c:when test="${param.ok == 'sesion-eliminada'}">La sesión se quitó del calendario.</c:when>
@@ -91,7 +101,7 @@
             <c:when test="${param.error == 'archivo-no-word'}">El FDC-124 debe ser un documento de Word (.doc o .docx).</c:when>
             <c:when test="${param.error == 'sin-director'}">Tu proyecto todavía no tiene director.</c:when>
             <c:when test="${param.error == 'propuesta-requerida'}">Sube el FDC-124 antes de enviarlo a tu director.</c:when>
-            <c:when test="${param.error == 'propuesta-devuelta'}">Tu director devolvió la última versión: sube una versión corregida antes de enviarla otra vez.</c:when>
+            <c:when test="${param.error == 'propuesta-devuelta'}">La última versión ya se revisó (el director la devolvió o el comité la aplazó): sube una versión corregida antes de enviarla otra vez.</c:when>
             <c:when test="${param.error == 'propuesta-no-revisable'}">Esa propuesta no está esperando tu revisión: ya la revisaste o el proyecto no está en la fase 3.</c:when>
             <c:when test="${param.error == 'sin-evaluador'}">El comité todavía no asigna el evaluador: puedes devolver la propuesta, pero no enviarla.</c:when>
             <c:when test="${param.error == 'turnitin-requerido'}">Para aprobar la propuesta, sube el reporte de Turnitin en PDF.</c:when>
@@ -123,6 +133,19 @@
             <c:when test="${param.error == 'inscripcion-incompleta'}">Falta el formato F-AM-04 o la cédula de algún estudiante.</c:when>
             <c:when test="${param.error == 'nota-no-aplica'}">La nota final se registra solo en un seminario en curso.</c:when>
             <c:when test="${param.error == 'nota-invalida'}">La nota debe ser un número de 0.0 a 5.0.</c:when>
+            <c:when test="${param.error == 'evaluacion-no-disponible'}">Esa propuesta no está esperando tu evaluación: ya la evaluaste o el director todavía no te la envía.</c:when>
+            <c:when test="${param.error == 'rejilla-incompleta'}">Para enviar la evaluación, marca Sí o No en todos los indicadores. Puedes guardarla en borrador mientras tanto.</c:when>
+            <c:when test="${param.error == 'concepto-requerido'}">Escoge el concepto: Aprobado, Aplazado o No aprobado.</c:when>
+            <c:when test="${param.error == 'aprobado-con-no'}">Para dar el concepto "Aprobado" deben cumplirse todos los indicadores (F-DC-124).</c:when>
+            <c:when test="${param.error == 'decision-no-disponible'}">La propuesta no está esperando la decisión del comité: falta el concepto del evaluador o ya se decidió.</c:when>
+            <c:when test="${param.error == 'acta-invalida'}">Escribe el número del acta (entero) y una fecha válida que no sea futura.</c:when>
+            <c:when test="${param.error == 'seguimiento-no-aplica'}">Los seguimientos se registran en la fase 4, después de que el comité aprueba la propuesta.</c:when>
+            <c:when test="${param.error == 'informe-no-aplica'}">El informe final se sube y se envía en la fase 4, después de que el comité aprueba la propuesta.</c:when>
+            <c:when test="${param.error == 'informe-no-word'}">El FDC-125 debe ser un documento de Word (.doc o .docx).</c:when>
+            <c:when test="${param.error == 'informe-requerido'}">Sube el FDC-125 antes de enviarlo a tu director.</c:when>
+            <c:when test="${param.error == 'informe-antes-de-90'}">El informe final se envía desde el día 90 después de la aprobación de la propuesta.</c:when>
+            <c:when test="${param.error == 'informe-vencido'}">Se venció el plazo para entregar el informe final. Habla con el comité sobre una prórroga.</c:when>
+            <c:when test="${param.error == 'faltan-seguimientos'}">Tu director debe registrar al menos 2 seguimientos antes de que envíes el informe final.</c:when>
             <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
             <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
             <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>

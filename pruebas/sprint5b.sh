@@ -267,8 +267,11 @@ pedir carlos POST /estudiante/exoneracion-renunciar.jsp; [[ "$DESTINO" == *"erro
 exonerar dora 130 "$T/certificado.pdf"
 pedir admin POST /admin/exoneracion-revisar.jsp --data-urlencode "id=$($MYSQL -e "SELECT id FROM exoneraciones WHERE estudiante_id=$DORA")" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
 [ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PD")" = "Pendiente" ]; revisar "Si uno renunció, aunque el otro quede exonerado el proyecto sigue" $?
-$MYSQL -e "INSERT INTO entregas (proyecto_id, tipo, version, nombre_archivo, ruta_archivo, subido_por) VALUES ($PA, 'FDC-125', 1, 'informe.docx', 'x.docx', $ANA)"
+# El informe final se entrega al enviarlo al director (fase 5); subir un borrador no cuenta
+FASE_PA=$($MYSQL -e "SELECT fase_id FROM proyectos WHERE id=$PA")
+$MYSQL -e "UPDATE proyectos SET fase_id=(SELECT id FROM fases WHERE orden=5) WHERE id=$PA"
 exonerar ana 150 "$T/certificado.pdf"; [[ "$DESTINO" == *"error=exoneracion-informe-entregado"* ]]; revisar "Con el informe final entregado ya no se pide" $?
+$MYSQL -e "UPDATE proyectos SET fase_id=$FASE_PA WHERE id=$PA"
 
 echo "== Seminario: inscripción, seminario en curso y nota final (RF17)"
 idIdea() { $MYSQL -e "SELECT id FROM ideas WHERE titulo='$1'"; }

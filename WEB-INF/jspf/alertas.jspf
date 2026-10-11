@@ -6,7 +6,10 @@
        - semana 12 (propuesta aprobada a tiempo) a 10 y a 5 días, para los estudiantes y
          el director de los proyectos en las fases 1 a 3 con algún estudiante de plan
          anterior (RF30); al vencer, el proyecto se cancela (cierres.jspf);
-       - plazo del director para revisar la propuesta, al vencer (RF21). --%>
+       - plazo del director para revisar la propuesta, al vencer (RF21);
+       - plazo del evaluador para evaluarla (3 días hábiles), al vencer (RF21);
+       - límite del informe final (180 días desde la aprobación del FDC-124) a 30, 10 y
+         5 días, para los estudiantes y el director de los proyectos en la fase 4 (RF5). --%>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <c:set var="idAlerta" value="${sessionScope.usuario.id}" />
 <c:forEach var="diasAlerta" items="10,5">
@@ -70,3 +73,42 @@
       AND e.fecha_limite_revision < CURDATE()
     <sql:param value="${idAlerta}" />
 </sql:update>
+<%-- Plazo del evaluador para evaluar la propuesta (fase 4, el director ya se la envió), vencido --%>
+<%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
+<sql:update>
+    INSERT IGNORE INTO avisos (usuario_id, proyecto_id, mensaje, enlace, clave)
+    SELECT p.evaluador_id, p.id,
+           CONCAT('Se venció el plazo para evaluar la propuesta de «', LEFT(p.titulo, 80), '» (',
+                  DATE_FORMAT(e.fecha_limite_revision, '%d/%m/%Y'), ').'),
+           CONCAT('/evaluador/proyecto.jsp?id=', p.id), CONCAT('evaluacion-e', e.id, '-', e.fecha_limite_revision)
+    FROM proyectos p
+    JOIN fases f ON f.id = p.fase_id AND f.orden = 4
+    JOIN entregas e ON e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+         AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')
+    WHERE p.evaluador_id = ? AND p.estado NOT IN ('Finalizado', 'Cancelado')
+      AND e.fecha_limite_revision < CURDATE() AND ${sqlUltimaRevision} = 'Director:Aprobado'
+    <sql:param value="${idAlerta}" />
+</sql:update>
+<%-- Límite del informe final a 30, 10 y 5 días: estudiantes y director --%>
+<c:forEach var="diasInforme" items="30,10,5">
+    <sql:update>
+        INSERT IGNORE INTO avisos (usuario_id, proyecto_id, mensaje, enlace, clave)
+        SELECT ?, p.id,
+               CONCAT('Faltan ', DATEDIFF(p.fecha_limite, CURDATE()), ' días para el límite del informe final de «',
+                      LEFT(p.titulo, 80), '» (', DATE_FORMAT(p.fecha_limite, '%d/%m/%Y'), ').'),
+               CASE WHEN p.director_id = ? THEN CONCAT('/director/proyecto.jsp?id=', p.id) ELSE '/estudiante/proyecto.jsp' END,
+               CONCAT('informe-', ?, '-p', p.id, '-', p.fecha_limite)
+        FROM proyectos p
+        JOIN fases f ON f.id = p.fase_id
+        WHERE f.orden = 4 AND p.estado NOT IN ('Finalizado', 'Cancelado') AND p.fecha_limite IS NOT NULL
+          AND DATEDIFF(p.fecha_limite, CURDATE()) BETWEEN 0 AND ?
+          AND (p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_estudiantes x
+                                            WHERE x.proyecto_id = p.id AND x.vigente = 1 AND x.estudiante_id = ?))
+        <sql:param value="${idAlerta}" />
+        <sql:param value="${idAlerta}" />
+        <sql:param value="${diasInforme}" />
+        <sql:param value="${diasInforme}" />
+        <sql:param value="${idAlerta}" />
+        <sql:param value="${idAlerta}" />
+    </sql:update>
+</c:forEach>

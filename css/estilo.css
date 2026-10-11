@@ -1510,3 +1510,16 @@ a.app-campana:focus-visible {
         display: none;
     }
 }
+
+/* Rejilla de evaluación del F-DC-124: la pregunta, Sí / No y la observación debajo */
+.app-rejilla-pregunta {
+    flex: 1 1 20rem;
+}
+
+.app-rejilla-observacion {
+    flex: 1 1 100%;
+}
+
+.app-rejilla .app-casilla span {
+    padding: 0.35rem 1rem;
+}

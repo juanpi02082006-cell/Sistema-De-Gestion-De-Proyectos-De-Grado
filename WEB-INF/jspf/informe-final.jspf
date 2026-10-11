@@ -1,0 +1,44 @@
+<%-- Informe final en la fase 4, después de que el comité aprueba el FDC-124: los
+     seguimientos del director (RF20: al menos 2 antes de entregar el informe) y las
+     versiones del FDC-125 (RF31, RF43), de la más nueva a la más antigua. Antes de
+     incluirlo, definir idProyectoInforme. Deja seguimientosInforme y versionesInforme
+     (las consultas). --%>
+<sql:query var="seguimientosInforme">
+    SELECT s.fecha, s.observacion, u.nombre AS director
+    FROM seguimientos s JOIN usuarios u ON u.id = s.director_id
+    WHERE s.proyecto_id = ? ORDER BY s.fecha, s.id
+    <sql:param value="${idProyectoInforme}" />
+</sql:query>
+<sql:query var="versionesInforme">
+    SELECT e.id, e.version, e.nombre_archivo, e.subido_en, u.nombre AS subida_por
+    FROM entregas e JOIN usuarios u ON u.id = e.subido_por
+    WHERE e.proyecto_id = ? AND e.tipo = 'FDC-125' ORDER BY e.version DESC
+    <sql:param value="${idProyectoInforme}" />
+</sql:query>
+<h3 class="h6 fw-bold mt-4 mb-2">Seguimientos del director <span class="text-secondary fw-normal">· <c:out value="${seguimientosInforme.rowCount}" /> (mínimo 2 antes de entregar el informe)</span></h3>
+<c:choose>
+    <c:when test="${seguimientosInforme.rowCount == 0}"><p class="app-vacio mt-0">Todavía no hay seguimientos.</p></c:when>
+    <c:otherwise>
+        <ul class="app-lista">
+            <c:forEach var="sg" items="${seguimientosInforme.rows}">
+                <li><span><c:out value="${sg.observacion}" />
+                    <span class="app-lista-nota"><fmt:formatDate value="${sg.fecha}" pattern="dd/MM/yyyy" /> · <c:out value="${sg.director}" /></span></span></li>
+            </c:forEach>
+        </ul>
+    </c:otherwise>
+</c:choose>
+<h3 class="h6 fw-bold mt-4 mb-2">Versiones del informe final (FDC-125)</h3>
+<c:choose>
+    <c:when test="${versionesInforme.rowCount == 0}"><p class="app-vacio mt-0">Todavía no hay versiones del FDC-125.</p></c:when>
+    <c:otherwise>
+        <c:forEach var="vi" items="${versionesInforme.rows}">
+            <div class="app-archivo">
+                <span>
+                    <span class="app-lista-dato">Versión <c:out value="${vi.version}" /> · <c:out value="${vi.nombre_archivo}" /></span>
+                    <span class="app-lista-nota">Subida por <c:out value="${vi.subida_por}" /> el <fmt:formatDate value="${vi.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
+                </span>
+                <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${vi.id}">Descargar</a>
+            </div>
+        </c:forEach>
+    </c:otherwise>
+</c:choose>

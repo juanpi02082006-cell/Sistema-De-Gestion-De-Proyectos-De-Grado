@@ -169,6 +169,8 @@ erDiagram
 - Archivos: solo .docx y .pdf, de hasta 15 MB (RNF15, RNF16).
 - Estímulos por Saber TyT según el puntaje (RNF14): se calculan con `usuarios.puntaje_saber_tyt`.
 - Rejilla del F-DC-124 (RF23): la evaluación solo se envía con todos los criterios de su modalidad respondidos, y "Aprobado" exige que todos estén en Sí. Al enviar, el estudiante y el director ven las observaciones.
+- Decisión del comité (RF14): solo después del concepto del evaluador; aprobada, aplazada (vuelve a la fase 2), no aprobada (se cancela y la idea vuelve al banco) o devuelta al director (fase 3), siempre con acta.
+- Informe final (RF20, RF31): se envía al director desde el día 90 y hasta `proyectos.fecha_limite`, con al menos 2 filas en `seguimientos`; al enviarlo, el proyecto pasa a la fase 5.
 - Versiones (RF43): la versión nueva es la siguiente a la mayor del proyecto y el tipo; al aprobarse, se marca como oficial.
 - Cambio de modalidad (RF12): solo antes de aprobar el FDC-124; al aprobarse, se cambia `proyectos.modalidad_id` y queda en el historial.
 - Banco de ideas (RF25): después de `periodos.fecha_cierre_banco` no se pueden tomar ideas.
@@ -204,6 +206,8 @@ Las pruebas de punta a punta pasan con la versión 4 y la contraseña nueva (`12
 
 **Seminario y semana 12 (2026-10-11):** columna `proyectos.nota_final` (`DECIMAL(3,1)`, de 0 a 5) y tipos de entrega "Formato F-AM-04" y "Documento de identidad"; Negocios Internacionales en Bucaramanga y en el Campus Virtual. Pruebas: 95 de 95 de la base, 63 de 63, 127 de 127, 136 de 136 y 153 de 153 de `sprint5b.sh`. La base se volvió a reiniciar con los mismos datos del equipo.
 
+**Fase 4 (2026-10-11):** sin tablas ni columnas nuevas; solo el SNIES 119351 de Negocios Internacionales (Bucaramanga). La evaluación del evaluador queda en `revisiones` (rol Evaluador; en borrador mientras no la envía) con sus respuestas en `revision_indicadores`; la decisión del comité, en `revisiones` (rol Comité) más una fila en `actas` con el número y la fecha. En qué va la propuesta se calcula con la última revisión enviada sobre la última versión (`WEB-INF/jspf/revision-propuesta.jspf`). Al aprobarla: `entregas.oficial = 1` en esa versión y, en `proyectos`, `fecha_aprobacion_124` (la fecha del acta), `fecha_notificacion` y `fecha_limite` (180 días). Los plazos del director (5 días hábiles) y del evaluador (3) van en `entregas.fecha_limite_revision` de la última versión. Los seguimientos del director van en `seguimientos` y el informe final en `entregas` (tipo FDC-125, con versiones). Pruebas: 86 de 86 de `sprint5c.sh`; las demás siguen pasando.
+
 **Columnas `TINYINT(1)`:** el driver de MySQL las entrega como verdadero o falso (`leido`, `exonerado`, `renuncia_exoneracion`, `interdisciplinario`, `oficial`, `activo`, `metodologia_aprobada`). En EL se comparan con `== true`, nunca con `== 1` (da error). Las expresiones de SQL que dan verdadero o falso, en cambio, llegan como número y se comparan con `== 1`.
 
 **Archivos que suben los usuarios:** se guardan en `WEB-INF/archivos` (no se abre desde el navegador ni se sube a Git) con un nombre que pone el sistema (por ejemplo `recibo-p12-1760000000000.pdf`); en `entregas` quedan el nombre original y el guardado. Se ven con `archivos/ver.jsp?id=`, que revisa que quien pide el archivo sea del comité o del proyecto. Para recibir archivos, `web.xml` le da `multipart-config` (hasta 15 MB) a la página que los guarda.
@@ -217,6 +221,7 @@ bash pruebas/sprints2-3.sh   # login, usuarios y roles (importar la base antes)
 bash pruebas/sprint4.sh      # registro, habilitación, periodos, modalidades y banco de ideas (importar la base antes)
 bash pruebas/sprint5.sh      # pago, integrantes, director y evaluador, fases 2 y 3 (importar la base antes)
 bash pruebas/sprint5b.sh     # carreras, código, avisos, plazos, codirectores, anexos, cambio de modalidad, PQR, auditoría, exoneración, Seminario y semana 12
+bash pruebas/sprint5c.sh     # fase 4: rejilla del evaluador, decisión del comité, seguimientos e informe final
 ```
 
 Importar la base borra los datos que haya. Para conservarlos, hacer antes una copia con `C:/xampp/mysql/bin/mysqldump.exe -u root --databases sistemas_proyectos_grado > copia.sql` (y de `WEB-INF/archivos`, porque `sprint4.sh` borra los recibos), y devolverla al final con `mysql -u root < copia.sql`.

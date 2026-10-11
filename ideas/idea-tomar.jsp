@@ -76,7 +76,7 @@
             <sql:query var="nuevo">SELECT LAST_INSERT_ID() AS id</sql:query>
             <%-- Código del proyecto (RF40): prefijo (65 tecnológico, 125 universitario),
                  periodo (2026-2) y consecutivo dentro del prefijo y el periodo, desde 1
-                 (supuesto). Ejemplo: 65-2026-2/1. La clave única del código evita que dos
+                 en cada periodo (confirmado por el equipo). Ejemplo: 65-2026-2/1. La clave única del código evita que dos
                  proyectos queden con el mismo. --%>
             <sql:query var="consecutivo">
                 SELECT COUNT(*) AS n FROM proyectos WHERE periodo_id = ? AND nivel_id = ?

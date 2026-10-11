@@ -1,0 +1,7 @@
+<%-- Protege una página del evaluador (rol con id 4). --%>
+<%@ include file="/WEB-INF/jspf/sesion.jspf" %>
+<c:if test="${sessionScope.rolActivo.id != 4}">
+    <c:redirect url="/panel/inicio.jsp">
+        <c:param name="error" value="denegado" />
+    </c:redirect>
+</c:if>

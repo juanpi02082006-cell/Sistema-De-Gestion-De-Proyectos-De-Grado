@@ -2,21 +2,25 @@
      del pago (RF32) y el director. Desde aquí se abre cada proyecto para revisar el
      pago y asignar director y evaluador (RF11). Filtros: ?filtro=pago (pagos por
      revisar), ?filtro=director (sin director) o ?filtro=evaluador (sin evaluador en las
-     fases 2 a 4: el director no puede enviarle la propuesta). --%>
+     fases 2 a 4: el director no puede enviarle la propuesta), ?filtro=propuestas
+     (propuestas con el concepto del evaluador, esperando la decisión del comité, RF14)
+     o ?filtro=vencidos (plazo del director o del evaluador vencido, RF21). --%>
 <%@ include file="/WEB-INF/jspf/solo-admin.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
+<%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Proyectos" />
 <c:set var="seccion" value="proyectos" />
 <c:set var="filtro" value="${param.filtro == 'pago' or param.filtro == 'director' or param.filtro == 'evaluador'
                                or param.filtro == 'modalidad' or param.filtro == 'exoneracion' or param.filtro == 'vencidos'
-                               or param.filtro == 'seminario' ? param.filtro : ''}" />
+                               or param.filtro == 'seminario' or param.filtro == 'propuestas' ? param.filtro : ''}" />
 
 <sql:query var="proyectos">
     SELECT * FROM (
         SELECT p.id, p.codigo, p.titulo, p.estado, p.evaluador_id, p.modalidad_id, f.orden AS fase,
                (SELECT COUNT(*) FROM cambios_modalidad c WHERE c.proyecto_id = p.id AND c.estado = 'Pendiente') AS cambios,
                (SELECT COUNT(*) FROM exoneraciones x WHERE x.proyecto_id = p.id AND x.estado = 'Pendiente') AS exoneraciones,
-               (f.orden = 3 AND EXISTS (SELECT 1 FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+               ${sqlUltimaRevision} AS ultima,
+               ((f.orden = 3 OR (f.orden = 4 AND ${sqlUltimaRevision} = 'Director:Aprobado')) AND EXISTS (SELECT 1 FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
                    AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')
                    AND e.fecha_limite_revision < CURDATE())) AS director_vencido, f.nombre AS nombre_fase,
                m.nombre AS modalidad, n.nombre AS nivel, pr.nombre AS periodo, d.nombre AS director,
@@ -35,8 +39,10 @@
            OR (? = 'evaluador' AND evaluador_id IS NULL AND fase BETWEEN 2 AND 4)
            OR (? = 'modalidad' AND cambios > 0) OR (? = 'exoneracion' AND exoneraciones > 0)
            OR (? = 'vencidos' AND director_vencido = 1)
+           OR (? = 'propuestas' AND fase = 4 AND ultima LIKE 'Evaluador:%' AND ultima <> 'Evaluador:Devuelto' AND estado NOT IN ('Finalizado', 'Cancelado'))
            OR (? = 'seminario' AND modalidad_id = 5 AND estado = 'Pendiente'))
     ORDER BY fase, titulo
+    <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
@@ -65,7 +71,8 @@
             <option value="evaluador" ${filtro == 'evaluador' ? 'selected' : ''}>Sin evaluador (fases 2 a 4)</option>
             <option value="modalidad" ${filtro == 'modalidad' ? 'selected' : ''}>Cambios de modalidad por decidir</option>
             <option value="exoneracion" ${filtro == 'exoneracion' ? 'selected' : ''}>Exoneraciones por verificar</option>
-            <option value="vencidos" ${filtro == 'vencidos' ? 'selected' : ''}>Plazo del director vencido</option>
+            <option value="propuestas" ${filtro == 'propuestas' ? 'selected' : ''}>Propuestas por decidir (comité)</option>
+            <option value="vencidos" ${filtro == 'vencidos' ? 'selected' : ''}>Plazo del director o del evaluador vencido</option>
             <option value="seminario" ${filtro == 'seminario' ? 'selected' : ''}>Seminario: inscripciones por validar</option>
         </select>
         <noscript><button type="submit" class="btn btn-outline-dark rounded-pill">Filtrar</button></noscript>
@@ -96,7 +103,8 @@
                                     <c:if test="${not empty p.codigo}"><span class="app-lista-nota"><c:out value="${p.codigo}" /></span></c:if>
                                     <c:if test="${p.cambios > 0}"><span class="app-etiqueta ms-0">Cambio de modalidad por decidir</span></c:if>
                                     <c:if test="${p.exoneraciones > 0}"><span class="app-etiqueta ms-0">Exoneración por verificar</span></c:if>
-                                    <c:if test="${p.director_vencido == 1}"><span class="app-etiqueta ms-0">Plazo del director vencido</span></c:if>
+                                    <c:if test="${p.director_vencido == 1 and p.estado != 'Cancelado'}"><span class="app-etiqueta ms-0">Plazo del ${p.fase == 3 ? 'director' : 'evaluador'} vencido</span></c:if>
+                                    <c:if test="${p.fase == 4 and fn:startsWith(p.ultima, 'Evaluador:') and p.ultima != 'Evaluador:Devuelto' and p.estado != 'Cancelado'}"><span class="app-etiqueta ms-0">Propuesta por decidir</span></c:if>
                                     <c:if test="${p.modalidad_id == 5 and p.estado == 'Pendiente'}"><span class="app-etiqueta ms-0">Seminario: inscripción por validar</span></c:if>
                                     <c:if test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><span class="app-etiqueta ms-0"><c:out value="${p.estado}" /></span></c:if>
                                     <span class="app-lista-nota"><c:out value="${p.modalidad}" /> · <c:out value="${p.nivel}" /><c:if test="${not empty p.periodo}"> · <c:out value="${p.periodo}" /></c:if></span>

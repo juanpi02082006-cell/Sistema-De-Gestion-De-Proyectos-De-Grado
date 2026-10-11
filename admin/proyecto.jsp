@@ -2,9 +2,12 @@
      la revisión del recibo de pago (RF32, con observación obligatoria, RF34) y la
      asignación del director y del evaluador (RF11; un docente nunca evalúa el proyecto
      que dirige). Cuando el pago está aprobado (o no aplica) y tiene director, el
-     proyecto pasa a la fase 2 (avanzar-fase-2.jspf). --%>
+     proyecto pasa a la fase 2 (avanzar-fase-2.jspf). En la fase 4 el comité ve la
+     evaluación y da la decisión final sobre la propuesta con su acta (RF14,
+     propuesta-decidir.jsp); aprobada, ve los seguimientos y el informe final. --%>
 <%@ include file="/WEB-INF/jspf/solo-admin.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
+<%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Proyecto" />
 <c:set var="seccion" value="proyectos" />
 
@@ -16,7 +19,9 @@
            (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
             ORDER BY e.version DESC LIMIT 1) AS limite_director,
            (SELECT e.fecha_limite_revision < CURDATE() FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
-            ORDER BY e.version DESC LIMIT 1) AS director_vencido
+            ORDER BY e.version DESC LIMIT 1) AS director_vencido,
+           ${sqlUltimaRevision} AS ultima, p.fecha_aprobacion_124, p.fecha_limite,
+           p.fecha_aprobacion_124 + INTERVAL 90 DAY AS informe_desde, CURDATE() AS hoy
     FROM proyectos p
     JOIN modalidades m ON m.id = p.modalidad_id
     JOIN niveles n ON n.id = p.nivel_id
@@ -155,11 +160,19 @@
     </div>
 </c:if>
 
-<c:if test="${p.fase == 3 and not empty p.limite_director}">
+<c:if test="${p.fase == 3 and not empty p.limite_director and p.estado != 'Cancelado'}">
     <div class="${p.director_vencido == 1 ? 'alert alert-warning app-aviso' : 'app-resultado'}" role="status">
         <c:choose>
             <c:when test="${p.director_vencido == 1}">Se venció el plazo del director para revisar la propuesta (<fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" />). No hay aprobación automática.</c:when>
             <c:otherwise>El director tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para revisar la propuesta (5 días hábiles).</c:otherwise>
+        </c:choose>
+    </div>
+</c:if>
+<c:if test="${p.fase == 4 and p.ultima == 'Director:Aprobado' and not empty p.limite_director and p.estado != 'Cancelado'}">
+    <div class="${p.director_vencido == 1 ? 'alert alert-warning app-aviso' : 'app-resultado'}" role="status">
+        <c:choose>
+            <c:when test="${p.director_vencido == 1}">Se venció el plazo del evaluador para evaluar la propuesta (<fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" />). No hay aprobación automática.</c:when>
+            <c:otherwise>El evaluador tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para evaluar la propuesta (3 días hábiles).</c:otherwise>
         </c:choose>
     </div>
 </c:if>
@@ -245,7 +258,59 @@
                 </div>
             </c:forEach>
         </c:if>
+        <c:set var="idProyectoEvaluacion" value="${p.id}" />
+        <c:set var="evaluacionConEvaluador" value="true" />
+        <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
     </div>
+
+    <%-- Fase 4: decisión final del comité sobre la propuesta, con su acta (RF14) --%>
+    <c:if test="${p.fase == 4 and fn:startsWith(p.ultima, 'Evaluador:') and p.ultima != 'Evaluador:Devuelto' and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
+        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/admin/propuesta-decidir.jsp">
+            <input type="hidden" name="id" value="${p.id}">
+            <h2 class="app-tarjeta-titulo">Decisión del comité sobre la propuesta</h2>
+            <p class="text-secondary">
+                El evaluador ya dio su concepto. La decisión final es del comité, sea cual sea ese concepto, y queda con su acta.
+                Aprobada, empiezan a correr los 180 días del informe final. Aplazada, el estudiante sube una versión corregida (vuelve a la fase 2).
+                No aprobada, el proyecto se cancela y la idea vuelve al banco. Si falta algo, devuélvela al director (fase 3).
+            </p>
+            <div class="row g-3">
+                <div class="col-sm-4">
+                    <label class="form-label" for="acta">Número del acta *</label>
+                    <input class="form-control" type="number" id="acta" name="acta" min="1" step="1" required>
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label" for="fechaActa">Fecha del acta *</label>
+                    <input class="form-control" type="date" id="fechaActa" name="fecha_acta" required
+                           value="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />" max="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />">
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="observacionComite">Observación del comité *</label>
+                    <textarea class="form-control" id="observacionComite" name="observacion" required></textarea>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="submit" name="decision" value="aprobar" class="btn btn-primary rounded-pill app-boton">Aprobar la propuesta</button>
+                <button type="submit" name="decision" value="aplazar" class="btn btn-outline-dark rounded-pill">Aplazar</button>
+                <button type="submit" name="decision" value="devolver" class="btn btn-outline-dark rounded-pill">Devolver al director</button>
+                <button type="submit" name="decision" value="no-aprobar" class="btn btn-outline-danger rounded-pill"
+                        onclick="return confirm('¿No aprobar la propuesta? El proyecto se cancela y la idea vuelve al banco.');">No aprobar</button>
+            </div>
+        </form>
+    </c:if>
+
+    <%-- Fase 4 con el FDC-124 aprobado: plazos, seguimientos e informe final (RF20, RF31) --%>
+    <c:if test="${not empty p.fecha_aprobacion_124}">
+        <div class="app-tarjeta mb-4">
+            <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
+            <dl class="app-pares">
+                <div><dt>Propuesta aprobada</dt><dd><fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></dd></div>
+                <div><dt>Se entrega desde</dt><dd><fmt:formatDate value="${p.informe_desde}" pattern="dd/MM/yyyy" /></dd></div>
+                <div><dt>Fecha límite</dt><dd><fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /></dd></div>
+            </dl>
+            <c:set var="idProyectoInforme" value="${p.id}" />
+            <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
+        </div>
+    </c:if>
 </c:if>
 
 <div class="row g-4">

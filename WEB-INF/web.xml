@@ -29,7 +29,7 @@
          que tiene guardada (si no, el menú lateral sale sin estilo). -->
     <context-param>
         <param-name>versionEstilos</param-name>
-        <param-value>2026-10-11b</param-value>
+        <param-value>2026-10-11c</param-value>
     </context-param>
 
     <!-- Los formularios llegan en UTF-8 (tildes y eñes) -->
@@ -132,6 +132,19 @@
     <servlet-mapping>
         <servlet-name>inscripcionSeminario</servlet-name>
         <url-pattern>/estudiante/inscripcion-guardar.jsp</url-pattern>
+    </servlet-mapping>
+    <!-- El informe final (FDC-125, en Word), igual que la propuesta -->
+    <servlet>
+        <servlet-name>subirInforme</servlet-name>
+        <jsp-file>/estudiante/informe-guardar.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>15728640</max-file-size>
+            <max-request-size>16777216</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>subirInforme</servlet-name>
+        <url-pattern>/estudiante/informe-guardar.jsp</url-pattern>
     </servlet-mapping>
 
     <!-- La sesión viaja solo en una cookie (nunca como ;jsessionid=... en la URL) -->

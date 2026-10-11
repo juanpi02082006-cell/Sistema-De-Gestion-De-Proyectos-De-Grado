@@ -72,6 +72,7 @@ bash pruebas/sprints2-3.sh
 bash pruebas/sprint4.sh
 bash pruebas/sprint5.sh
 bash pruebas/sprint5b.sh
+bash pruebas/sprint5c.sh
 ```
 
 ## Estructura del proyecto

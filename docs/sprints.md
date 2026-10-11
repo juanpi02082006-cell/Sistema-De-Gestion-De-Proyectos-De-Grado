@@ -149,10 +149,10 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 
 ## Sprint 5 — Pago, director y propuesta
 
-- **Objetivo:** que el comité revise el pago y asigne el director y el evaluador, y que el proyecto avance por las fases 2 y 3 (propuesta FDC-124 y revisión del director).
+- **Objetivo:** que el comité revise el pago y asigne el director y el evaluador, y que el proyecto avance por las fases 2 a 4 (propuesta FDC-124, revisión del director, evaluación con la rejilla y decisión del comité) hasta enviar el informe final.
 - **Inicio:** 2026-10-10
 - **Cierre:** por definir
-- **Requerimientos:** hechos hasta ahora: RF9, RF11, RF19 y RF32, y parte de RF18, RF26, RF30 y RF43. Lo demás está en la [propuesta](#propuesta-para-los-siguientes-sprints).
+- **Requerimientos:** hechos hasta ahora: RF9, RF11, RF19, RF20, RF30 y RF32, y parte de RF14, RF18, RF21–RF23, RF26, RF31 y RF43. Lo demás está en la [propuesta](#propuesta-para-los-siguientes-sprints).
 
 | Tarea | Estado | Notas |
 | --- | --- | --- |
@@ -168,7 +168,7 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | Catálogo de carreras (`WEB-INF/jspf/selector-carrera.jspf`) | Hecho | RF24. El registro y la administración de usuarios usan la lista; el nivel sale de la carrera. |
 | Avisos y alertas (`WEB-INF/jspf/avisar.jspf`, `alertas.jspf`, `panel/avisos.jsp`) | Hecho | RF5, RNF21. Campana en la cabecera; avisos de cada movimiento; alertas del límite de pago, la semana 12 y el plazo del director. |
 | Historial y auditoría (`WEB-INF/jspf/historial-proyecto.jspf`, `admin/auditoria.jsp`) | Hecho | RNF12. Historial plegable en cada proyecto; auditoría con filtros. |
-| Plazos en días hábiles (`WEB-INF/jspf/plazo-habil.jspf`) | Hecho | RF21, RNF19. El director tiene 5 días hábiles (supuesto) para revisar la propuesta; se ve en su página y en la del comité, con la marca de vencido. |
+| Plazos en días hábiles (`WEB-INF/jspf/plazo-habil.jspf`) | Hecho | RF21, RNF19. El director tiene 5 días hábiles (confirmado) para revisar la propuesta; se ve en su página y en la del comité, con la marca de vencido. |
 | Código del proyecto | Hecho | RF40. Al tomar la idea: 65 o 125, el periodo y un consecutivo (65-2026-2/1). |
 | Codirectores (`admin/proyecto-asignar.jsp`, `director/propuesta-observar.jsp`) | Hecho | RF13. Hasta 2 en los interdisciplinarios; comentan y decide el director. |
 | Cambio de modalidad (`estudiante/modalidad-solicitar.jsp`, `admin/modalidad-decidir.jsp`) | Hecho | RF12. En las fases 1 a 3, con motivo; el comité decide con observación. |
@@ -181,7 +181,11 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | Integrantes (`estudiante/integrante-agregar.jsp`, `estudiante/integrante-quitar.jsp`) | Hecho | RF13, RF35, RF36. Cualquier integrante agrega a un compañero por correo (habilitado, del mismo nivel, sin otro proyecto, sin pasarse del máximo) o lo quita, en las fases 1 y 2. El comité marca el proyecto como interdisciplinario (hasta 4). Al enviar la propuesta se revisa todo el grupo. |
 | Pago por estudiante (`WEB-INF/jspf/estado-pago.jspf`) | Hecho | RF32. Cada estudiante sube su recibo y el comité revisa el de cada uno; el proyecto pasa a la fase 2 cuando todos están al día. |
 | Fase 3: el director revisa, deja observaciones, pasa Turnitin, devuelve o envía al evaluador y al comité (`director/propuesta-revisar.jsp`) | Hecho | RF18, RF30, RF34. Devolver: vuelve a la fase 2. Aprobar: reporte de Turnitin en PDF y evaluador asignado; pasa a la fase 4. El comité tiene el filtro "sin evaluador". La firma se toma como la aprobación en el sistema (por confirmar). |
-| Evaluación con la rejilla del F-DC-124 y decisión del comité (RF14, RF22, RF23) | Pendiente | |
+| Fase 4: el evaluador evalúa la propuesta con la rejilla del F-DC-124 (`evaluador/proyectos.jsp`, `evaluador/proyecto.jsp`, `evaluador/evaluacion-guardar.jsp`) | Hecho | RF21, RF22, RF23, RF27. Menú "Mis evaluaciones"; 3 días hábiles desde que el director la aprueba, con alerta al vencer; solo los criterios de la modalidad; borrador; para enviar, todos los indicadores, concepto y observación ("Aprobado" solo con todo en Sí). Puede devolverla al director (fase 3). El estudiante ve el concepto y las observaciones, nunca quién lo evaluó. |
+| Decisión del comité con su acta (`admin/propuesta-decidir.jsp`) | Hecho | RF14, RF22, RF34, RF43. Aprobada: versión oficial y 180 días desde la fecha del acta. Aplazada: vuelve a la fase 2. No aprobada: se cancela y la idea vuelve al banco. Devuelta: al director (fase 3). Filtro "Propuestas por decidir" y contador en el inicio. |
+| Seguimientos e informe final (`director/seguimiento-registrar.jsp`, `estudiante/informe-guardar.jsp`, `estudiante/informe-enviar.jsp`) | Hecho | RF20, RF31, RF43. El director registra seguimientos; el estudiante sube el FDC-125 por versiones y lo envía al director desde el día 90 hasta el 180, con al menos 2 seguimientos: pasa a la fase 5. Alertas del límite a 30, 10 y 5 días. |
+| Pruebas de la fase 4 (`pruebas/sprint5c.sh`) | Hecho | 86/86. Siguen pasando: base 95/95, Sprints 2 y 3 63/63, Sprint 4 127/127, Sprint 5 136/136 y `sprint5b.sh` 153/153. |
+| Fase 5: el director revisa el informe y lo envía al evaluador y al comité; rejilla del F-DC-129 (RF22, RF23, RF31) | Pendiente | |
 
 ## Propuesta para los siguientes sprints
 

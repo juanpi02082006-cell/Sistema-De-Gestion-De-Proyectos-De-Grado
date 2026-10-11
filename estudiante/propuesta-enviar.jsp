@@ -1,8 +1,9 @@
 <%-- El estudiante envía la propuesta (la última versión del FDC-124) a su director, por
      POST: el proyecto pasa de la fase 2 (Propuesta I) a la 3 (Propuesta II), donde el
      director la revisa (RF18, RF37). Reglas: proyecto vigente en la fase 2, con director
-     y con al menos una versión subida; si el director devolvió la última versión, hay
-     que subir una nueva antes de volver a enviarla (RF43). Antes de enviarla se revisa
+     y con al menos una versión subida; si la última versión ya se revisó (el director
+     la devolvió o el comité la aplazó), hay que subir una nueva antes de volver a
+     enviarla (RF43). Antes de enviarla se revisa
      el grupo (RF36): que no pase del máximo de integrantes, que todos tengan el pago al
      día (RF32) y que todos sigan habilitados (RF33). Al enviarla, el grupo se cierra. --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
@@ -17,7 +18,7 @@
            (SELECT COUNT(*) FROM proyecto_estudiantes x WHERE x.proyecto_id = p.id AND x.vigente = 1) AS integrantes,
            (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version,
            (SELECT COUNT(*) FROM entregas e JOIN revisiones r ON r.entrega_id = e.id
-            WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.estado = 'Enviada' AND r.decision = 'Devuelto'
+            WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.estado = 'Enviada' AND r.rol <> 'Codirector'
               AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')) AS devuelta
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
@@ -61,8 +62,7 @@
     </c:redirect>
 </c:if>
 
-<%-- El director tiene 5 días hábiles para revisarla (RF21; que sean hábiles es un
-     supuesto, igual que los del evaluador) --%>
+<%-- El director tiene 5 días hábiles para revisarla (RF21; confirmado por el equipo) --%>
 <c:set var="diasHabiles" value="5" />
 <%@ include file="/WEB-INF/jspf/plazo-habil.jspf" %>
 

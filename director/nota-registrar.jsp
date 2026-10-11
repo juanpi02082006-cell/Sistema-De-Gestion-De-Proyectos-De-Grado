@@ -2,7 +2,7 @@
      POST (RF17; proceso entregado por el equipo el 2026-10-10: al terminar las clases y
      el entregable, el docente registra la nota). Solo para Seminario en curso, con
      observación obligatoria (RF34). Nota de 0.0 a 5.0, con punto o coma; se aprueba con
-     3.0 o más (supuesto: la escala usual; el texto del equipo dice "nota aprobatoria").
+     3.0 o más (nota mínima confirmada por el equipo el 2026-10-11).
        aprobada   el proyecto termina ("Finalizado") y el requisito queda cumplido;
        reprobada  el proyecto se cancela y los estudiantes quedan libres para empezar de
                   nuevo. --%>

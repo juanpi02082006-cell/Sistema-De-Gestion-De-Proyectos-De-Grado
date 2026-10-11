@@ -5,9 +5,13 @@
      su director, con sus anexos en PDF. También: el código del proyecto (RF40), el
      plazo de la semana 12 (RF30) y el del director (RF21), el cambio de modalidad
      (RF12), la exoneración por Saber TyT (RNF14) y el historial (RNF12). El estudiante
-     no ve a su evaluador (RF27). --%>
+     no ve a su evaluador (RF27), pero sí su concepto y sus observaciones (RF23). En la
+     fase 4, con el FDC-124 aprobado por el comité, sube el informe final (FDC-125) por
+     versiones y lo envía a su director desde el día 90 hasta el 180 (RF31), con al
+     menos 2 seguimientos del director (RF20). --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
+<%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Mi proyecto" />
 <c:set var="seccion" value="proyecto" />
 <c:set var="idEstudiante" value="${sessionScope.usuario.id}" />
@@ -22,14 +26,19 @@
            (SELECT COUNT(*) FROM proyecto_estudiantes x WHERE x.proyecto_id = p.id AND x.vigente = 1) AS integrantes,
            (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version_propuesta,
            (SELECT COUNT(*) FROM entregas e JOIN revisiones r ON r.entrega_id = e.id
-            WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.estado = 'Enviada' AND r.decision = 'Devuelto'
+            WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.estado = 'Enviada' AND r.rol <> 'Codirector'
               AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')) AS propuesta_devuelta,
+           ${sqlUltimaRevision} AS ultima, p.fecha_aprobacion_124, p.fecha_limite,
+           p.fecha_aprobacion_124 + INTERVAL 90 DAY AS informe_desde,
+           (CURDATE() >= p.fecha_aprobacion_124 + INTERVAL 90 DAY) AS informe_abierto,
+           (CURDATE() > p.fecha_limite) AS informe_vencido,
+           (SELECT COUNT(*) FROM seguimientos s WHERE s.proyecto_id = p.id) AS seguimientos,
+           (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS version_informe,
            DATEDIFF(pe2.fecha_limite_propuestas, CURDATE()) AS dias_semana12,
            (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
             ORDER BY e.version DESC LIMIT 1) AS limite_director,
            ue.nivel_id AS mi_nivel, pe.exonerado, pe.renuncia_exoneracion, p.nota_final,
-           ${sqlDocumentosFaltantes} AS documentos_faltantes,
-           (SELECT COUNT(*) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS informes
+           ${sqlDocumentosFaltantes} AS documentos_faltantes
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
     JOIN usuarios ue ON ue.id = pe.estudiante_id
@@ -215,7 +224,7 @@
                                     <c:if test="${not empty p.fecha_limite_propuestas}">La propuesta debe quedar aprobada a más tardar el <fmt:formatDate value="${p.fecha_limite_propuestas}" pattern="dd/MM/yyyy" /> (semana 12)${p.dias_semana12 >= 0 ? ': faltan ' : ''}${p.dias_semana12 >= 0 ? p.dias_semana12 : ''}${p.dias_semana12 >= 0 ? ' días' : ''}.</c:if>
                                 </p>
                                 <c:if test="${p.propuesta_devuelta > 0}">
-                                    <div class="alert alert-warning app-aviso" role="status">Tu director devolvió la última versión. Revisa sus observaciones y sube una versión corregida antes de enviarla otra vez.</div>
+                                    <div class="alert alert-warning app-aviso" role="status">${p.ultima == 'Comité:Aplazado' ? 'El comité aplazó' : 'Tu director devolvió'} la última versión. Revisa las observaciones y sube una versión corregida antes de enviarla otra vez.</div>
                                 </c:if>
                                 <c:if test="${not pagoListo}">
                                     <div class="alert alert-warning app-aviso" role="status">Antes de enviarla, todos los integrantes deben tener el pago aprobado por el comité. Revisa el pago de cada uno en "Integrantes".</div>
@@ -224,14 +233,23 @@
                             <c:when test="${p.fase == 3}">
                                 <p class="text-secondary">Enviaste la versión <c:out value="${p.version_propuesta}" /> a tu director. Está en revisión<c:if test="${not empty p.limite_director}">: tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para revisarla</c:if>.</p>
                             </c:when>
+                            <c:when test="${not empty p.fecha_aprobacion_124}">
+                                <p class="text-secondary">El comité aprobó tu propuesta: la versión oficial es la <c:out value="${p.version_propuesta}" />.</p>
+                            </c:when>
+                            <c:when test="${p.fase == 4 and p.ultima == 'Director:Aprobado'}">
+                                <p class="text-secondary">Tu director aprobó la versión <c:out value="${p.version_propuesta}" />, la pasó por Turnitin y la envió al evaluador y al comité. El evaluador la está evaluando.</p>
+                            </c:when>
                             <c:when test="${p.fase == 4}">
-                                <p class="text-secondary">Tu director aprobó la versión <c:out value="${p.version_propuesta}" />, la pasó por Turnitin y la envió al evaluador y al comité.</p>
+                                <p class="text-secondary">El evaluador ya dio su concepto. Falta la decisión final del comité.</p>
                             </c:when>
                         </c:choose>
 
                         <c:set var="idProyectoPropuesta" value="${p.id}" />
                         <c:set var="anexosQuitar" value="${p.fase == 2 and not terminado}" />
                         <%@ include file="/WEB-INF/jspf/propuesta-versiones.jspf" %>
+                        <c:set var="idProyectoEvaluacion" value="${p.id}" />
+                        <c:set var="evaluacionConEvaluador" value="false" />
+                        <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
 
                         <c:if test="${p.fase == 2 and not terminado}">
                             <form class="mt-3" method="post" action="${ctx}/estudiante/anexo-guardar.jsp" enctype="multipart/form-data">
@@ -261,6 +279,55 @@
                         </c:if>
                     </c:otherwise>
                 </c:choose>
+            </div>
+        </c:if>
+
+        <%-- Informe final (FDC-125): desde que el comité aprueba el FDC-124 (RF20, RF31) --%>
+        <c:if test="${not empty p.fecha_aprobacion_124 and not esSeminario}">
+            <div class="app-tarjeta mb-4 app-formulario">
+                <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
+                <dl class="app-pares">
+                    <div><dt>Propuesta aprobada</dt><dd><fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></dd></div>
+                    <div><dt>Se entrega desde</dt><dd><fmt:formatDate value="${p.informe_desde}" pattern="dd/MM/yyyy" /></dd></div>
+                    <div><dt>Fecha límite</dt><dd><fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /></dd></div>
+                </dl>
+                <c:choose>
+                    <c:when test="${p.fase == 4 and not terminado}">
+                        <p class="text-secondary mt-3">
+                            Desarrolla tu trabajo con tu director y diligencia el FDC-125 en Word (.doc o .docx, hasta 15 MB); cada archivo que subes queda como una versión nueva.
+                            Lo envías a tu director desde el día 90 y hasta el día 180 después de la aprobación de la propuesta.
+                        </p>
+                        <ul class="app-lista mb-3">
+                            <li><span class="app-lista-dato">Pasaron 90 días desde la aprobación</span><span class="app-requisito ${p.informe_abierto == 1 ? 'cumple' : ''}">${p.informe_abierto == 1 ? 'Listo' : 'Pendiente'}</span></li>
+                            <li><span class="app-lista-dato">Tu director registró al menos 2 seguimientos</span><span class="app-requisito ${p.seguimientos >= 2 ? 'cumple' : ''}">${p.seguimientos >= 2 ? 'Listo' : 'Pendiente'}</span></li>
+                            <li><span class="app-lista-dato">Subiste el FDC-125</span><span class="app-requisito ${empty p.version_informe ? '' : 'cumple'}">${empty p.version_informe ? 'Pendiente' : 'Listo'}</span></li>
+                        </ul>
+                        <c:if test="${p.informe_vencido == 1}">
+                            <div class="alert alert-warning app-aviso" role="status">Se venció el plazo para entregar el informe final. Habla con el comité sobre una prórroga.</div>
+                        </c:if>
+                    </c:when>
+                    <c:when test="${p.fase >= 5}">
+                        <p class="text-secondary mt-3">Enviaste la versión <c:out value="${p.version_informe}" /> del informe final a tu director (fase 5, Informe II).</p>
+                    </c:when>
+                </c:choose>
+                <c:set var="idProyectoInforme" value="${p.id}" />
+                <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
+                <c:if test="${p.fase == 4 and not terminado}">
+                    <div class="row g-3 align-items-end mt-1">
+                        <form class="col-lg-8" method="post" action="${ctx}/estudiante/informe-guardar.jsp" enctype="multipart/form-data">
+                            <label class="form-label" for="informe">${empty p.version_informe ? 'FDC-125 (Word) *' : 'Subir una versión nueva (Word)'}</label>
+                            <input class="form-control" type="file" id="informe" name="informe" required
+                                   accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                            <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Subir versión</button>
+                        </form>
+                        <c:if test="${not empty p.version_informe and p.informe_abierto == 1 and p.seguimientos >= 2 and p.informe_vencido != 1}">
+                            <form class="col-lg-4 text-lg-end" method="post" action="${ctx}/estudiante/informe-enviar.jsp"
+                                  onsubmit="return confirm('¿Enviar la versión ${p.version_informe} del informe final a tu director?');">
+                                <button type="submit" class="btn btn-primary rounded-pill app-boton">Enviar versión <c:out value="${p.version_informe}" /> al director</button>
+                            </form>
+                        </c:if>
+                    </div>
+                </c:if>
             </div>
         </c:if>
 
@@ -406,7 +473,7 @@
                             <c:when test="${not empty ex and ex.estado == 'Pendiente'}">
                                 <p class="mb-0">Pediste la exoneración con <c:out value="${ex.puntaje}" /> puntos. El comité está verificando tu certificado.</p>
                             </c:when>
-                            <c:when test="${terminado or p.informes > 0}">
+                            <c:when test="${terminado or p.fase >= 5}">
                                 <p class="mb-0">La exoneración se pide antes de entregar el informe final.</p>
                             </c:when>
                             <c:otherwise>

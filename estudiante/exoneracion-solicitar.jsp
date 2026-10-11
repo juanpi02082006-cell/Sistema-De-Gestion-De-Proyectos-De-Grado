@@ -3,7 +3,7 @@
      (decisión del equipo, 2026-10-10). Reglas:
        - solo nivel tecnológico (ingeniería y demás universitarios presentan Saber Pro);
        - proyecto vigente que no esté terminado, y sin el informe final (FDC-125)
-         entregado: se puede pedir en cualquier fase hasta entonces;
+         entregado al director (fase 5): se puede pedir en cualquier fase hasta entonces;
        - puntaje entero de 120 a 300 (los estímulos empiezan en 120);
        - una sola solicitud pendiente; quien ya está exonerado o renunció no pide otra
          (la renuncia no tiene vuelta atrás). --%>
@@ -14,7 +14,7 @@
 
 <sql:query var="consulta">
     SELECT p.id, p.estado, p.titulo, f.id AS fase_id, u.nivel_id, pe.exonerado, pe.renuncia_exoneracion,
-           (SELECT COUNT(*) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS informes,
+           (f.orden >= 5) AS informes,
            (SELECT COUNT(*) FROM exoneraciones x WHERE x.proyecto_id = p.id AND x.estudiante_id = pe.estudiante_id AND x.estado = 'Pendiente') AS pendientes
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id

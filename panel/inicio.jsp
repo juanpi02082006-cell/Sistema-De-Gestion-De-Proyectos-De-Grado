@@ -19,6 +19,25 @@
              + (SELECT COUNT(*) FROM exoneraciones WHERE estado = 'Pendiente') AS total
     </sql:query>
     <sql:query var="pqrsPendientes">SELECT COUNT(*) AS total FROM pqrs WHERE estado = 'Pendiente'</sql:query>
+    <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
+    <%-- Propuestas con el concepto del evaluador, esperando la decisión del comité (RF14) --%>
+    <sql:query var="propuestasPorDecidir">
+        SELECT COUNT(*) AS total FROM (
+            SELECT ${sqlUltimaRevision} AS ultima FROM proyectos p JOIN fases f ON f.id = p.fase_id
+            WHERE f.orden = 4 AND p.estado NOT IN ('Finalizado', 'Cancelado')
+        ) t WHERE ultima LIKE 'Evaluador:%' AND ultima <> 'Evaluador:Devuelto'
+    </sql:query>
+</c:if>
+<c:if test="${rol == 4}">
+    <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
+    <%-- Propuestas que el director ya le envió (fase 4) --%>
+    <sql:query var="porEvaluar">
+        SELECT COUNT(*) AS total FROM (
+            SELECT ${sqlUltimaRevision} AS ultima FROM proyectos p JOIN fases f ON f.id = p.fase_id
+            WHERE f.orden = 4 AND p.evaluador_id = ? AND p.estado NOT IN ('Finalizado', 'Cancelado')
+        ) t WHERE ultima = 'Director:Aprobado'
+        <sql:param value="${sessionScope.usuario.id}" />
+    </sql:query>
 </c:if>
 <c:if test="${rol == 3 or rol == 4}">
     <sql:query var="misIdeas">
@@ -80,6 +99,13 @@
             </a>
         </div>
         <div class="col-md-6 col-xl-3">
+            <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=propuestas">
+                <span class="app-acceso-numero"><c:out value="${propuestasPorDecidir.rows[0].total}" /></span>
+                <span class="app-acceso-titulo">Propuestas por decidir</span>
+                <span class="app-acceso-texto">Propuestas con el concepto del evaluador: falta la decisión del comité.</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
             <a class="app-acceso" href="${ctx}/admin/pqrs.jsp">
                 <span class="app-acceso-numero"><c:out value="${pqrsPendientes.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">PQR pendientes</span>
@@ -118,8 +144,17 @@
 </c:if>
 
 <c:if test="${rol == 3 or rol == 4}">
-    <c:set var="columnaDocente" value="${rol == 3 ? 'col-md-6 col-xl-4' : 'col-md-6'}" />
+    <c:set var="columnaDocente" value="col-md-6 col-xl-4" />
     <div class="row g-4">
+        <c:if test="${rol == 4}">
+            <div class="${columnaDocente}">
+                <a class="app-acceso" href="${ctx}/evaluador/proyectos.jsp">
+                    <span class="app-acceso-numero"><c:out value="${porEvaluar.rows[0].total}" /></span>
+                    <span class="app-acceso-titulo">Propuestas por evaluar</span>
+                    <span class="app-acceso-texto">Las propuestas que te envió el director, para evaluarlas con la rejilla del F-DC-124.</span>
+                </a>
+            </div>
+        </c:if>
         <c:if test="${rol == 3}">
             <div class="${columnaDocente}">
                 <a class="app-acceso" href="${ctx}/director/proyectos.jsp">
