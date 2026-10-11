@@ -8,6 +8,8 @@
          anterior (RF30); al vencer, el proyecto se cancela (cierres.jspf);
        - plazo del director para revisar la propuesta, al vencer (RF21);
        - plazo del evaluador para evaluarla (3 días hábiles), al vencer (RF21);
+       - informe final (fase 5): plazo del director para revisarlo y del evaluador para
+         evaluarlo (5 días hábiles cada uno), al vencer (RF21);
        - límite del informe final (180 días desde la aprobación del FDC-124) a 30, 10 y
          5 días, para los estudiantes y el director de los proyectos en la fase 4 (RF5). --%>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
@@ -87,6 +89,25 @@
          AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')
     WHERE p.evaluador_id = ? AND p.estado NOT IN ('Finalizado', 'Cancelado')
       AND e.fecha_limite_revision < CURDATE() AND ${sqlUltimaRevision} = 'Director:Aprobado'
+    <sql:param value="${idAlerta}" />
+</sql:update>
+<%-- Informe final (fase 5): plazo del director para revisarlo y del evaluador para evaluarlo, vencidos --%>
+<sql:update>
+    INSERT IGNORE INTO avisos (usuario_id, proyecto_id, mensaje, enlace, clave)
+    SELECT CASE WHEN ${sqlUltimaRevisionInforme} = 'Director:Aprobado' THEN p.evaluador_id ELSE p.director_id END, p.id,
+           CONCAT('Se venció el plazo para ', CASE WHEN ${sqlUltimaRevisionInforme} = 'Director:Aprobado' THEN 'evaluar' ELSE 'revisar' END,
+                  ' el informe final de «', LEFT(p.titulo, 80), '» (', DATE_FORMAT(e.fecha_limite_revision, '%d/%m/%Y'), ').'),
+           CASE WHEN ${sqlUltimaRevisionInforme} = 'Director:Aprobado' THEN CONCAT('/evaluador/proyecto.jsp?id=', p.id)
+                ELSE CONCAT('/director/proyecto.jsp?id=', p.id) END,
+           CONCAT('informe-e', e.id, '-', e.fecha_limite_revision)
+    FROM proyectos p
+    JOIN fases f ON f.id = p.fase_id AND f.orden = 5
+    JOIN entregas e ON e.proyecto_id = p.id AND e.tipo = 'FDC-125'
+         AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-125')
+    WHERE p.estado NOT IN ('Finalizado', 'Cancelado') AND e.fecha_limite_revision < CURDATE()
+      AND ((COALESCE(${sqlUltimaRevisionInforme}, 'Comité:Devuelto') = 'Comité:Devuelto' AND p.director_id = ?)
+           OR (${sqlUltimaRevisionInforme} = 'Director:Aprobado' AND p.evaluador_id = ?))
+    <sql:param value="${idAlerta}" />
     <sql:param value="${idAlerta}" />
 </sql:update>
 <%-- Límite del informe final a 30, 10 y 5 días: estudiantes y director --%>

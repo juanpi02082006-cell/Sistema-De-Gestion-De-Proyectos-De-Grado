@@ -58,6 +58,12 @@
             <c:when test="${param.ok == 'propuesta-devolver-comite'}">La propuesta se devolvió al director: el proyecto volvió a la fase 3.</c:when>
             <c:when test="${param.ok == 'seguimiento-registrado'}">El seguimiento quedó registrado.</c:when>
             <c:when test="${param.ok == 'informe-subido'}">La versión del FDC-125 se subió correctamente.</c:when>
+            <c:when test="${param.ok == 'informe-aprobado-director'}">Aprobaste el informe final y lo enviaste al evaluador y al comité.</c:when>
+            <c:when test="${param.ok == 'informe-devuelto-director'}">Devolviste el informe al estudiante con tus observaciones: el proyecto volvió a la fase 4.</c:when>
+            <c:when test="${param.ok == 'informe-aprobar-comite'}">El informe final quedó aprobado: el proyecto pasó a la fase final (sustentación).</c:when>
+            <c:when test="${param.ok == 'informe-aplazar-comite'}">El informe final quedó aplazado: vuelve al estudiante para las correcciones (fase 4).</c:when>
+            <c:when test="${param.ok == 'informe-no-aprobar-comite'}">El informe final no se aprobó: vuelve al estudiante para corregirlo (fase 4).</c:when>
+            <c:when test="${param.ok == 'informe-devolver-comite'}">El informe se devolvió al director.</c:when>
             <c:when test="${param.ok == 'informe-enviado'}">Enviaste el informe final a tu director: el proyecto pasó a la fase 5 (Informe II).</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
@@ -146,6 +152,10 @@
             <c:when test="${param.error == 'informe-antes-de-90'}">El informe final se envía desde el día 90 después de la aprobación de la propuesta.</c:when>
             <c:when test="${param.error == 'informe-vencido'}">Se venció el plazo para entregar el informe final. Habla con el comité sobre una prórroga.</c:when>
             <c:when test="${param.error == 'faltan-seguimientos'}">Tu director debe registrar al menos 2 seguimientos antes de que envíes el informe final.</c:when>
+            <c:when test="${param.error == 'informe-no-revisable'}">Ese informe no está esperando tu revisión: ya lo revisaste o el proyecto no está en la fase 5.</c:when>
+            <c:when test="${param.error == 'informe-ya-revisado'}">La última versión del informe ya se revisó: sube una versión corregida antes de enviarla otra vez.</c:when>
+            <c:when test="${param.error == 'plazo-correccion-invalido'}">Para aplazar el informe, indica el plazo para las correcciones: una fecha después de hoy y antes de la fecha límite del proyecto.</c:when>
+            <c:when test="${param.error == 'plazo-correccion-vencido'}">Se venció el plazo que dio el evaluador para corregir el informe. Habla con el comité.</c:when>
             <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
             <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
             <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>

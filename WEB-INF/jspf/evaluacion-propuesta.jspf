@@ -1,45 +1,51 @@
-<%-- La última evaluación enviada de la propuesta (RF23) y la decisión del comité con su
-     acta (RF14). Antes de incluirlo, definir idProyectoEvaluacion; con
-     evaluacionConEvaluador = true se muestra el nombre del evaluador (solo para el
-     comité: el estudiante y el director ven el concepto y las observaciones, pero el
-     estudiante nunca sabe quién es su evaluador, RF27). La rejilla va plegada, con la
-     respuesta de cada indicador. No muestra nada si todavía no hay evaluación enviada. --%>
+<%-- La última evaluación enviada (RF23) y la última decisión del comité con su acta
+     (RF14), de la propuesta (FDC-124, rejilla del F-DC-124) o, con evaluacionInforme =
+     true, del informe final (FDC-125, rejilla del F-DC-129, con N/A). Antes de
+     incluirlo, definir idProyectoEvaluacion; con evaluacionConEvaluador = true se
+     muestra el nombre del evaluador (solo para el comité: el estudiante y el director ven
+     el concepto y las observaciones, pero el estudiante nunca sabe quién es su
+     evaluador, RF27). La rejilla va plegada, con la respuesta de cada indicador. No
+     muestra nada si todavía no hay evaluación enviada. --%>
+<c:set var="tipoEvaluado" value="${evaluacionInforme ? 'FDC-125' : 'FDC-124'}" />
 <sql:query var="evaluacionPropuesta">
-    SELECT r.id, r.decision, r.observacion, r.revisado_en, e.version, u.nombre AS evaluador,
-           (SELECT COUNT(*) FROM revision_indicadores ri WHERE ri.revision_id = r.id AND ri.cumple = 'Sí') AS en_si,
-           (SELECT COUNT(*) FROM revision_indicadores ri WHERE ri.revision_id = r.id) AS indicadores
+    SELECT r.id, r.decision, r.observacion, r.plazo_correccion, r.revisado_en, e.version, u.nombre AS evaluador,
+           (SELECT COUNT(*) FROM revision_indicadores x WHERE x.revision_id = r.id AND x.cumple = 'Sí') AS en_si,
+           (SELECT COUNT(*) FROM revision_indicadores x WHERE x.revision_id = r.id AND (x.cumple IS NULL OR x.cumple <> 'N/A')) AS indicadores
     FROM revisiones r
     JOIN entregas e ON e.id = r.entrega_id
     JOIN usuarios u ON u.id = r.revisor_id
-    WHERE e.proyecto_id = ? AND e.tipo = 'FDC-124' AND r.rol = 'Evaluador' AND r.estado = 'Enviada' AND r.decision <> 'Devuelto'
+    WHERE e.proyecto_id = ? AND e.tipo = ? AND r.rol = 'Evaluador' AND r.estado = 'Enviada' AND r.decision <> 'Devuelto'
     ORDER BY r.id DESC LIMIT 1
     <sql:param value="${idProyectoEvaluacion}" />
+    <sql:param value="${tipoEvaluado}" />
 </sql:query>
 <sql:query var="decisionComite">
-    SELECT r.decision, r.observacion, r.revisado_en, e.version,
-           (SELECT a.numero FROM actas a WHERE a.proyecto_id = e.proyecto_id ORDER BY a.id DESC LIMIT 1) AS acta,
-           (SELECT a.fecha FROM actas a WHERE a.proyecto_id = e.proyecto_id ORDER BY a.id DESC LIMIT 1) AS fecha_acta
-    FROM revisiones r JOIN entregas e ON e.id = r.entrega_id
-    WHERE e.proyecto_id = ? AND e.tipo = 'FDC-124' AND r.rol = 'Comité' AND r.estado = 'Enviada'
+    SELECT r.decision, r.observacion, r.revisado_en, e.version, a.numero AS acta, a.fecha AS fecha_acta
+    FROM revisiones r
+    JOIN entregas e ON e.id = r.entrega_id
+    LEFT JOIN actas a ON a.revision_id = r.id
+    WHERE e.proyecto_id = ? AND e.tipo = ? AND r.rol = 'Comité' AND r.estado = 'Enviada'
     ORDER BY r.id DESC LIMIT 1
     <sql:param value="${idProyectoEvaluacion}" />
+    <sql:param value="${tipoEvaluado}" />
 </sql:query>
 <c:if test="${evaluacionPropuesta.rowCount > 0}">
     <c:set var="evProp" value="${evaluacionPropuesta.rows[0]}" />
-    <h3 class="h6 fw-bold mt-4 mb-2">Evaluación de la versión <c:out value="${evProp.version}" /> (rejilla del F-DC-124)</h3>
+    <h3 class="h6 fw-bold mt-4 mb-2">Evaluación de la versión <c:out value="${evProp.version}" /> (rejilla del ${evaluacionInforme ? 'F-DC-129' : 'F-DC-124'})</h3>
     <dl class="app-pares">
         <div><dt>Concepto del evaluador</dt><dd><c:out value="${evProp.decision}" /></dd></div>
         <div><dt>Fecha</dt><dd><fmt:formatDate value="${evProp.revisado_en}" pattern="dd/MM/yyyy" /></dd></div>
         <c:if test="${evaluacionConEvaluador}"><div><dt>Evaluador</dt><dd><c:out value="${evProp.evaluador}" /></dd></div></c:if>
-        <div><dt>Indicadores que cumplen</dt><dd><c:out value="${evProp.en_si}" /> de <c:out value="${evProp.indicadores}" /></dd></div>
+        <div><dt>Indicadores que cumplen</dt><dd><c:out value="${evProp.en_si}" /> de <c:out value="${evProp.indicadores}" />${evaluacionInforme ? ' (sin los N/A)' : ''}</dd></div>
+        <c:if test="${not empty evProp.plazo_correccion}"><div><dt>Plazo para las correcciones</dt><dd><fmt:formatDate value="${evProp.plazo_correccion}" pattern="dd/MM/yyyy" /></dd></div></c:if>
     </dl>
     <p class="app-observacion mt-3"><strong>Observaciones generales:</strong> <c:out value="${evProp.observacion}" /></p>
     <sql:query var="respuestasRejilla">
-        SELECT c.nombre AS criterio, i.pregunta, ri.cumple, ri.observacion
-        FROM revision_indicadores ri
-        JOIN indicadores_rejilla i ON i.id = ri.indicador_id
+        SELECT c.nombre AS criterio, i.pregunta, x.cumple, x.observacion
+        FROM revision_indicadores x
+        JOIN indicadores_rejilla i ON i.id = x.indicador_id
         JOIN criterios_rejilla c ON c.id = i.criterio_id
-        WHERE ri.revision_id = ?
+        WHERE x.revision_id = ?
         ORDER BY c.orden, i.orden
         <sql:param value="${evProp.id}" />
     </sql:query>
@@ -66,8 +72,8 @@
     <c:set var="decComite" value="${decisionComite.rows[0]}" />
     <h3 class="h6 fw-bold mt-4 mb-2">Decisión del comité sobre la versión <c:out value="${decComite.version}" /></h3>
     <dl class="app-pares">
-        <div><dt>Decisión</dt><dd><c:out value="${decComite.decision == 'Devuelto' ? 'Devuelta al director' : dc.decision}" /></dd></div>
-        <div><dt>Acta</dt><dd><c:choose><c:when test="${not empty dc.acta}">N.º <c:out value="${decComite.acta}" /> del <fmt:formatDate value="${decComite.fecha_acta}" pattern="dd/MM/yyyy" /></c:when><c:otherwise>Sin acta</c:otherwise></c:choose></dd></div>
+        <div><dt>Decisión</dt><dd><c:out value="${decComite.decision == 'Devuelto' ? 'Devuelto al director' : decComite.decision}" /></dd></div>
+        <div><dt>Acta</dt><dd><c:choose><c:when test="${not empty decComite.acta}">N.º <c:out value="${decComite.acta}" /> del <fmt:formatDate value="${decComite.fecha_acta}" pattern="dd/MM/yyyy" /></c:when><c:otherwise>Sin acta</c:otherwise></c:choose></dd></div>
     </dl>
     <p class="app-observacion mt-3"><strong>Observación del comité:</strong> <c:out value="${decComite.observacion}" /></p>
 </c:if>

@@ -1,0 +1,91 @@
+<%-- Formulario de la rejilla del evaluador (RF23), con lo que tenga su borrador. Antes de
+     incluirlo, definir p (el proyecto, con id, modalidad_id y fecha_limite),
+     rejillaEntrega (id de la versión que evalúa) y rejillaInforme: false para la
+     propuesta (F-DC-124: solo los criterios de la modalidad, Sí o No) y true para el
+     informe final (F-DC-129: todos los criterios, Sí, No o N/A, y el plazo para las
+     correcciones si el concepto es Aplazado). Lo guarda evaluador/evaluacion-guardar.jsp. --%>
+<sql:query var="borrador">
+    SELECT id, decision, observacion, plazo_correccion FROM revisiones
+    WHERE entrega_id = ? AND revisor_id = ? AND rol = 'Evaluador' AND estado = 'Borrador'
+    ORDER BY id DESC LIMIT 1
+    <sql:param value="${rejillaEntrega}" />
+    <sql:param value="${sessionScope.usuario.id}" />
+</sql:query>
+<c:set var="idBorrador" value="${borrador.rowCount > 0 ? borrador.rows[0].id : 0}" />
+<sql:query var="indicadores">
+    SELECT c.nombre AS criterio, i.id, i.pregunta,
+           (SELECT x.cumple FROM revision_indicadores x WHERE x.revision_id = ? AND x.indicador_id = i.id) AS cumple,
+           (SELECT x.observacion FROM revision_indicadores x WHERE x.revision_id = ? AND x.indicador_id = i.id) AS observacion
+    FROM criterios_rejilla c
+    JOIN criterio_modalidades cm ON cm.criterio_id = c.id AND cm.modalidad_id = ?
+    JOIN indicadores_rejilla i ON i.criterio_id = c.id
+    WHERE c.formato = ?
+    ORDER BY c.orden, i.orden
+    <sql:param value="${idBorrador}" />
+    <sql:param value="${idBorrador}" />
+    <sql:param value="${p.modalidad_id}" />
+    <sql:param value="${rejillaInforme ? 'FDC-129' : 'FDC-124'}" />
+</sql:query>
+<form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/evaluador/evaluacion-guardar.jsp">
+    <input type="hidden" name="id" value="${p.id}">
+    <input type="hidden" name="documento" value="${rejillaInforme ? 'informe' : 'propuesta'}">
+    <h2 class="app-tarjeta-titulo">Rejilla de evaluación (${rejillaInforme ? 'F-DC-129, informe final' : 'F-DC-124, propuesta'})</h2>
+    <p class="text-secondary">
+        <c:choose>
+            <c:when test="${rejillaInforme}">Marca si cumple cada indicador; si no aplica a la modalidad, marca N/A. Para dar el concepto "Aprobado" deben cumplirse todos los que aplican. Si lo aplazas, indica el plazo máximo para las correcciones.</c:when>
+            <c:otherwise>Marca si cumple cada indicador. Para dar el concepto "Aprobado" deben cumplirse todos.<c:if test="${p.modalidad_id == 3 or p.modalidad_id == 4}"> En esta modalidad no se evalúa el estado del arte.</c:if></c:otherwise>
+        </c:choose>
+        Puedes guardar en borrador y seguir después; al enviarla ya no se puede cambiar y pasa al comité, que da la decisión final.
+    </p>
+    <c:if test="${idBorrador != 0}"><div class="alert alert-success app-aviso" role="status">Tienes un borrador guardado de esta evaluación.</div></c:if>
+    <c:set var="criterioAnterior" value="" />
+    <c:forEach var="ind" items="${indicadores.rows}">
+        <c:if test="${ind.criterio != criterioAnterior}">
+            <c:if test="${not empty criterioAnterior}"></ul></c:if>
+            <h3 class="h6 fw-bold mt-4 mb-0"><c:out value="${ind.criterio}" /></h3>
+            <ul class="app-lista app-rejilla">
+        </c:if>
+        <li>
+            <span class="app-rejilla-pregunta" id="pregunta${ind.id}"><c:out value="${ind.pregunta}" /></span>
+            <span class="app-casillas" role="radiogroup" aria-labelledby="pregunta${ind.id}">
+                <label class="app-casilla"><input type="radio" name="r${ind.id}" value="si" ${ind.cumple == 'Sí' ? 'checked' : ''}><span>Sí</span></label>
+                <label class="app-casilla"><input type="radio" name="r${ind.id}" value="no" ${ind.cumple == 'No' ? 'checked' : ''}><span>No</span></label>
+                <c:if test="${rejillaInforme}"><label class="app-casilla"><input type="radio" name="r${ind.id}" value="na" ${ind.cumple == 'N/A' ? 'checked' : ''}><span>N/A</span></label></c:if>
+            </span>
+            <input class="form-control form-control-sm app-rejilla-observacion" type="text" name="o${ind.id}" maxlength="500"
+                   value="${fn:escapeXml(ind.observacion)}" placeholder="Observación (opcional)" aria-label="Observación del indicador">
+        </li>
+        <c:set var="criterioAnterior" value="${ind.criterio}" />
+    </c:forEach>
+    <c:if test="${not empty criterioAnterior}"></ul></c:if>
+
+    <div class="row g-3 mt-2">
+        <div class="col-md-4">
+            <label class="form-label" for="concepto">Concepto</label>
+            <c:set var="conceptoBorrador" value="${idBorrador != 0 ? borrador.rows[0].decision : ''}" />
+            <select class="form-select" id="concepto" name="concepto">
+                <option value="">Escoge el concepto</option>
+                <c:forEach var="co" items="Aprobado,Aplazado,No aprobado">
+                    <option value="${co}" ${co == conceptoBorrador ? 'selected' : ''}>${co}</option>
+                </c:forEach>
+            </select>
+        </div>
+        <c:if test="${rejillaInforme}">
+            <div class="col-md-4">
+                <label class="form-label" for="plazo">Plazo para las correcciones (si lo aplazas)</label>
+                <input class="form-control" type="date" id="plazo" name="plazo"
+                       value="<c:if test='${idBorrador != 0}'><fmt:formatDate value='${borrador.rows[0].plazo_correccion}' pattern='yyyy-MM-dd' /></c:if>"
+                       <c:if test="${not empty p.fecha_limite}">max="<fmt:formatDate value='${p.fecha_limite}' pattern='yyyy-MM-dd' />"</c:if>>
+            </div>
+        </c:if>
+        <div class="col-12">
+            <label class="form-label" for="observacionGeneral">Observaciones generales (obligatorias para enviar)</label>
+            <textarea class="form-control" id="observacionGeneral" name="observacion"><c:out value="${idBorrador != 0 ? borrador.rows[0].observacion : ''}" /></textarea>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <button type="submit" name="accion" value="borrador" class="btn btn-outline-dark rounded-pill">Guardar borrador</button>
+        <button type="submit" name="accion" value="enviar" class="btn btn-primary rounded-pill app-boton"
+                onclick="return confirm('¿Enviar la evaluación al comité? Ya no podrás cambiarla.');">Enviar evaluación al comité</button>
+    </div>
+</form>

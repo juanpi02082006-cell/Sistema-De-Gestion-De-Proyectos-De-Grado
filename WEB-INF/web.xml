@@ -146,6 +146,19 @@
         <servlet-name>subirInforme</servlet-name>
         <url-pattern>/estudiante/informe-guardar.jsp</url-pattern>
     </servlet-mapping>
+    <!-- La revisión del informe final por el director, con el reporte de Turnitin (PDF) -->
+    <servlet>
+        <servlet-name>revisarInforme</servlet-name>
+        <jsp-file>/director/informe-revisar.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>15728640</max-file-size>
+            <max-request-size>16777216</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>revisarInforme</servlet-name>
+        <url-pattern>/director/informe-revisar.jsp</url-pattern>
+    </servlet-mapping>
 
     <!-- La sesión viaja solo en una cookie (nunca como ;jsessionid=... en la URL) -->
     <session-config>

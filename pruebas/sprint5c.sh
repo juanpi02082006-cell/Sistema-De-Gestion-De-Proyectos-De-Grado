@@ -4,8 +4,11 @@
 # concepto; el comité da la decisión final con su acta (RF14, RF22): aprueba, aplaza,
 # devuelve o no aprueba. Con el FDC-124 aprobado, el director registra seguimientos
 # (RF20) y el estudiante sube el informe final (FDC-125) y lo envía al director desde el
-# día 90 (RF31): el proyecto pasa a la fase 5. También: el estudiante no ve a su
-# evaluador (RF27) y las alertas del evaluador y del informe final (RF5, RNF21).
+# día 90 (RF31): el proyecto pasa a la fase 5. Fase 5: el director revisa el informe y lo
+# envía con Turnitin; el evaluador lo evalúa con la rejilla del F-DC-129 (con N/A y plazo
+# de corrección si lo aplaza); el comité aprueba (fase final), aplaza o no aprueba
+# (vuelve a corrección) o devuelve al director, con acta. También: el estudiante no ve a
+# su evaluador (RF27) y las alertas de los plazos y del informe final (RF5, RNF21).
 # Se corren sobre la base recién importada (usuarios de prueba con la clave 123456).
 B="http://localhost:8080/segundo-parcial"
 T="$(dirname "$0")/tmp/sprint5c"; rm -rf "$T"; mkdir -p "$T"
@@ -108,7 +111,7 @@ aprobarDirector $PA
 PLAZO=$($MYSQL -e "SELECT fecha_limite_revision FROM entregas WHERE proyecto_id=$PA AND tipo='FDC-124' AND version=1")
 [ -n "$PLAZO" ] && [[ "$PLAZO" > "$HOY" ]] && [[ "$PLAZO" < "$(date -d '+8 days' +%F)" ]]; revisar "El evaluador tiene 3 días hábiles ($PLAZO)" $?
 [ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=4 AND mensaje LIKE '%evaluarla%3 d_as h_biles%'")" = "1" ]; revisar "El evaluador recibe el aviso con su plazo" $?
-pedir eva GET /panel/inicio.jsp; contiene "Propuestas por evaluar" && sinError; revisar "El inicio del evaluador muestra lo que tiene por evaluar" $?
+pedir eva GET /panel/inicio.jsp; contiene "Por evaluar" && sinError; revisar "El inicio del evaluador muestra lo que tiene por evaluar" $?
 pedir eva GET /evaluador/proyectos.jsp; contiene ">Evaluar<" && contiene "Por evaluar"; revisar "En su lista la propuesta sale por evaluar" $?
 pedir eva GET "/evaluador/proyecto.jsp?id=$PA"
 [ "$(grep -o 'name="r[0-9]*" value="si"' "$T/cuerpo.html" | wc -l)" = "28" ] && contiene "Estado del arte" && sinError
@@ -152,7 +155,7 @@ revisar "El estudiante ve el concepto, las observaciones y la rejilla, pero no q
 pedir dir GET "/director/proyecto.jsp?id=$PA"; contiene "Concepto del evaluador" && contiene "falta la decisión del comité"; revisar "El director ve el concepto" $?
 pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "Evaluador de Prueba" && contiene "propuesta-decidir.jsp" && sinError; revisar "El comité ve quién evaluó y el formulario de la decisión" $?
 pedir admin GET "/admin/proyectos.jsp?filtro=propuestas"; contiene "Idea DT" && ! contiene "Idea Mono"; revisar "Filtro \"Propuestas por decidir\"" $?
-pedir admin GET /panel/inicio.jsp; contiene "Propuestas por decidir" && sinError; revisar "El inicio del comité cuenta las propuestas por decidir" $?
+pedir admin GET /panel/inicio.jsp; contiene "Propuestas e informes por decidir" && sinError; revisar "El inicio del comité cuenta las propuestas por decidir" $?
 
 echo "== Decisión del comité: Aplazado (vuelve a la fase 2)"
 decidir $PA aplazar "" "$HOY" "Corregir"; [[ "$DESTINO" == *"error=acta-invalida"* ]]; revisar "Sin número de acta: rechazado" $?
@@ -212,10 +215,97 @@ pedir ana POST /estudiante/informe-enviar.jsp
 [[ "$DESTINO" == *"ok=informe-enviado"* ]] && [ "$(fase $PA)" = "5" ]; revisar "Envía el informe al director: fase 5 (Informe II)" $?
 [ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=3 AND mensaje LIKE '%informe final%'")" -ge "1" ]; revisar "El director recibe el aviso" $?
 pedir ana POST /estudiante/informe-guardar.jsp -F "informe=@$T/informe.docx"; [[ "$DESTINO" == *"error=informe-no-aplica"* ]]; revisar "En la fase 5 ya no sube versiones" $?
-pedir dir GET "/director/proyecto.jsp?id=$PA"; contiene "te envió el informe final" && contiene "Resultados listos" && sinError; revisar "El director ve el informe y los seguimientos" $?
+pedir dir GET "/director/proyecto.jsp?id=$PA"; contiene "del informe final para revisarla" && contiene "Resultados listos" && sinError; revisar "El director ve el informe y los seguimientos" $?
 pedir ana GET /estudiante/proyecto.jsp; contiene "La exoneración se pide antes de entregar el informe final" && sinError; revisar "Con el informe entregado ya no se pide la exoneración" $?
 pedir ana GET /estudiante/proyecto.jsp; grep -q "Evaluador de Prueba" "$T/cuerpo.html"; [ $? -ne 0 ]; revisar "El historial del estudiante no nombra al evaluador (RF27)" $?
 pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "Informe final (FDC-125)" && contiene "Resultados listos" && sinError; revisar "El comité ve el informe y los seguimientos" $?
+
+echo "== Fase 5: el director revisa el informe final (RF14, RF21, RF31)"
+revisarInforme() { pedir dir POST /director/informe-revisar.jsp -F "id=$PA" -F "decision=$1" -F "observacion=$2" ${3:+-F "turnitin=@$3"}; }
+ultimaInf() { $MYSQL -e "SELECT CONCAT(r.rol,':',r.decision) FROM revisiones r JOIN entregas e ON e.id=r.entrega_id WHERE e.proyecto_id=$PA AND e.tipo='FDC-125' AND r.estado='Enviada' AND r.rol<>'Codirector' ORDER BY r.id DESC LIMIT 1"; }
+evaluarInforme() { # acción, concepto, observación, plazo, (ARGS de rejilla)
+    pedir eva POST /evaluador/evaluacion-guardar.jsp --data-urlencode "id=$PA" --data-urlencode "documento=informe" --data-urlencode "accion=$1" \
+        --data-urlencode "concepto=$2" --data-urlencode "observacion=$3" --data-urlencode "plazo=$4" "${ARGS[@]}"
+}
+rejillaInforme() { # modo: todos | uno-no | con-na
+    ARGS=(); local n=0
+    for I in $($MYSQL -e "SELECT i.id FROM criterios_rejilla c JOIN indicadores_rejilla i ON i.criterio_id=c.id WHERE c.formato='FDC-129' ORDER BY c.orden, i.orden" | tr -d '\r'); do
+        n=$((n+1))
+        case "$1" in
+            todos) ARGS+=(--data-urlencode "r$I=si") ;;
+            uno-no) if [ $n -eq 1 ]; then ARGS+=(--data-urlencode "r$I=no"); else ARGS+=(--data-urlencode "r$I=si"); fi ;;
+            con-na) if [ $n -ge 39 ]; then ARGS+=(--data-urlencode "r$I=na"); else ARGS+=(--data-urlencode "r$I=si"); fi ;;
+        esac
+    done
+}
+decidirInforme() { pedir admin POST /admin/informe-decidir.jsp --data-urlencode "id=$PA" --data-urlencode "decision=$1" --data-urlencode "acta=$2" --data-urlencode "fecha_acta=$HOY" --data-urlencode "observacion=$3"; }
+subirInforme() { pedir ana POST /estudiante/informe-guardar.jsp -F "informe=@$T/informe.docx"; }
+[ -n "$($MYSQL -e "SELECT fecha_limite_revision FROM entregas WHERE proyecto_id=$PA AND tipo='FDC-125' AND version=1")" ]; revisar "Al enviarlo, el director tiene 5 días hábiles para revisarlo" $?
+pedir dir GET /director/proyectos.jsp; contiene "Informe por revisar" && sinError; revisar "En la lista del director sale el informe por revisar" $?
+pedir dir GET "/director/proyecto.jsp?id=$PA"; contiene "informe-revisar.jsp" && sinError; revisar "El director ve el formulario para revisar el informe" $?
+rejillaInforme todos; evaluarInforme enviar Aprobado "Bien" ""; [[ "$DESTINO" == *"error=evaluacion-no-disponible"* ]]; revisar "El evaluador no evalúa antes que el director" $?
+$MYSQL -e "UPDATE entregas SET fecha_limite_revision='$AYER' WHERE proyecto_id=$PA AND tipo='FDC-125' AND version=1"
+pedir dir GET /panel/inicio.jsp
+[ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=3 AND clave LIKE 'informe-e%'")" = "1" ]; revisar "Alerta al director con el plazo del informe vencido" $?
+pedir admin GET "/admin/proyectos.jsp?filtro=vencidos"; contiene "Plazo del director vencido (informe)"; revisar "El comité ve el plazo del director vencido en el informe" $?
+revisarInforme devolver ""; [[ "$DESTINO" == *"error=observacion-requerida"* ]]; revisar "Devolver sin observación: rechazado" $?
+revisarInforme devolver "Faltan las conclusiones"
+[ "$(fase $PA)" = "4" ] && [ "$(ultimaInf)" = "Director:Devuelto" ]; revisar "El director lo devuelve: vuelve a la fase 4" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "Tu director devolvi" && contiene "Faltan las conclusiones" && ! contiene "informe-enviar.jsp"; revisar "El estudiante ve la devolución, sin el botón de enviar" $?
+pedir ana POST /estudiante/informe-enviar.jsp; [[ "$DESTINO" == *"error=informe-ya-revisado"* ]]; revisar "No puede reenviar la misma versión" $?
+subirInforme; pedir ana POST /estudiante/informe-enviar.jsp; [ "$(fase $PA)" = "5" ]; revisar "Sube la versión 2 y la envía: fase 5" $?
+revisarInforme aprobar "Listo"; [[ "$DESTINO" == *"error=turnitin-requerido"* ]]; revisar "Aprobar sin Turnitin: rechazado (RF31)" $?
+revisarInforme aprobar "Listo para evaluar" "$T/turnitin.pdf"
+[ "$(fase $PA)" = "5" ] && [ "$(ultimaInf)" = "Director:Aprobado" ]; revisar "El director lo aprueba con Turnitin; sigue en la fase 5" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=4 AND mensaje LIKE '%informe final%F-DC-129%5 d_as h_biles%'")" = "1" ]; revisar "El evaluador recibe el aviso con sus 5 días hábiles" $?
+
+echo "== Fase 5: el evaluador evalúa con la rejilla del F-DC-129 (RF23, RF22)"
+pedir eva GET /evaluador/proyectos.jsp; contiene "Informe final por evaluar"; revisar "En la lista del evaluador sale el informe por evaluar" $?
+pedir eva GET "/evaluador/proyecto.jsp?id=$PA"
+[ "$(grep -o 'name="r[0-9]*" value="na"' "$T/cuerpo.html" | wc -l)" = "40" ] && contiene "F-DC-129" && sinError
+revisar "Rejilla del F-DC-129: 40 indicadores con Sí, No y N/A" $?
+rejillaInforme uno-no; evaluarInforme enviar Aplazado "Corregir el formato" ""; [[ "$DESTINO" == *"error=plazo-correccion-invalido"* ]]; revisar "Aplazado sin plazo: rechazado (RF22)" $?
+rejillaInforme uno-no; evaluarInforme enviar Aplazado "Corregir el formato" "$AYER"; [[ "$DESTINO" == *"error=plazo-correccion-invalido"* ]]; revisar "Plazo en el pasado: rechazado" $?
+rejillaInforme uno-no; evaluarInforme enviar Aplazado "Corregir el formato" "$EN180"; [[ "$DESTINO" == *"error=plazo-correccion-invalido"* ]]; revisar "Plazo después de la fecha límite: rechazado" $?
+rejillaInforme uno-no; evaluarInforme borrador Aplazado "Voy" "$EN30"
+[ "$($MYSQL -e "SELECT plazo_correccion FROM revisiones WHERE rol='Evaluador' AND estado='Borrador'")" = "$EN30" ]; revisar "El borrador guarda el plazo" $?
+rejillaInforme uno-no; evaluarInforme enviar Aplazado "Corregir el formato de la portada" "$EN30"
+[ "$(ultimaInf)" = "Evaluador:Aplazado" ]; revisar "Envía el concepto Aplazado con el plazo" $?
+pedir admin GET "/admin/proyectos.jsp?filtro=propuestas"; contiene "Informe por decidir"; revisar "El comité ve el informe por decidir" $?
+pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "informe-decidir.jsp" && contiene "Plazo para las correcciones" && sinError; revisar "El comité ve la evaluación con el plazo y el formulario" $?
+
+echo "== Fase 5: decisiones del comité sobre el informe"
+decidirInforme aplazar 30 "Corregir segun el evaluador"
+[ "$(fase $PA)" = "4" ] && [ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PA")" != "Cancelado" ]; revisar "Aplazado: vuelve a la fase 4" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "El comité aplazó" && contiene "a más tardar el" && ! contiene "Evaluador de Prueba"; revisar "El estudiante ve el aplazamiento y el plazo, sin saber quién evaluó" $?
+subirInforme
+$MYSQL -e "UPDATE revisiones SET plazo_correccion='$AYER' WHERE rol='Evaluador' AND plazo_correccion IS NOT NULL"
+pedir ana POST /estudiante/informe-enviar.jsp; [[ "$DESTINO" == *"error=plazo-correccion-vencido"* ]]; revisar "Vencido el plazo de corrección no se envía" $?
+$MYSQL -e "UPDATE revisiones SET plazo_correccion='$EN30' WHERE rol='Evaluador' AND plazo_correccion IS NOT NULL"
+pedir ana POST /estudiante/informe-enviar.jsp; [ "$(fase $PA)" = "5" ]; revisar "Envía la versión 3 dentro del plazo: fase 5" $?
+revisarInforme aprobar "Corregido" "$T/turnitin.pdf"
+rejillaInforme uno-no; evaluarInforme enviar Aprobado "Bien" ""; [[ "$DESTINO" == *"error=aprobado-con-no"* ]]; revisar "\"Aprobado\" con un indicador en No: rechazado" $?
+rejillaInforme con-na; evaluarInforme enviar Aprobado "Cumple todo lo que aplica" ""
+[ "$(ultimaInf)" = "Evaluador:Aprobado" ]; revisar "Aprobado con N/A en lo que no aplica" $?
+decidirInforme no-aprobar 31 "Similitud alta en el capitulo 2"
+[ "$(fase $PA)" = "4" ] && [ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PA")" != "Cancelado" ]; revisar "No aprobado: vuelve a la fase 4 para corrección, sin cancelar (decisión del equipo)" $?
+subirInforme; pedir ana POST /estudiante/informe-enviar.jsp; revisarInforme aprobar "Parafraseado" "$T/turnitin.pdf"
+rejillaInforme todos; evaluarInforme enviar Aprobado "Bien" ""
+decidirInforme devolver 32 "Falta la firma del director"
+[ "$(fase $PA)" = "5" ] && [ "$(ultimaInf)" = "Comité:Devuelto" ]; revisar "Devuelto: vuelve al director y sigue en la fase 5" $?
+pedir dir GET "/director/proyecto.jsp?id=$PA"; contiene "El comité te devolvió el informe" && contiene "informe-revisar.jsp"; revisar "El director lo revisa otra vez" $?
+revisarInforme aprobar "Firmado" "$T/turnitin.pdf"; rejillaInforme todos; evaluarInforme enviar Aprobado "Bien" ""
+decidirInforme aprobar "" "Ok"; [[ "$DESTINO" == *"error=acta-invalida"* ]]; revisar "Sin acta: rechazado" $?
+decidirInforme aprobar 33 "Informe aprobado"
+[ "$(fase $PA)" = "6" ] && [ "$($MYSQL -e "SELECT version FROM entregas WHERE proyecto_id=$PA AND tipo='FDC-125' AND oficial=1")" = "4" ]
+revisar "Aprobado: fase final y la versión 4 queda como la oficial" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM actas a JOIN revisiones r ON r.id=a.revision_id WHERE a.proyecto_id=$PA AND r.rol LIKE 'Comit_'")" = "$($MYSQL -e "SELECT COUNT(*) FROM actas WHERE proyecto_id=$PA")" ]
+revisar "Cada acta queda ligada a la decisión del comité que respalda" $?
+decidirInforme aprobar 34 "Otra vez"; [[ "$DESTINO" == *"error=decision-no-disponible"* ]]; revisar "No se decide dos veces" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "aprobó tu informe final" && contiene "N.º 15" && contiene "N.º 33" && sinError
+revisar "El estudiante ve el informe aprobado y el acta de cada decisión" $?
+pedir eva GET /evaluador/proyectos.jsp; contiene "Informe final aprobado por el comité"; revisar "El evaluador ve el informe aprobado" $?
+pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "Informe final (FDC-125)" && ! contiene "informe-decidir.jsp" && sinError; revisar "El comité ya no ve el formulario" $?
 
 echo "== Monografía: sin estado del arte; el comité devuelve y luego no aprueba"
 aprobarDirector $PB; [ "$(fase $PB)" = "4" ]; revisar "El director aprueba la monografía" $?

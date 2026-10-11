@@ -1,15 +1,29 @@
-<%-- En qué va la revisión de la propuesta (RF14: director → evaluador → comité). Deja
-     sqlUltimaRevision, una subconsulta para un proyecto con el alias "p": la última
-     revisión enviada sobre la última versión del FDC-124, como "Rol:Decisión" (vacía si
-     nadie la ha revisado). Las observaciones de los codirectores no cuentan: no deciden.
+<%-- En qué va la revisión de la propuesta y del informe final (RF14: director →
+     evaluador → comité). Deja dos subconsultas para un proyecto con el alias "p": la
+     última revisión enviada sobre la última versión, como "Rol:Decisión" (vacía si nadie
+     la ha revisado). Las observaciones de los codirectores no cuentan: no deciden.
+     sqlUltimaRevision, propuesta (FDC-124):
        vacía o "Evaluador:Devuelto" o "Comité:Devuelto"   le toca al director (fase 3)
        "Director:Aprobado"                               le toca al evaluador (fase 4)
        "Evaluador:Aprobado|Aplazado|No aprobado"         le toca al comité (fase 4)
        "Comité:Aprobado"                                 FDC-124 aprobado
-       "Director:Devuelto" o "Comité:Aplazado"           el estudiante sube otra versión (fase 2) --%>
+       "Director:Devuelto" o "Comité:Aplazado"           el estudiante sube otra versión (fase 2)
+     sqlUltimaRevisionInforme, informe final (FDC-125), igual pero en la fase 5:
+       vacía o "Comité:Devuelto"                         le toca al director
+       "Director:Aprobado"                               le toca al evaluador
+       "Evaluador:Aprobado|Aplazado|No aprobado"         le toca al comité
+       "Comité:Aprobado"                                 informe aprobado (fase final)
+       "Director:Devuelto", "Comité:Aplazado" o
+       "Comité:No aprobado"                              el estudiante lo corrige (fase 4) --%>
 <c:set var="sqlUltimaRevision">
     (SELECT CONCAT(ru.rol, ':', ru.decision) FROM entregas eu JOIN revisiones ru ON ru.entrega_id = eu.id
      WHERE eu.proyecto_id = p.id AND eu.tipo = 'FDC-124' AND ru.estado = 'Enviada' AND ru.rol <> 'Codirector'
        AND eu.version = (SELECT MAX(eu2.version) FROM entregas eu2 WHERE eu2.proyecto_id = p.id AND eu2.tipo = 'FDC-124')
      ORDER BY ru.id DESC LIMIT 1)
+</c:set>
+<c:set var="sqlUltimaRevisionInforme">
+    (SELECT CONCAT(rinf.rol, ':', rinf.decision) FROM entregas einf JOIN revisiones rinf ON rinf.entrega_id = einf.id
+     WHERE einf.proyecto_id = p.id AND einf.tipo = 'FDC-125' AND rinf.estado = 'Enviada' AND rinf.rol <> 'Codirector'
+       AND einf.version = (SELECT MAX(einf2.version) FROM entregas einf2 WHERE einf2.proyecto_id = p.id AND einf2.tipo = 'FDC-125')
+     ORDER BY rinf.id DESC LIMIT 1)
 </c:set>

@@ -131,6 +131,9 @@ CALL prueba('PQR de tipo que no existe', "INSERT INTO pqrs (usuario_id, tipo, co
 CALL prueba('PQR vacía', "INSERT INTO pqrs (usuario_id, tipo, comentario) VALUES (5, 'Queja', '  ')", 1);
 CALL prueba('PQR de petición', "INSERT INTO pqrs (id, usuario_id, tipo, comentario) VALUES (1, 5, 'Petición', 'Necesito ayuda')", 0);
 CALL prueba('PQR respondida sin respuesta', "UPDATE pqrs SET estado = 'Respondida', respondida_por = 1, respondida_en = NOW() WHERE id = 1", 1);
+-- Fases 4 y 5 (2026-10-11): acta ligada a la decisión del comité y plazo de corrección del informe
+CALL prueba('v5: Acta ligada a una decisión que no existe', "INSERT INTO actas (proyecto_id, revision_id, numero, fecha, descripcion) VALUES (1, 99999, 1, CURDATE(), 'x')", 1);
+CALL prueba('v5: Informe aplazado con plazo para las correcciones', "INSERT INTO revisiones (entrega_id, revisor_id, rol, estado, decision, observacion, plazo_correccion) VALUES (1, 4, 'Evaluador', 'Enviada', 'Aplazado', 'Corregir el formato', CURDATE() + INTERVAL 10 DAY)", 0);
 
 -- Datos de las rejillas (no son restricciones: se comprueban los conteos)
 INSERT INTO pruebas_tmp.resultados (prueba, esperado, obtenido, estado)

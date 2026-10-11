@@ -1,12 +1,15 @@
 <%-- Mis proyectos (director): los proyectos que dirige o codirige, con su fase y la
-     última versión de la propuesta (RF18, RF19). Los que están en la fase 3 son los
-     que el estudiante ya le envió para revisar. --%>
+     última versión de la propuesta (RF18, RF19). Los que están en la fase 3 (propuesta)
+     o en la 5 sin revisar (informe final) son los que el estudiante ya le envió. --%>
 <%@ include file="/WEB-INF/jspf/solo-director.jspf" %>
+<%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Mis proyectos" />
 <c:set var="seccion" value="dirigidos" />
 
 <sql:query var="proyectos">
-    SELECT p.id, p.titulo, f.orden AS fase, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
+    SELECT * FROM (
+    SELECT p.id, p.titulo, p.estado, f.orden AS fase, ${sqlUltimaRevisionInforme} AS ultima_informe,
+           (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS version_informe, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
            (p.director_id = ?) AS es_director,
            (SELECT GROUP_CONCAT(u.nombre ORDER BY u.nombre SEPARATOR ', ')
             FROM proyecto_estudiantes pe JOIN usuarios u ON u.id = pe.estudiante_id
@@ -17,7 +20,8 @@
     JOIN niveles n ON n.id = p.nivel_id
     LEFT JOIN fases f ON f.id = p.fase_id
     WHERE p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_codirectores pc WHERE pc.proyecto_id = p.id AND pc.docente_id = ?)
-    ORDER BY (f.orden = 3) DESC, f.orden, p.titulo
+    ) t
+    ORDER BY (fase = 3 OR (fase = 5 AND COALESCE(ultima_informe, 'Comité:Devuelto') = 'Comité:Devuelto')) DESC, fase, titulo
     <sql:param value="${sessionScope.usuario.id}" />
     <sql:param value="${sessionScope.usuario.id}" />
     <sql:param value="${sessionScope.usuario.id}" />
@@ -45,12 +49,13 @@
                             <th>Proyecto</th>
                             <th>Estudiantes</th>
                             <th>Fase</th>
-                            <th>Propuesta</th>
+                            <th>Documento</th>
                             <th class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <c:forEach var="p" items="${proyectos.rows}">
+                            <c:set var="informePorRevisar" value="${p.fase == 5 and (empty p.ultima_informe or p.ultima_informe == 'Comité:Devuelto')}" />
                             <tr>
                                 <td>
                                     <span class="fw-semibold"><c:out value="${p.titulo}" /></span>
@@ -64,12 +69,14 @@
                                 <td class="text-nowrap">
                                     <c:choose>
                                         <c:when test="${p.fase == 3}"><span class="app-estado activo">Por revisar · v<c:out value="${p.version_propuesta}" /></span></c:when>
+                                        <c:when test="${informePorRevisar}"><span class="app-estado activo">Informe por revisar · v<c:out value="${p.version_informe}" /></span></c:when>
+                                        <c:when test="${p.fase >= 4 and not empty p.version_informe}">Informe · versión <c:out value="${p.version_informe}" /></c:when>
                                         <c:when test="${not empty p.version_propuesta}">Versión <c:out value="${p.version_propuesta}" /></c:when>
                                         <c:otherwise><span class="app-lista-nota d-inline">Sin versiones</span></c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td class="text-end app-acciones">
-                                    <a class="btn btn-sm ${p.fase == 3 ? 'btn-primary' : 'btn-outline-dark'} rounded-pill" href="${ctx}/director/proyecto.jsp?id=${p.id}">${p.fase == 3 ? 'Revisar' : 'Ver'}</a>
+                                    <a class="btn btn-sm ${p.fase == 3 or informePorRevisar ? 'btn-primary' : 'btn-outline-dark'} rounded-pill" href="${ctx}/director/proyecto.jsp?id=${p.id}">${p.fase == 3 or informePorRevisar ? 'Revisar' : 'Ver'}</a>
                                 </td>
                             </tr>
                         </c:forEach>

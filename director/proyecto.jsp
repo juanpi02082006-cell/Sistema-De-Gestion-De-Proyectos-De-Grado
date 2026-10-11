@@ -22,7 +22,13 @@
             ORDER BY e.version DESC LIMIT 1) AS director_vencido,
            DATEDIFF(pr.fecha_limite_propuestas, CURDATE()) AS dias_semana12,
            ${sqlUltimaRevision} AS ultima, p.fecha_aprobacion_124, p.fecha_limite,
-           p.fecha_aprobacion_124 + INTERVAL 90 DAY AS informe_desde
+           p.fecha_aprobacion_124 + INTERVAL 90 DAY AS informe_desde,
+           ${sqlUltimaRevisionInforme} AS ultima_informe,
+           (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS version_informe,
+           (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125'
+            ORDER BY e.version DESC LIMIT 1) AS limite_informe,
+           (SELECT e.fecha_limite_revision < CURDATE() FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125'
+            ORDER BY e.version DESC LIMIT 1) AS informe_vencido
     FROM proyectos p
     JOIN modalidades m ON m.id = p.modalidad_id
     JOIN niveles n ON n.id = p.nivel_id
@@ -130,6 +136,7 @@
         </c:if>
         <c:set var="idProyectoEvaluacion" value="${p.id}" />
         <c:set var="evaluacionConEvaluador" value="false" />
+        <c:set var="evaluacionInforme" value="false" />
         <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
     </div>
 
@@ -142,9 +149,49 @@
                 <div><dt>Se entrega desde</dt><dd><fmt:formatDate value="${p.informe_desde}" pattern="dd/MM/yyyy" /></dd></div>
                 <div><dt>Fecha límite</dt><dd><fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /></dd></div>
             </dl>
-            <c:if test="${p.fase == 5}"><p class="text-secondary mt-3 mb-0">El estudiante te envió el informe final (fase 5, Informe II).</p></c:if>
+            <c:set var="informeRevisable" value="${p.fase == 5 and (empty p.ultima_informe or p.ultima_informe == 'Comité:Devuelto') and p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
+            <c:choose>
+                <c:when test="${informeRevisable}">
+                    <c:if test="${p.ultima_informe == 'Comité:Devuelto'}"><div class="alert alert-warning app-aviso mt-3" role="status">El comité te devolvió el informe porque le falta algo: revisa su observación abajo.</div></c:if>
+                    <p class="text-secondary mt-3 mb-0">El estudiante te envió la versión <c:out value="${p.version_informe}" /> del informe final para revisarla.
+                        <c:if test="${not empty p.limite_informe}">Tienes hasta el <fmt:formatDate value="${p.limite_informe}" pattern="dd/MM/yyyy" /> (5 días hábiles).</c:if></p>
+                    <c:if test="${p.informe_vencido == 1}"><div class="alert alert-warning app-aviso mt-3" role="status">Se venció el plazo para revisar el informe. No hay aprobación automática: revísalo cuanto antes.</div></c:if>
+                </c:when>
+                <c:when test="${p.fase == 5 and p.ultima_informe == 'Director:Aprobado'}"><p class="text-secondary mt-3 mb-0">Aprobaste el informe y lo enviaste al evaluador y al comité. El evaluador lo está evaluando.</p></c:when>
+                <c:when test="${p.fase == 5}"><p class="text-secondary mt-3 mb-0">El evaluador dio su concepto sobre el informe: falta la decisión del comité.</p></c:when>
+                <c:when test="${p.fase == 6}"><p class="text-secondary mt-3 mb-0">El comité aprobó el informe final: el proyecto está en la fase final (sustentación).</p></c:when>
+            </c:choose>
             <c:set var="idProyectoInforme" value="${p.id}" />
             <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
+            <c:set var="idProyectoEvaluacion" value="${p.id}" />
+            <c:set var="evaluacionConEvaluador" value="false" />
+            <c:set var="evaluacionInforme" value="true" />
+            <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
+            <c:if test="${informeRevisable and p.es_director == 1}">
+                <form class="mt-4" method="post" action="${ctx}/director/informe-revisar.jsp" enctype="multipart/form-data">
+                    <input type="hidden" name="id" value="${p.id}">
+                    <h3 class="h6 fw-bold mb-2">Revisar la versión <c:out value="${p.version_informe}" /> del informe</h3>
+                    <p class="text-secondary">
+                        Deja tus observaciones (obligatorias). Si falta algo, devuélvelo al estudiante: el proyecto vuelve a la fase 4.
+                        Si está listo, pásalo por Turnitin (similitud máxima del 10 %), sube el reporte y envíalo al evaluador y al comité.
+                    </p>
+                    <c:if test="${p.tiene_evaluador != 1}"><div class="alert alert-warning app-aviso" role="status">El proyecto no tiene evaluador: puedes devolver el informe, pero no enviarlo.</div></c:if>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" for="observacionInforme">Observaciones *</label>
+                            <textarea class="form-control" id="observacionInforme" name="observacion" required></textarea>
+                        </div>
+                        <div class="col-lg-7">
+                            <label class="form-label" for="turnitinInforme">Reporte de Turnitin (PDF, solo para aprobar)</label>
+                            <input class="form-control" type="file" id="turnitinInforme" name="turnitin" accept="application/pdf,.pdf">
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button type="submit" name="decision" value="devolver" class="btn btn-outline-dark rounded-pill">Devolver al estudiante</button>
+                        <button type="submit" name="decision" value="aprobar" class="btn btn-primary rounded-pill app-boton text-wrap" ${p.tiene_evaluador == 1 ? '' : 'disabled'}>Aprobar y enviar al evaluador y al comité</button>
+                    </div>
+                </form>
+            </c:if>
             <c:if test="${p.fase == 4 and p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
                 <form class="mt-3" method="post" action="${ctx}/director/seguimiento-registrar.jsp">
                     <input type="hidden" name="id" value="${p.id}">

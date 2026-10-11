@@ -149,10 +149,10 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 
 ## Sprint 5 — Pago, director y propuesta
 
-- **Objetivo:** que el comité revise el pago y asigne el director y el evaluador, y que el proyecto avance por las fases 2 a 4 (propuesta FDC-124, revisión del director, evaluación con la rejilla y decisión del comité) hasta enviar el informe final.
+- **Objetivo:** que el comité revise el pago y asigne el director y el evaluador, y que el proyecto avance por las fases 2 a 5: propuesta (FDC-124) e informe final (FDC-125), cada uno revisado por el director, evaluado con su rejilla y decidido por el comité.
 - **Inicio:** 2026-10-10
 - **Cierre:** por definir
-- **Requerimientos:** hechos hasta ahora: RF9, RF11, RF19, RF20, RF30 y RF32, y parte de RF14, RF18, RF21–RF23, RF26, RF31 y RF43. Lo demás está en la [propuesta](#propuesta-para-los-siguientes-sprints).
+- **Requerimientos:** hechos hasta ahora: RF9, RF11, RF14, RF18–RF23, RF30–RF32 y RF43, y parte de RF26 y RF37. Lo demás está en la [propuesta](#propuesta-para-los-siguientes-sprints).
 
 | Tarea | Estado | Notas |
 | --- | --- | --- |
@@ -185,7 +185,12 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | Decisión del comité con su acta (`admin/propuesta-decidir.jsp`) | Hecho | RF14, RF22, RF34, RF43. Aprobada: versión oficial y 180 días desde la fecha del acta. Aplazada: vuelve a la fase 2. No aprobada: se cancela y la idea vuelve al banco. Devuelta: al director (fase 3). Filtro "Propuestas por decidir" y contador en el inicio. |
 | Seguimientos e informe final (`director/seguimiento-registrar.jsp`, `estudiante/informe-guardar.jsp`, `estudiante/informe-enviar.jsp`) | Hecho | RF20, RF31, RF43. El director registra seguimientos; el estudiante sube el FDC-125 por versiones y lo envía al director desde el día 90 hasta el 180, con al menos 2 seguimientos: pasa a la fase 5. Alertas del límite a 30, 10 y 5 días. |
 | Pruebas de la fase 4 (`pruebas/sprint5c.sh`) | Hecho | 86/86. Siguen pasando: base 95/95, Sprints 2 y 3 63/63, Sprint 4 127/127, Sprint 5 136/136 y `sprint5b.sh` 153/153. |
-| Fase 5: el director revisa el informe y lo envía al evaluador y al comité; rejilla del F-DC-129 (RF22, RF23, RF31) | Pendiente | |
+| Fase 5: el director revisa el informe final (`director/informe-revisar.jsp`) | Hecho | RF14, RF18, RF21, RF31. 5 días hábiles; lo devuelve (fase 4) o lo aprueba con Turnitin y lo envía al evaluador y al comité. |
+| Fase 5: el evaluador evalúa el informe con la rejilla del F-DC-129 (`WEB-INF/jspf/rejilla-formulario.jspf`, `evaluador/evaluacion-guardar.jsp`) | Hecho | RF21, RF22, RF23. 5 días hábiles; Sí, No o N/A; si lo aplaza, indica el plazo para las correcciones. La rejilla de la propuesta y la del informe usan el mismo fragmento. |
+| Fase 5: decisión del comité sobre el informe (`admin/informe-decidir.jsp`) | Hecho | RF14, RF22. Aprobado: versión oficial y fase final. Aplazado o no aprobado: vuelve a la fase 4 para corrección (el aplazado, dentro del plazo del evaluador). Devuelto: al director. Cada acta queda ligada a su decisión (`actas.revision_id`). |
+| Pruebas de la fase 5 (en `pruebas/sprint5c.sh`) | Hecho | `sprint5c.sh` 125/125 (fases 4 y 5); base 97/97; las demás siguen pasando. |
+| Fase final: programar la sustentación y dejar el proyecto "Finalizado" (RF39) | Pendiente | |
+| Prórrogas del informe final (RF38) | Pendiente | |
 
 ## Propuesta para los siguientes sprints
 

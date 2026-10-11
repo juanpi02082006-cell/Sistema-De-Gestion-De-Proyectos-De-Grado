@@ -21,7 +21,12 @@
            (SELECT e.fecha_limite_revision < CURDATE() FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
             ORDER BY e.version DESC LIMIT 1) AS director_vencido,
            ${sqlUltimaRevision} AS ultima, p.fecha_aprobacion_124, p.fecha_limite,
-           p.fecha_aprobacion_124 + INTERVAL 90 DAY AS informe_desde, CURDATE() AS hoy
+           p.fecha_aprobacion_124 + INTERVAL 90 DAY AS informe_desde, CURDATE() AS hoy,
+           ${sqlUltimaRevisionInforme} AS ultima_informe,
+           (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125'
+            ORDER BY e.version DESC LIMIT 1) AS limite_informe,
+           (SELECT e.fecha_limite_revision < CURDATE() FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125'
+            ORDER BY e.version DESC LIMIT 1) AS informe_vencido
     FROM proyectos p
     JOIN modalidades m ON m.id = p.modalidad_id
     JOIN niveles n ON n.id = p.nivel_id
@@ -260,6 +265,7 @@
         </c:if>
         <c:set var="idProyectoEvaluacion" value="${p.id}" />
         <c:set var="evaluacionConEvaluador" value="true" />
+        <c:set var="evaluacionInforme" value="false" />
         <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
     </div>
 
@@ -298,8 +304,19 @@
         </form>
     </c:if>
 
-    <%-- Fase 4 con el FDC-124 aprobado: plazos, seguimientos e informe final (RF20, RF31) --%>
+    <%-- Con el FDC-124 aprobado: plazos, seguimientos e informe final (RF20, RF31); en la
+         fase 5, la evaluación con la rejilla del F-DC-129 y la decisión del comité (RF14) --%>
     <c:if test="${not empty p.fecha_aprobacion_124}">
+        <c:set var="informeAbierto" value="${p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
+        <c:if test="${p.fase == 5 and informeAbierto and not empty p.limite_informe and (empty p.ultima_informe or p.ultima_informe == 'Comité:Devuelto' or p.ultima_informe == 'Director:Aprobado')}">
+            <div class="${p.informe_vencido == 1 ? 'alert alert-warning app-aviso' : 'app-resultado'}" role="status">
+                ${p.ultima_informe == 'Director:Aprobado' ? 'El evaluador' : 'El director'}
+                <c:choose>
+                    <c:when test="${p.informe_vencido == 1}">tenía hasta el <fmt:formatDate value="${p.limite_informe}" pattern="dd/MM/yyyy" /> para ${p.ultima_informe == 'Director:Aprobado' ? 'evaluar' : 'revisar'} el informe final: el plazo se venció. No hay aprobación automática.</c:when>
+                    <c:otherwise>tiene hasta el <fmt:formatDate value="${p.limite_informe}" pattern="dd/MM/yyyy" /> para ${p.ultima_informe == 'Director:Aprobado' ? 'evaluar' : 'revisar'} el informe final (5 días hábiles).</c:otherwise>
+                </c:choose>
+            </div>
+        </c:if>
         <div class="app-tarjeta mb-4">
             <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
             <dl class="app-pares">
@@ -309,7 +326,45 @@
             </dl>
             <c:set var="idProyectoInforme" value="${p.id}" />
             <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
+            <c:set var="idProyectoEvaluacion" value="${p.id}" />
+            <c:set var="evaluacionConEvaluador" value="true" />
+            <c:set var="evaluacionInforme" value="true" />
+            <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
         </div>
+
+        <c:if test="${p.fase == 5 and fn:startsWith(p.ultima_informe, 'Evaluador:') and informeAbierto}">
+            <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/admin/informe-decidir.jsp">
+                <input type="hidden" name="id" value="${p.id}">
+                <h2 class="app-tarjeta-titulo">Decisión del comité sobre el informe final</h2>
+                <p class="text-secondary">
+                    El evaluador ya dio su concepto con la rejilla del F-DC-129. La decisión final es del comité y queda con su acta.
+                    Aprobado, el proyecto pasa a la fase final para programar la sustentación. Aplazado o no aprobado, vuelve al estudiante para corregirlo (fase 4).
+                    Si falta algo, devuélvelo al director.
+                </p>
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <label class="form-label" for="actaInforme">Número del acta *</label>
+                        <input class="form-control" type="number" id="actaInforme" name="acta" min="1" step="1" required>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label" for="fechaActaInforme">Fecha del acta *</label>
+                        <input class="form-control" type="date" id="fechaActaInforme" name="fecha_acta" required
+                               value="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />" max="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="observacionInforme">Observación del comité *</label>
+                        <textarea class="form-control" id="observacionInforme" name="observacion" required></textarea>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button type="submit" name="decision" value="aprobar" class="btn btn-primary rounded-pill app-boton">Aprobar el informe</button>
+                    <button type="submit" name="decision" value="aplazar" class="btn btn-outline-dark rounded-pill">Aplazar</button>
+                    <button type="submit" name="decision" value="devolver" class="btn btn-outline-dark rounded-pill">Devolver al director</button>
+                    <button type="submit" name="decision" value="no-aprobar" class="btn btn-outline-danger rounded-pill"
+                            onclick="return confirm('¿No aprobar el informe? Vuelve al estudiante para corregirlo.');">No aprobar</button>
+                </div>
+            </form>
+        </c:if>
     </c:if>
 </c:if>
 

@@ -93,9 +93,11 @@
         <sql:param value="${decisionGuardada}" />
         <sql:param value="${observacion}" />
     </sql:update>
+    <sql:query var="decisionNueva">SELECT LAST_INSERT_ID() AS id</sql:query>
     <sql:update>
-        INSERT INTO actas (proyecto_id, numero, fecha, descripcion) VALUES (?, ?, STR_TO_DATE(?, '%Y-%m-%d'), ?)
+        INSERT INTO actas (proyecto_id, revision_id, numero, fecha, descripcion) VALUES (?, ?, ?, STR_TO_DATE(?, '%Y-%m-%d'), ?)
         <sql:param value="${p.id}" />
+        <sql:param value="${decisionNueva.rows[0].id}" />
         <sql:param value="${numeroActa}" />
         <sql:param value="${fn:trim(param.fecha_acta)}" />
         <sql:param value="Propuesta (FDC-124, versión ${p.version}): ${decisionGuardada}. ${observacion}" />

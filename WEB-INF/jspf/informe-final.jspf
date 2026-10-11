@@ -1,8 +1,9 @@
 <%-- Informe final en la fase 4, después de que el comité aprueba el FDC-124: los
      seguimientos del director (RF20: al menos 2 antes de entregar el informe) y las
-     versiones del FDC-125 (RF31, RF43), de la más nueva a la más antigua. Antes de
-     incluirlo, definir idProyectoInforme. Deja seguimientosInforme y versionesInforme
-     (las consultas). --%>
+     versiones del FDC-125 (RF31, RF43), de la más nueva a la más antigua, con las
+     observaciones enviadas sobre cada una (de quien revisa solo se muestra el rol,
+     RF27). Antes de incluirlo, definir idProyectoInforme. Deja seguimientosInforme y
+     versionesInforme (las consultas). --%>
 <sql:query var="seguimientosInforme">
     SELECT s.fecha, s.observacion, u.nombre AS director
     FROM seguimientos s JOIN usuarios u ON u.id = s.director_id
@@ -10,9 +11,11 @@
     <sql:param value="${idProyectoInforme}" />
 </sql:query>
 <sql:query var="versionesInforme">
-    SELECT e.id, e.version, e.nombre_archivo, e.subido_en, u.nombre AS subida_por
+    SELECT e.id, e.version, e.oficial, e.nombre_archivo, e.subido_en, u.nombre AS subida_por,
+           r.rol AS rol_revision, r.decision, r.observacion, r.revisado_en
     FROM entregas e JOIN usuarios u ON u.id = e.subido_por
-    WHERE e.proyecto_id = ? AND e.tipo = 'FDC-125' ORDER BY e.version DESC
+    LEFT JOIN revisiones r ON r.entrega_id = e.id AND r.estado = 'Enviada'
+    WHERE e.proyecto_id = ? AND e.tipo = 'FDC-125' ORDER BY e.version DESC, r.id
     <sql:param value="${idProyectoInforme}" />
 </sql:query>
 <h3 class="h6 fw-bold mt-4 mb-2">Seguimientos del director <span class="text-secondary fw-normal">· <c:out value="${seguimientosInforme.rowCount}" /> (mínimo 2 antes de entregar el informe)</span></h3>
@@ -31,14 +34,25 @@
 <c:choose>
     <c:when test="${versionesInforme.rowCount == 0}"><p class="app-vacio mt-0">Todavía no hay versiones del FDC-125.</p></c:when>
     <c:otherwise>
+        <c:set var="idInformeAnterior" value="0" />
         <c:forEach var="vi" items="${versionesInforme.rows}">
-            <div class="app-archivo">
-                <span>
-                    <span class="app-lista-dato">Versión <c:out value="${vi.version}" /> · <c:out value="${vi.nombre_archivo}" /></span>
-                    <span class="app-lista-nota">Subida por <c:out value="${vi.subida_por}" /> el <fmt:formatDate value="${vi.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
-                </span>
-                <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${vi.id}">Descargar</a>
-            </div>
+            <c:if test="${vi.id != idInformeAnterior}">
+                <div class="app-archivo">
+                    <span>
+                        <span class="app-lista-dato">Versión <c:out value="${vi.version}" /> · <c:out value="${vi.nombre_archivo}" /></span>
+                        <span class="app-lista-nota">Subida por <c:out value="${vi.subida_por}" /> el <fmt:formatDate value="${vi.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
+                    </span>
+                    <span class="app-acciones">
+                        <c:if test="${vi.oficial == true}"><span class="app-estado activo">Oficial</span></c:if>
+                        <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${vi.id}">Descargar</a>
+                    </span>
+                </div>
+            </c:if>
+            <c:if test="${not empty vi.rol_revision}">
+                <p class="app-observacion mb-3"><strong><c:out value="${vi.rol_revision}" /><c:if test="${not empty vi.decision}"> · <c:out value="${vi.decision}" /></c:if>:</strong> <c:out value="${vi.observacion}" />
+                    <span class="app-lista-nota"><fmt:formatDate value="${vi.revisado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
+            </c:if>
+            <c:set var="idInformeAnterior" value="${vi.id}" />
         </c:forEach>
     </c:otherwise>
 </c:choose>

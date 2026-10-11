@@ -349,6 +349,7 @@ CREATE TABLE revisiones (
     decision    ENUM('Aprobado', 'Aplazado', 'No aprobado', 'Devuelto') NULL,
     nota        DECIMAL(3,1) NULL COMMENT 'Planes nuevos: el informe final se califica con nota (RF42)',
     observacion TEXT         NULL COMMENT 'Observación general (RF34)',
+    plazo_correccion DATE    NULL COMMENT 'Informe final aplazado: plazo máximo que indica el evaluador para las correcciones (RF22)',
     revisado_en TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     CONSTRAINT fk_revisiones_entrega FOREIGN KEY (entrega_id) REFERENCES entregas (id) ON DELETE CASCADE,
@@ -502,15 +503,18 @@ CREATE TABLE sustentaciones (
     CONSTRAINT chk_sustentaciones_lugar CHECK (TRIM(lugar) <> '')
 ) ENGINE=InnoDB;
 
--- Actas del comité por proyecto (RF16; igual que en la original).
+-- Actas del comité por proyecto (RF16; igual que en la original). revision_id es la
+-- decisión del comité que respalda (RF14: sobre la propuesta o el informe final).
 CREATE TABLE actas (
     id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
     proyecto_id INT UNSIGNED NOT NULL,
+    revision_id INT UNSIGNED NULL COMMENT 'Decisión del comité que respalda el acta (RF14)',
     numero      INT          NOT NULL,
     fecha       DATE         NOT NULL,
     descripcion TEXT         NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT fk_actas_proyecto FOREIGN KEY (proyecto_id) REFERENCES proyectos (id) ON DELETE CASCADE
+    CONSTRAINT fk_actas_proyecto FOREIGN KEY (proyecto_id) REFERENCES proyectos (id) ON DELETE CASCADE,
+    CONSTRAINT fk_actas_revision FOREIGN KEY (revision_id) REFERENCES revisiones (id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- PQR en cualquier fase, por ejemplo cambio de director o evaluador (RNF1). El comité

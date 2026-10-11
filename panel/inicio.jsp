@@ -23,19 +23,22 @@
     <%-- Propuestas con el concepto del evaluador, esperando la decisión del comité (RF14) --%>
     <sql:query var="propuestasPorDecidir">
         SELECT COUNT(*) AS total FROM (
-            SELECT ${sqlUltimaRevision} AS ultima FROM proyectos p JOIN fases f ON f.id = p.fase_id
-            WHERE f.orden = 4 AND p.estado NOT IN ('Finalizado', 'Cancelado')
-        ) t WHERE ultima LIKE 'Evaluador:%' AND ultima <> 'Evaluador:Devuelto'
+            SELECT f.orden AS fase, ${sqlUltimaRevision} AS ultima, ${sqlUltimaRevisionInforme} AS ultima_informe
+            FROM proyectos p JOIN fases f ON f.id = p.fase_id
+            WHERE f.orden IN (4, 5) AND p.estado NOT IN ('Finalizado', 'Cancelado')
+        ) t WHERE (fase = 4 AND ultima LIKE 'Evaluador:%' AND ultima <> 'Evaluador:Devuelto')
+               OR (fase = 5 AND ultima_informe LIKE 'Evaluador:%')
     </sql:query>
 </c:if>
 <c:if test="${rol == 4}">
     <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
-    <%-- Propuestas que el director ya le envió (fase 4) --%>
+    <%-- Propuestas (fase 4) e informes finales (fase 5) que el director ya le envió --%>
     <sql:query var="porEvaluar">
         SELECT COUNT(*) AS total FROM (
-            SELECT ${sqlUltimaRevision} AS ultima FROM proyectos p JOIN fases f ON f.id = p.fase_id
-            WHERE f.orden = 4 AND p.evaluador_id = ? AND p.estado NOT IN ('Finalizado', 'Cancelado')
-        ) t WHERE ultima = 'Director:Aprobado'
+            SELECT f.orden AS fase, ${sqlUltimaRevision} AS ultima, ${sqlUltimaRevisionInforme} AS ultima_informe
+            FROM proyectos p JOIN fases f ON f.id = p.fase_id
+            WHERE f.orden IN (4, 5) AND p.evaluador_id = ? AND p.estado NOT IN ('Finalizado', 'Cancelado')
+        ) t WHERE (fase = 4 AND ultima = 'Director:Aprobado') OR (fase = 5 AND ultima_informe = 'Director:Aprobado')
         <sql:param value="${sessionScope.usuario.id}" />
     </sql:query>
 </c:if>
@@ -46,10 +49,13 @@
     </sql:query>
 </c:if>
 <c:if test="${rol == 3}">
-    <%-- Propuestas que el estudiante ya le envió (fase 3) --%>
+    <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
+    <%-- Propuestas (fase 3) e informes finales (fase 5) que esperan su revisión --%>
     <sql:query var="porRevisar">
         SELECT COUNT(*) AS total FROM proyectos p JOIN fases f ON f.id = p.fase_id
-        WHERE f.orden = 3 AND (p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_codirectores pc WHERE pc.proyecto_id = p.id AND pc.docente_id = ?))
+        WHERE p.estado NOT IN ('Finalizado', 'Cancelado')
+          AND (f.orden = 3 OR (f.orden = 5 AND COALESCE(${sqlUltimaRevisionInforme}, 'Comité:Devuelto') = 'Comité:Devuelto'))
+          AND (p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_codirectores pc WHERE pc.proyecto_id = p.id AND pc.docente_id = ?))
         <sql:param value="${sessionScope.usuario.id}" />
         <sql:param value="${sessionScope.usuario.id}" />
     </sql:query>
@@ -101,8 +107,8 @@
         <div class="col-md-6 col-xl-3">
             <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=propuestas">
                 <span class="app-acceso-numero"><c:out value="${propuestasPorDecidir.rows[0].total}" /></span>
-                <span class="app-acceso-titulo">Propuestas por decidir</span>
-                <span class="app-acceso-texto">Propuestas con el concepto del evaluador: falta la decisión del comité.</span>
+                <span class="app-acceso-titulo">Propuestas e informes por decidir</span>
+                <span class="app-acceso-texto">Ya tienen el concepto del evaluador: falta la decisión del comité.</span>
             </a>
         </div>
         <div class="col-md-6 col-xl-3">
@@ -150,8 +156,8 @@
             <div class="${columnaDocente}">
                 <a class="app-acceso" href="${ctx}/evaluador/proyectos.jsp">
                     <span class="app-acceso-numero"><c:out value="${porEvaluar.rows[0].total}" /></span>
-                    <span class="app-acceso-titulo">Propuestas por evaluar</span>
-                    <span class="app-acceso-texto">Las propuestas que te envió el director, para evaluarlas con la rejilla del F-DC-124.</span>
+                    <span class="app-acceso-titulo">Por evaluar</span>
+                    <span class="app-acceso-texto">Las propuestas y los informes finales que te envió el director, para evaluarlos con su rejilla.</span>
                 </a>
             </div>
         </c:if>
@@ -159,8 +165,8 @@
             <div class="${columnaDocente}">
                 <a class="app-acceso" href="${ctx}/director/proyectos.jsp">
                     <span class="app-acceso-numero"><c:out value="${porRevisar.rows[0].total}" /></span>
-                    <span class="app-acceso-titulo">Propuestas por revisar</span>
-                    <span class="app-acceso-texto">Los proyectos que diriges y las propuestas que te enviaron.</span>
+                    <span class="app-acceso-titulo">Por revisar</span>
+                    <span class="app-acceso-texto">Los proyectos que diriges, y las propuestas y los informes finales que te enviaron.</span>
                 </a>
             </div>
         </c:if>
