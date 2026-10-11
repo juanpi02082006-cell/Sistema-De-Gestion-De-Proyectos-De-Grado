@@ -159,6 +159,19 @@
         <servlet-name>revisarInforme</servlet-name>
         <url-pattern>/director/informe-revisar.jsp</url-pattern>
     </servlet-mapping>
+    <!-- La solicitud de prórroga, con su soporte (PDF) -->
+    <servlet>
+        <servlet-name>pedirProrroga</servlet-name>
+        <jsp-file>/estudiante/prorroga-solicitar.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>15728640</max-file-size>
+            <max-request-size>16777216</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>pedirProrroga</servlet-name>
+        <url-pattern>/estudiante/prorroga-solicitar.jsp</url-pattern>
+    </servlet-mapping>
 
     <!-- La sesión viaja solo en una cookie (nunca como ;jsessionid=... en la URL) -->
     <session-config>

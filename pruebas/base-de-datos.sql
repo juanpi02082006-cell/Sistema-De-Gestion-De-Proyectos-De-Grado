@@ -48,7 +48,7 @@ CALL prueba('Seguimiento sin observación', "INSERT INTO seguimientos (proyecto_
 CALL prueba('Codirector repetido en el mismo proyecto', "INSERT INTO proyecto_codirectores VALUES (1, 6), (1, 6)", 1);
 CALL prueba('Estudiante en un segundo proyecto vigente', "INSERT INTO proyecto_estudiantes (proyecto_id, estudiante_id) VALUES (1, 5), (3, 5)", 1);
 CALL prueba('Renunciar a la exoneración sin estar exonerado', "INSERT INTO proyecto_estudiantes (proyecto_id, estudiante_id, vigente, renuncia_exoneracion) VALUES (3, 6, NULL, 1)", 1);
-CALL prueba('Cuarta prórroga (F-DC-124: hasta 3)', "INSERT INTO prorrogas (proyecto_id, numero, fecha_solicitud, nueva_fecha_limite) VALUES (1, 4, '2026-10-01', '2027-04-01')", 1);
+CALL prueba('Cuarta prórroga (F-DC-124: hasta 3)', "INSERT INTO prorrogas (proyecto_id, numero, fecha_solicitud, nueva_fecha_limite, estado, observacion, decidida_por, decidida_en) VALUES (1, 4, '2026-10-01', '2027-04-01', 'Aprobada', 'Ok', 1, NOW())", 1);
 CALL prueba('Decisión "Aprobado con correcciones" (no está en el F-DC-124)', "INSERT INTO revisiones (entrega_id, revisor_id, rol, decision, observacion) VALUES (1, 4, 'Evaluador', 'Aprobado con correcciones', 'x')", 1);
 
 -- Versión 4: lo que la base debe rechazar
@@ -81,7 +81,7 @@ CALL prueba('Proyecto interdisciplinario con 2 codirectores', "INSERT INTO proye
 CALL prueba('Revisión "Aplazado" con nota', "INSERT INTO revisiones (entrega_id, revisor_id, rol, decision, nota, observacion) VALUES (1, 4, 'Evaluador', 'Aplazado', 4.2, 'Ajustar la metodología')", 0);
 CALL prueba('Devolución del comité (administrador)', "INSERT INTO revisiones (entrega_id, revisor_id, rol, decision, observacion) VALUES (1, 1, 'Comité', 'Devuelto', 'Falta la firma')", 0);
 CALL prueba('Seguimiento del director', "INSERT INTO seguimientos (proyecto_id, director_id, fecha, observacion) VALUES (1, 3, '2026-10-06', 'Avance del capítulo 1')", 0);
-CALL prueba('Prórrogas 1, 2 y 3', "INSERT INTO prorrogas (proyecto_id, numero, fecha_solicitud, nueva_fecha_limite) VALUES (1, 1, '2026-10-01', '2027-04-01'), (1, 2, '2027-03-20', '2027-09-28'), (1, 3, '2027-09-20', '2028-03-26')", 0);
+CALL prueba('Prórrogas 1, 2 y 3', "INSERT INTO prorrogas (proyecto_id, numero, fecha_solicitud, nueva_fecha_limite, estado, observacion, decidida_por, decidida_en) VALUES (1, 1, '2026-10-01', '2027-04-01', 'Aprobada', 'Ok', 1, NOW()), (1, 2, '2027-03-20', '2027-09-28', 'Aprobada', 'Ok', 1, NOW()), (1, 3, '2027-09-20', '2028-03-26', 'Aprobada', 'Ok', 1, NOW())", 0);
 CALL prueba('Proyecto con fecha de notificación de la aprobación', "UPDATE proyectos SET fecha_aprobacion_124 = '2026-10-01', fecha_notificacion = '2026-10-05', fecha_limite = DATE_ADD('2026-10-01', INTERVAL 180 DAY) WHERE id = 1", 0);
 
 -- Versión 4: lo que la base debe aceptar
@@ -133,6 +133,11 @@ CALL prueba('PQR de petición', "INSERT INTO pqrs (id, usuario_id, tipo, comenta
 CALL prueba('PQR respondida sin respuesta', "UPDATE pqrs SET estado = 'Respondida', respondida_por = 1, respondida_en = NOW() WHERE id = 1", 1);
 -- Fases 4 y 5 (2026-10-11): acta ligada a la decisión del comité y plazo de corrección del informe
 CALL prueba('v5: Acta ligada a una decisión que no existe', "INSERT INTO actas (proyecto_id, revision_id, numero, fecha, descripcion) VALUES (1, 99999, 1, CURDATE(), 'x')", 1);
+CALL prueba('v5: Prórroga pendiente con número', "INSERT INTO prorrogas (proyecto_id, numero, fecha_solicitud, nueva_fecha_limite) VALUES (2, 1, CURDATE(), CURDATE() + INTERVAL 180 DAY)", 1);
+CALL prueba('v5: Prórroga aprobada sin número', "INSERT INTO prorrogas (proyecto_id, fecha_solicitud, nueva_fecha_limite, estado, observacion, decidida_por, decidida_en) VALUES (2, CURDATE(), CURDATE() + INTERVAL 180 DAY, 'Aprobada', 'Ok', 1, NOW())", 1);
+CALL prueba('v5: Prórroga rechazada sin observación', "INSERT INTO prorrogas (proyecto_id, fecha_solicitud, nueva_fecha_limite, estado, decidida_por, decidida_en) VALUES (2, CURDATE(), CURDATE() + INTERVAL 180 DAY, 'Rechazada', 1, NOW())", 1);
+CALL prueba('v5: Prórroga con estado que no existe', "INSERT INTO prorrogas (proyecto_id, fecha_solicitud, nueva_fecha_limite, estado) VALUES (2, CURDATE(), CURDATE() + INTERVAL 180 DAY, 'Vencida')", 1);
+CALL prueba('v5: Prórroga pendiente y otra rechazada (sin número, no chocan)', "INSERT INTO prorrogas (proyecto_id, fecha_solicitud, nueva_fecha_limite, estado, observacion, decidida_por, decidida_en) VALUES (2, CURDATE(), CURDATE() + INTERVAL 180 DAY, 'Rechazada', 'Sin soporte', 1, NOW()), (2, CURDATE(), CURDATE() + INTERVAL 180 DAY, 'Pendiente', NULL, NULL, NULL)", 0);
 CALL prueba('v5: Informe aplazado con plazo para las correcciones', "INSERT INTO revisiones (entrega_id, revisor_id, rol, estado, decision, observacion, plazo_correccion) VALUES (1, 4, 'Evaluador', 'Enviada', 'Aplazado', 'Corregir el formato', CURDATE() + INTERVAL 10 DAY)", 0);
 
 -- Datos de las rejillas (no son restricciones: se comprueban los conteos)

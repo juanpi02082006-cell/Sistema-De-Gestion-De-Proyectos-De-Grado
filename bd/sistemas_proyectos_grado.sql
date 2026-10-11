@@ -313,7 +313,7 @@ CREATE TABLE entregas (
     id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
     proyecto_id           INT UNSIGNED NOT NULL,
     fase_id               INT UNSIGNED NULL,
-    tipo                  ENUM('Propuesta', 'FDC-124', 'FDC-125', 'FDC-129', 'Reporte Turnitin', 'Recibo de pago', 'Anexo', 'Evidencia', 'Manual de usuario', 'Código fuente', 'Certificado Saber TyT', 'Formato F-AM-04', 'Documento de identidad') NOT NULL,
+    tipo                  ENUM('Propuesta', 'FDC-124', 'FDC-125', 'FDC-129', 'Reporte Turnitin', 'Recibo de pago', 'Anexo', 'Evidencia', 'Manual de usuario', 'Código fuente', 'Certificado Saber TyT', 'Formato F-AM-04', 'Documento de identidad', 'Soporte de prórroga') NOT NULL,
     version               SMALLINT UNSIGNED NULL COMMENT 'RF43: 1, 2, 3…; NULL si el archivo no se versiona',
     oficial               TINYINT(1)   NULL DEFAULT NULL COMMENT 'RF43: 1 en la versión aprobada; NULL en las demás',
     nombre_archivo        VARCHAR(255) NOT NULL,
@@ -458,19 +458,37 @@ CREATE TABLE seguimientos (
     CONSTRAINT chk_seguimientos_observacion CHECK (TRIM(observacion) <> '')
 ) ENGINE=InnoDB;
 
--- Prórrogas (RF38): máximo 3 por proyecto (F-DC-124), de 180 días cada una.
--- La clave única (proyecto_id, numero) y numero IN (1, 2, 3) impiden una cuarta.
+-- Prórrogas (RF38): máximo 3 por proyecto (F-DC-124), de 180 días cada una. El
+-- estudiante la pide antes del vencimiento con su soporte (el recibo del nuevo pago, o
+-- el aval de la Dirección de Investigaciones en investigación y desarrollo tecnológico)
+-- y el comité la decide. numero (1, 2 o 3) solo se asigna al aprobarla: la clave única
+-- (proyecto_id, numero) y numero IN (1, 2, 3) impiden una cuarta, y las pendientes o
+-- rechazadas (numero NULL) no ocupan número.
 CREATE TABLE prorrogas (
     id                 INT UNSIGNED     NOT NULL AUTO_INCREMENT,
     proyecto_id        INT UNSIGNED     NOT NULL,
-    numero             TINYINT UNSIGNED NOT NULL COMMENT '1, 2 o 3',
+    numero             TINYINT UNSIGNED NULL COMMENT '1, 2 o 3 al aprobarse; NULL si está pendiente o se rechazó',
     fecha_solicitud    DATE             NOT NULL,
-    nueva_fecha_limite DATE             NOT NULL,
+    nueva_fecha_limite DATE             NOT NULL COMMENT 'Fecha límite vigente + 180 días',
     motivo             TEXT             NULL,
+    entrega_id         INT UNSIGNED     NULL COMMENT 'Soporte en PDF: recibo del nuevo pago o aval de la Dirección de Investigaciones',
+    solicitada_por     INT UNSIGNED     NULL,
+    estado             ENUM('Pendiente', 'Aprobada', 'Rechazada') NOT NULL DEFAULT 'Pendiente',
+    observacion        TEXT             NULL COMMENT 'Observación del comité (RF34)',
+    decidida_por       INT UNSIGNED     NULL COMMENT 'Administrador (comité)',
+    decidida_en        TIMESTAMP        NULL DEFAULT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uq_prorrogas_numero (proyecto_id, numero),
-    CONSTRAINT fk_prorrogas_proyecto FOREIGN KEY (proyecto_id) REFERENCES proyectos (id) ON DELETE CASCADE,
-    CONSTRAINT chk_prorrogas_numero CHECK (numero IN (1, 2, 3))
+    CONSTRAINT fk_prorrogas_proyecto  FOREIGN KEY (proyecto_id)    REFERENCES proyectos (id) ON DELETE CASCADE,
+    CONSTRAINT fk_prorrogas_entrega   FOREIGN KEY (entrega_id)     REFERENCES entregas (id) ON DELETE SET NULL,
+    CONSTRAINT fk_prorrogas_solicita  FOREIGN KEY (solicitada_por) REFERENCES usuarios (id),
+    CONSTRAINT fk_prorrogas_decide    FOREIGN KEY (decidida_por)   REFERENCES usuarios (id),
+    CONSTRAINT chk_prorrogas_numero CHECK (numero IS NULL OR numero IN (1, 2, 3)),
+    -- Solo las aprobadas tienen número
+    CONSTRAINT chk_prorrogas_aprobada CHECK ((estado = 'Aprobada') = (numero IS NOT NULL)),
+    CONSTRAINT chk_prorrogas_decision
+        CHECK (estado = 'Pendiente' OR (decidida_por IS NOT NULL AND decidida_en IS NOT NULL AND observacion IS NOT NULL AND TRIM(observacion) <> '')),
+    CONSTRAINT chk_prorrogas_estado_valido CHECK (estado <> '')
 ) ENGINE=InnoDB;
 
 -- Calendario de sesiones del comité (RF3, RF16): el comité publica al inicio del

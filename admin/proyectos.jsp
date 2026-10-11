@@ -12,13 +12,14 @@
 <c:set var="seccion" value="proyectos" />
 <c:set var="filtro" value="${param.filtro == 'pago' or param.filtro == 'director' or param.filtro == 'evaluador'
                                or param.filtro == 'modalidad' or param.filtro == 'exoneracion' or param.filtro == 'vencidos'
-                               or param.filtro == 'seminario' or param.filtro == 'propuestas' ? param.filtro : ''}" />
+                               or param.filtro == 'seminario' or param.filtro == 'propuestas' or param.filtro == 'prorrogas' ? param.filtro : ''}" />
 
 <sql:query var="proyectos">
     SELECT * FROM (
         SELECT p.id, p.codigo, p.titulo, p.estado, p.evaluador_id, p.modalidad_id, f.orden AS fase,
                (SELECT COUNT(*) FROM cambios_modalidad c WHERE c.proyecto_id = p.id AND c.estado = 'Pendiente') AS cambios,
                (SELECT COUNT(*) FROM exoneraciones x WHERE x.proyecto_id = p.id AND x.estado = 'Pendiente') AS exoneraciones,
+               (SELECT COUNT(*) FROM prorrogas x WHERE x.proyecto_id = p.id AND x.estado = 'Pendiente') AS prorrogas,
                ${sqlUltimaRevision} AS ultima, ${sqlUltimaRevisionInforme} AS ultima_informe,
                (f.orden = 5 AND COALESCE(${sqlUltimaRevisionInforme}, 'Comité:Devuelto') IN ('Comité:Devuelto', 'Director:Aprobado')
                 AND EXISTS (SELECT 1 FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125'
@@ -42,11 +43,13 @@
     WHERE (? = '' OR (? = 'pago' AND estado_pago = 'Por revisar') OR (? = 'director' AND director IS NULL)
            OR (? = 'evaluador' AND evaluador_id IS NULL AND fase BETWEEN 2 AND 4)
            OR (? = 'modalidad' AND cambios > 0) OR (? = 'exoneracion' AND exoneraciones > 0)
+           OR (? = 'prorrogas' AND prorrogas > 0)
            OR (? = 'vencidos' AND (director_vencido = 1 OR informe_vencido = 1) AND estado NOT IN ('Finalizado', 'Cancelado'))
            OR (? = 'propuestas' AND ((fase = 4 AND ultima LIKE 'Evaluador:%' AND ultima <> 'Evaluador:Devuelto') OR (fase = 5 AND ultima_informe LIKE 'Evaluador:%'))
                AND estado NOT IN ('Finalizado', 'Cancelado'))
            OR (? = 'seminario' AND modalidad_id = 5 AND estado = 'Pendiente'))
     ORDER BY fase, titulo
+    <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
@@ -76,6 +79,7 @@
             <option value="evaluador" ${filtro == 'evaluador' ? 'selected' : ''}>Sin evaluador (fases 2 a 4)</option>
             <option value="modalidad" ${filtro == 'modalidad' ? 'selected' : ''}>Cambios de modalidad por decidir</option>
             <option value="exoneracion" ${filtro == 'exoneracion' ? 'selected' : ''}>Exoneraciones por verificar</option>
+            <option value="prorrogas" ${filtro == 'prorrogas' ? 'selected' : ''}>Prórrogas por decidir</option>
             <option value="propuestas" ${filtro == 'propuestas' ? 'selected' : ''}>Propuestas e informes por decidir (comité)</option>
             <option value="vencidos" ${filtro == 'vencidos' ? 'selected' : ''}>Plazos vencidos (director o evaluador)</option>
             <option value="seminario" ${filtro == 'seminario' ? 'selected' : ''}>Seminario: inscripciones por validar</option>
@@ -108,6 +112,7 @@
                                     <c:if test="${not empty p.codigo}"><span class="app-lista-nota"><c:out value="${p.codigo}" /></span></c:if>
                                     <c:if test="${p.cambios > 0}"><span class="app-etiqueta ms-0">Cambio de modalidad por decidir</span></c:if>
                                     <c:if test="${p.exoneraciones > 0}"><span class="app-etiqueta ms-0">Exoneración por verificar</span></c:if>
+                                    <c:if test="${p.prorrogas > 0}"><span class="app-etiqueta ms-0">Prórroga por decidir</span></c:if>
                                     <c:if test="${p.director_vencido == 1 and p.estado != 'Cancelado'}"><span class="app-etiqueta ms-0">Plazo del ${p.fase == 3 ? 'director' : 'evaluador'} vencido</span></c:if>
                                     <c:if test="${p.fase == 4 and fn:startsWith(p.ultima, 'Evaluador:') and p.ultima != 'Evaluador:Devuelto' and p.estado != 'Cancelado'}"><span class="app-etiqueta ms-0">Propuesta por decidir</span></c:if>
                                     <c:if test="${p.fase == 5 and fn:startsWith(p.ultima_informe, 'Evaluador:') and p.estado != 'Cancelado'}"><span class="app-etiqueta ms-0">Informe por decidir</span></c:if>

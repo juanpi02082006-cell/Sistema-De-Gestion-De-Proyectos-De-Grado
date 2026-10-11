@@ -35,6 +35,10 @@
            (SELECT COUNT(*) FROM seguimientos s WHERE s.proyecto_id = p.id) AS seguimientos,
            (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS version_informe,
            ${sqlUltimaRevisionInforme} AS ultima_informe,
+           (SELECT COUNT(*) FROM prorrogas x WHERE x.proyecto_id = p.id AND x.estado = 'Aprobada') AS prorrogas_aprobadas,
+           (SELECT COUNT(*) FROM prorrogas x WHERE x.proyecto_id = p.id AND x.estado = 'Pendiente') AS prorrogas_pendientes,
+           EXISTS (SELECT 1 FROM proyecto_estudiantes y JOIN usuarios uy ON uy.id = y.estudiante_id
+                   WHERE y.proyecto_id = p.id AND y.vigente = 1 AND (uy.plan_estudios IS NULL OR uy.plan_estudios <> 'Nuevo')) AS plan_anterior,
            (SELECT r.plazo_correccion FROM entregas e JOIN revisiones r ON r.entrega_id = e.id
             WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125' AND r.rol = 'Evaluador' AND r.estado = 'Enviada'
             ORDER BY r.id DESC LIMIT 1) AS plazo_correccion,
@@ -319,7 +323,7 @@
                             <li><span class="app-lista-dato">Subiste el FDC-125</span><span class="app-requisito ${empty p.version_informe ? '' : 'cumple'}">${empty p.version_informe ? 'Pendiente' : 'Listo'}</span></li>
                         </ul>
                         <c:if test="${p.informe_vencido == 1}">
-                            <div class="alert alert-warning app-aviso" role="status">Se venció el plazo para entregar el informe final. Habla con el comité sobre una prórroga.</div>
+                            <div class="alert alert-warning app-aviso" role="status">Se venció el plazo para entregar el informe final.${p.prorrogas_pendientes > 0 ? ' Tu solicitud de prórroga está esperando la decisión del comité.' : ''}</div>
                         </c:if>
                     </c:when>
                     <c:when test="${p.fase == 5 and p.ultima_informe == 'Director:Aprobado'}">
@@ -356,6 +360,46 @@
                             </form>
                         </c:if>
                     </div>
+                </c:if>
+
+                <%-- Prórrogas del plazo del informe final (RF38): solo planes anteriores --%>
+                <sql:query var="misProrrogas">
+                    SELECT x.numero, x.estado, x.fecha_solicitud, x.nueva_fecha_limite, x.motivo, x.observacion
+                    FROM prorrogas x WHERE x.proyecto_id = ? ORDER BY x.id
+                    <sql:param value="${p.id}" />
+                </sql:query>
+                <c:if test="${p.plan_anterior == 1 and (misProrrogas.rowCount > 0 or (p.fase == 4 and not terminado))}">
+                    <h3 class="h6 fw-bold mt-4 mb-2">Prórrogas <span class="text-secondary fw-normal">· <c:out value="${p.prorrogas_aprobadas}" /> de 3</span></h3>
+                    <c:if test="${misProrrogas.rowCount > 0}">
+                        <ul class="app-lista">
+                            <c:forEach var="pr" items="${misProrrogas.rows}">
+                                <li>
+                                    <span><span class="app-lista-dato">${pr.estado == 'Aprobada' ? 'Prórroga ' : 'Solicitud del '}<c:choose><c:when test="${pr.estado == 'Aprobada'}"><c:out value="${pr.numero}" /> · hasta el <fmt:formatDate value="${pr.nueva_fecha_limite}" pattern="dd/MM/yyyy" /></c:when><c:otherwise><fmt:formatDate value="${pr.fecha_solicitud}" pattern="dd/MM/yyyy" /></c:otherwise></c:choose></span>
+                                        <span class="app-lista-nota">Motivo: <c:out value="${pr.motivo}" /><c:if test="${not empty pr.observacion}"> · Comité: <c:out value="${pr.observacion}" /></c:if></span></span>
+                                    <span class="app-requisito ${pr.estado == 'Aprobada' ? 'cumple' : ''}"><c:out value="${pr.estado}" /></span>
+                                </li>
+                            </c:forEach>
+                        </ul>
+                    </c:if>
+                    <c:if test="${p.fase == 4 and not terminado and p.informe_vencido != 1 and p.prorrogas_aprobadas < 3 and p.prorrogas_pendientes == 0}">
+                        <p class="text-secondary mt-2">
+                            Si no alcanzas a entregar el informe, pide una prórroga de 180 días antes del <fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /> (mejor unos 8 días antes).
+                            Adjunta el recibo del nuevo pago del derecho pecuniario<c:if test="${p.modalidad_id == 1 or p.modalidad_id == 2}"> o el aval de la Dirección de Investigaciones y Extensión</c:if>. Si se vence el plazo sin prórroga, se cancela la modalidad.
+                        </p>
+                        <form method="post" action="${ctx}/estudiante/prorroga-solicitar.jsp" enctype="multipart/form-data">
+                            <div class="row g-3">
+                                <div class="col-lg-7">
+                                    <label class="form-label" for="motivoProrroga">Motivo *</label>
+                                    <textarea class="form-control" id="motivoProrroga" name="motivo" required></textarea>
+                                </div>
+                                <div class="col-lg-5">
+                                    <label class="form-label" for="soporteProrroga">Soporte (PDF) *</label>
+                                    <input class="form-control" type="file" id="soporteProrroga" name="soporte" accept="application/pdf,.pdf" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Pedir la prórroga</button>
+                        </form>
+                    </c:if>
                 </c:if>
             </div>
         </c:if>

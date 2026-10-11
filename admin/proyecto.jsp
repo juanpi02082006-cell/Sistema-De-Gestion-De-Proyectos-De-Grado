@@ -111,6 +111,14 @@
     <sql:param value="${p.id}" />
 </sql:query>
 
+<%-- Prórrogas del plazo del informe final (RF38) --%>
+<sql:query var="prorrogas">
+    SELECT x.id, x.numero, x.estado, x.fecha_solicitud, x.nueva_fecha_limite, x.motivo, x.observacion, x.entrega_id, u.nombre AS solicitante
+    FROM prorrogas x LEFT JOIN usuarios u ON u.id = x.solicitada_por
+    WHERE x.proyecto_id = ? ORDER BY x.id
+    <sql:param value="${p.id}" />
+</sql:query>
+
 <c:if test="${p.estado == 'Finalizado'}">
     <div class="app-resultado cumple">
         <h2>Proyecto terminado</h2>
@@ -130,6 +138,37 @@
                 <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar el cambio</button>
                 <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
             </form>
+        </c:forEach>
+    </div>
+</c:if>
+
+<c:if test="${prorrogas.rowCount > 0}">
+    <div class="app-tarjeta mb-4">
+        <h2 class="app-tarjeta-titulo">Prórrogas del informe final</h2>
+        <c:forEach var="pr" items="${prorrogas.rows}">
+            <div class="app-archivo">
+                <span>
+                    <span class="app-lista-dato"><c:choose><c:when test="${pr.estado == 'Aprobada'}">Prórroga <c:out value="${pr.numero}" /> de 3</c:when><c:otherwise>Solicitud de prórroga</c:otherwise></c:choose> · <c:out value="${pr.solicitante}" /></span>
+                    <span class="app-lista-nota">Pedida el <fmt:formatDate value="${pr.fecha_solicitud}" pattern="dd/MM/yyyy" /> · nueva fecha límite: <fmt:formatDate value="${pr.nueva_fecha_limite}" pattern="dd/MM/yyyy" /> · Motivo: <c:out value="${pr.motivo}" /></span>
+                </span>
+                <span class="app-acciones">
+                    <span class="app-estado ${pr.estado == 'Aprobada' ? 'activo' : 'inactivo'}"><c:out value="${pr.estado}" /></span>
+                    <c:if test="${not empty pr.entrega_id}"><a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${pr.entrega_id}" target="_blank" rel="noopener">Soporte</a></c:if>
+                </span>
+            </div>
+            <c:choose>
+                <c:when test="${pr.estado == 'Pendiente' and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
+                    <form class="app-revision mb-3" method="post" action="${ctx}/admin/prorroga-decidir.jsp">
+                        <input type="hidden" name="id" value="${pr.id}">
+                        <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre la prórroga" required></textarea>
+                        <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar la prórroga</button>
+                        <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
+                    </form>
+                </c:when>
+                <c:when test="${not empty pr.observacion}">
+                    <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${pr.observacion}" /></p>
+                </c:when>
+            </c:choose>
         </c:forEach>
     </div>
 </c:if>

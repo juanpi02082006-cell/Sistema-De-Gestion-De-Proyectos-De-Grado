@@ -16,7 +16,8 @@
     <sql:query var="pagosPendientes">SELECT COUNT(*) AS total FROM proyectos p WHERE (${sqlEstadoPago}) = 'Por revisar'</sql:query>
     <sql:query var="solicitudesPendientes">
         SELECT (SELECT COUNT(*) FROM cambios_modalidad WHERE estado = 'Pendiente')
-             + (SELECT COUNT(*) FROM exoneraciones WHERE estado = 'Pendiente') AS total
+             + (SELECT COUNT(*) FROM exoneraciones WHERE estado = 'Pendiente')
+             + (SELECT COUNT(*) FROM prorrogas WHERE estado = 'Pendiente') AS total
     </sql:query>
     <sql:query var="pqrsPendientes">SELECT COUNT(*) AS total FROM pqrs WHERE estado = 'Pendiente'</sql:query>
     <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
@@ -101,7 +102,7 @@
             <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=modalidad">
                 <span class="app-acceso-numero"><c:out value="${solicitudesPendientes.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Solicitudes por decidir</span>
-                <span class="app-acceso-texto">Cambios de modalidad y exoneraciones por Saber TyT.</span>
+                <span class="app-acceso-texto">Cambios de modalidad, exoneraciones por Saber TyT y prórrogas.</span>
             </a>
         </div>
         <div class="col-md-6 col-xl-3">

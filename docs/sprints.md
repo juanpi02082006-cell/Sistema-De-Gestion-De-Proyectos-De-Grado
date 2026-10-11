@@ -190,7 +190,9 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | Fase 5: decisión del comité sobre el informe (`admin/informe-decidir.jsp`) | Hecho | RF14, RF22. Aprobado: versión oficial y fase final. Aplazado o no aprobado: vuelve a la fase 4 para corrección (el aplazado, dentro del plazo del evaluador). Devuelto: al director. Cada acta queda ligada a su decisión (`actas.revision_id`). |
 | Pruebas de la fase 5 (en `pruebas/sprint5c.sh`) | Hecho | `sprint5c.sh` 125/125 (fases 4 y 5); base 97/97; las demás siguen pasando. |
 | Fase final: programar la sustentación y dejar el proyecto "Finalizado" (RF39) | Pendiente | |
-| Prórrogas del informe final (RF38) | Pendiente | |
+| Prórrogas del informe final (`estudiante/prorroga-solicitar.jsp`, `admin/prorroga-decidir.jsp`) | Hecho | RF38. Antes del vencimiento, con motivo y soporte en PDF; el comité la aprueba (+180 días, hasta 3) o la rechaza. Sin prórrogas en los planes nuevos. Filtro "Prórrogas por decidir". |
+| Cancelación por el plazo del informe vencido (`WEB-INF/jspf/cierres.jspf`) | Hecho | RF38, RNF21. Fase 4, fecha límite pasada y sin prórroga pendiente: se cancela la modalidad y la idea vuelve al banco. |
+| Pruebas de las prórrogas (en `pruebas/sprint5c.sh`) | Hecho | `sprint5c.sh` 147/147; base 102/102; las demás siguen pasando. |
 
 ## Propuesta para los siguientes sprints
 

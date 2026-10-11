@@ -64,6 +64,9 @@
             <c:when test="${param.ok == 'informe-aplazar-comite'}">El informe final quedó aplazado: vuelve al estudiante para las correcciones (fase 4).</c:when>
             <c:when test="${param.ok == 'informe-no-aprobar-comite'}">El informe final no se aprobó: vuelve al estudiante para corregirlo (fase 4).</c:when>
             <c:when test="${param.ok == 'informe-devolver-comite'}">El informe se devolvió al director.</c:when>
+            <c:when test="${param.ok == 'prorroga-solicitada'}">Tu solicitud de prórroga quedó enviada al comité.</c:when>
+            <c:when test="${param.ok == 'prorroga-aprobada'}">La prórroga quedó aprobada: el plazo del informe final se amplió 180 días.</c:when>
+            <c:when test="${param.ok == 'prorroga-rechazada'}">La solicitud de prórroga quedó rechazada.</c:when>
             <c:when test="${param.ok == 'informe-enviado'}">Enviaste el informe final a tu director: el proyecto pasó a la fase 5 (Informe II).</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
@@ -156,6 +159,13 @@
             <c:when test="${param.error == 'informe-ya-revisado'}">La última versión del informe ya se revisó: sube una versión corregida antes de enviarla otra vez.</c:when>
             <c:when test="${param.error == 'plazo-correccion-invalido'}">Para aplazar el informe, indica el plazo para las correcciones: una fecha después de hoy y antes de la fecha límite del proyecto.</c:when>
             <c:when test="${param.error == 'plazo-correccion-vencido'}">Se venció el plazo que dio el evaluador para corregir el informe. Habla con el comité.</c:when>
+            <c:when test="${param.error == 'prorroga-no-aplica'}">La prórroga se pide en la fase 4, mientras corre el plazo del informe final.</c:when>
+            <c:when test="${param.error == 'prorroga-plan-nuevo'}">En los planes posteriores al decreto 1330 no hay prórrogas: el plazo es el del Seminario de Grado.</c:when>
+            <c:when test="${param.error == 'prorroga-vencida'}">Ya se venció el plazo: la prórroga se pide antes de la fecha límite.</c:when>
+            <c:when test="${param.error == 'prorrogas-agotadas'}">Ya se usaron las 3 prórrogas que permite el F-DC-124.</c:when>
+            <c:when test="${param.error == 'prorroga-pendiente'}">Ya hay una solicitud de prórroga esperando la decisión del comité.</c:when>
+            <c:when test="${param.error == 'prorroga-ya-decidida'}">Esa solicitud de prórroga ya fue decidida.</c:when>
+            <c:when test="${param.error == 'motivo-prorroga-requerido'}">Escribe el motivo de la prórroga.</c:when>
             <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
             <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
             <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>

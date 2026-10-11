@@ -116,7 +116,8 @@
         INSERT IGNORE INTO avisos (usuario_id, proyecto_id, mensaje, enlace, clave)
         SELECT ?, p.id,
                CONCAT('Faltan ', DATEDIFF(p.fecha_limite, CURDATE()), ' días para el límite del informe final de «',
-                      LEFT(p.titulo, 80), '» (', DATE_FORMAT(p.fecha_limite, '%d/%m/%Y'), ').'),
+                      LEFT(p.titulo, 80), '» (', DATE_FORMAT(p.fecha_limite, '%d/%m/%Y'),
+                      '). Si no alcanza, pidan una prórroga antes de esa fecha.'),
                CASE WHEN p.director_id = ? THEN CONCAT('/director/proyecto.jsp?id=', p.id) ELSE '/estudiante/proyecto.jsp' END,
                CONCAT('informe-', ?, '-p', p.id, '-', p.fecha_limite)
         FROM proyectos p

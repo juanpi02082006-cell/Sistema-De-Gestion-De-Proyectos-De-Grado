@@ -7,7 +7,8 @@
 # día 90 (RF31): el proyecto pasa a la fase 5. Fase 5: el director revisa el informe y lo
 # envía con Turnitin; el evaluador lo evalúa con la rejilla del F-DC-129 (con N/A y plazo
 # de corrección si lo aplaza); el comité aprueba (fase final), aplaza o no aprueba
-# (vuelve a corrección) o devuelve al director, con acta. También: el estudiante no ve a
+# (vuelve a corrección) o devuelve al director, con acta. Prórrogas (RF38) y cancelación
+# de la modalidad cuando se vence el plazo sin prórroga. También: el estudiante no ve a
 # su evaluador (RF27) y las alertas de los plazos y del informe final (RF5, RNF21).
 # Se corren sobre la base recién importada (usuarios de prueba con la clave 123456).
 B="http://localhost:8080/segundo-parcial"
@@ -196,6 +197,40 @@ pedir dir POST /director/seguimiento-registrar.jsp --data-urlencode "id=$PA" --d
 [ "$($MYSQL -e "SELECT COUNT(*) FROM seguimientos WHERE proyecto_id=$PA")" = "1" ]; revisar "El director registra un seguimiento" $?
 pedir ana GET /estudiante/proyecto.jsp; contiene "Avance del capitulo 2"; revisar "El estudiante lo ve" $?
 
+echo "== Prórrogas del plazo del informe final (RF38)"
+EN360=$(date -d "+360 days" +%F)
+pedirProrroga() { pedir ana POST /estudiante/prorroga-solicitar.jsp "$@"; }
+decidirProrroga() { pedir admin POST /admin/prorroga-decidir.jsp --data-urlencode "id=$($MYSQL -e "SELECT MAX(id) FROM prorrogas WHERE proyecto_id=$PA")" --data-urlencode "decision=$1" --data-urlencode "observacion=$2"; }
+pedir ana GET /estudiante/proyecto.jsp; contiene "prorroga-solicitar.jsp" && contiene "0 de 3" && sinError; revisar "El estudiante ve cómo pedir la prórroga (0 de 3)" $?
+pedirProrroga -F "motivo= " -F "soporte=@$T/recibo.pdf"; [[ "$DESTINO" == *"error=motivo-prorroga-requerido"* ]]; revisar "Sin motivo: rechazada" $?
+pedirProrroga -F "motivo=Falta terminar las pruebas"; [[ "$DESTINO" == *"error=archivo-requerido"* ]]; revisar "Sin soporte: rechazada" $?
+pedirProrroga -F "motivo=Falta terminar las pruebas" -F "soporte=@$T/informe.docx"; [[ "$DESTINO" == *"error=archivo-invalido"* ]]; revisar "Soporte que no es PDF: rechazado" $?
+$MYSQL -e "UPDATE usuarios SET plan_estudios='Nuevo' WHERE correo='ana@correo.uts.edu.co'"
+pedirProrroga -F "motivo=Falta terminar las pruebas" -F "soporte=@$T/recibo.pdf"; [[ "$DESTINO" == *"error=prorroga-plan-nuevo"* ]]; revisar "Planes nuevos: no hay prórrogas (RF42)" $?
+$MYSQL -e "UPDATE usuarios SET plan_estudios='Anterior' WHERE correo='ana@correo.uts.edu.co'"
+$MYSQL -e "UPDATE proyectos SET fecha_limite='$AYER' WHERE id=$PA"
+pedirProrroga -F "motivo=Falta terminar las pruebas" -F "soporte=@$T/recibo.pdf"; [[ "$DESTINO" == *"error=prorroga-vencida"* ]]; revisar "Vencido el plazo ya no se pide" $?
+$MYSQL -e "UPDATE proyectos SET fecha_limite='$EN180' WHERE id=$PA"
+pedirProrroga -F "motivo=Falta terminar las pruebas" -F "soporte=@$T/recibo.pdf"
+[[ "$DESTINO" == *"ok=prorroga-solicitada"* ]] && [ "$($MYSQL -e "SELECT CONCAT(estado,'|',IFNULL(numero,'-'),'|',nueva_fecha_limite) FROM prorrogas WHERE proyecto_id=$PA")" = "Pendiente|-|$EN360" ]
+revisar "Pide la prórroga: queda pendiente, sin número, hasta 180 días más" $?
+pedirProrroga -F "motivo=Otra" -F "soporte=@$T/recibo.pdf"; [[ "$DESTINO" == *"error=prorroga-pendiente"* ]]; revisar "Una sola solicitud pendiente" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=1 AND mensaje LIKE '%pidi_ una pr_rroga%'")" = "1" ]; revisar "El comité recibe el aviso" $?
+pedir admin GET "/admin/proyectos.jsp?filtro=prorrogas"; contiene "Idea DT" && contiene "Prórroga por decidir"; revisar "Filtro \"Prórrogas por decidir\"" $?
+pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "prorroga-decidir.jsp" && contiene "Soporte" && sinError; revisar "El comité ve la solicitud con su soporte" $?
+decidirProrroga rechazar ""; [[ "$DESTINO" == *"error=observacion-requerida"* ]]; revisar "Decidir sin observación: rechazado (RF34)" $?
+decidirProrroga rechazar "El recibo no corresponde"
+[ "$($MYSQL -e "SELECT CONCAT(estado,'|',IFNULL(numero,'-')) FROM prorrogas WHERE proyecto_id=$PA")" = "Rechazada|-" ] && [ "$($MYSQL -e "SELECT fecha_limite FROM proyectos WHERE id=$PA")" = "$EN180" ]
+revisar "Rechazada: sin número y la fecha límite no cambia" $?
+decidirProrroga aprobar "Otra vez"; [[ "$DESTINO" == *"error=prorroga-ya-decidida"* ]]; revisar "No se decide dos veces" $?
+pedirProrroga -F "motivo=Falta terminar las pruebas" -F "soporte=@$T/recibo.pdf"; decidirProrroga aprobar "Recibo correcto"
+[ "$($MYSQL -e "SELECT CONCAT(numero,'|',nueva_fecha_limite) FROM prorrogas WHERE proyecto_id=$PA AND estado='Aprobada'")" = "1|$EN360" ] && [ "$($MYSQL -e "SELECT fecha_limite FROM proyectos WHERE id=$PA")" = "$EN360" ]
+revisar "Aprobada: prórroga 1 y la fecha límite pasa a 180 días más" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "Prórroga 1 · hasta el"; revisar "El estudiante ve su prórroga aprobada" $?
+$MYSQL -e "INSERT INTO prorrogas (proyecto_id, numero, fecha_solicitud, nueva_fecha_limite, estado, observacion, decidida_por, decidida_en) VALUES ($PA, 2, CURDATE(), CURDATE(), 'Aprobada', 'Ok', 1, NOW()), ($PA, 3, CURDATE(), CURDATE(), 'Aprobada', 'Ok', 1, NOW())"
+pedirProrroga -F "motivo=Una mas" -F "soporte=@$T/recibo.pdf"; [[ "$DESTINO" == *"error=prorrogas-agotadas"* ]]; revisar "Con 3 prórrogas aprobadas no se pide una cuarta (F-DC-124)" $?
+$MYSQL -e "DELETE FROM prorrogas WHERE proyecto_id=$PA AND numero IN (2, 3)"
+
 echo "== Informe final (FDC-125, RF31)"
 pedir ana POST /estudiante/informe-guardar.jsp -F "informe=@$T/recibo.pdf"; [[ "$DESTINO" == *"error=informe-no-word"* ]]; revisar "El informe en PDF: rechazado (va en Word)" $?
 pedir ana POST /estudiante/informe-guardar.jsp -F "informe=@$T/informe.docx"
@@ -323,6 +358,32 @@ decidir $PB no-aprobar "21" "$HOY" "La propuesta no es viable"
 revisar "No aprobada: proyecto cancelado, estudiante libre e idea de vuelta en el banco" $?
 [ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=$(id beto@correo.uts.edu.co) AND mensaje LIKE '%comit_ no aprob_%'")" = "1" ]; revisar "El estudiante recibe el aviso" $?
 pedir eva GET /evaluador/proyectos.jsp; contiene "Cancelado" && sinError; revisar "El evaluador ve el proyecto cancelado" $?
+
+echo "== Plazo del informe final vencido sin prórroga: se cancela la modalidad (RF38)"
+pedir beto POST /ideas/idea-tomar.jsp --data-urlencode "id=$($MYSQL -e "SELECT id FROM ideas WHERE titulo='Idea Mono'")"
+PC=$(proyectoDe beto@correo.uts.edu.co)
+pedir beto POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf;type=application/pdf"
+pedir admin POST /admin/pago-revisar.jsp --data-urlencode "id=$($MYSQL -e "SELECT MAX(id) FROM entregas WHERE proyecto_id=$PC AND tipo='Recibo de pago'")" \
+    --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
+pedir admin POST /admin/proyecto-asignar.jsp --data-urlencode "id=$PC" --data-urlencode "director=3" --data-urlencode "evaluador=4"
+subirPropuesta beto; pedir beto POST /estudiante/propuesta-enviar.jsp; aprobarDirector $PC
+rejilla 3 todos; evaluar $PC enviar "Aprobado" "Bien"; decidir $PC aprobar "40" "$HOY" "Aprobada"
+[ "$(fase $PC)" = "4" ] && [ -n "$($MYSQL -e "SELECT fecha_aprobacion_124 FROM proyectos WHERE id=$PC")" ]; revisar "Otro proyecto con la propuesta aprobada (fase 4)" $?
+pedir beto POST /estudiante/prorroga-solicitar.jsp -F "motivo=Necesito mas tiempo" -F "soporte=@$T/recibo.pdf"
+$MYSQL -e "UPDATE proyectos SET fecha_limite='$AYER' WHERE id=$PC"
+pedir beto GET /panel/inicio.jsp
+[ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PC")" != "Cancelado" ]; revisar "Vencido con una prórroga pendiente: no se cancela mientras el comité decide" $?
+pedir admin POST /admin/prorroga-decidir.jsp --data-urlencode "id=$($MYSQL -e "SELECT MAX(id) FROM prorrogas WHERE proyecto_id=$PC")" --data-urlencode "decision=rechazar" --data-urlencode "observacion=Fuera de tiempo"
+pedir beto GET /panel/inicio.jsp
+[ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PC")" = "Cancelado" ] && [ -z "$(proyectoDe beto@correo.uts.edu.co)" ] \
+  && [ "$($MYSQL -e "SELECT estado FROM ideas WHERE titulo='Idea Mono'")" = "Aprobada" ]
+revisar "Rechazada la prórroga y vencido el plazo: modalidad cancelada, estudiante libre e idea de vuelta en el banco" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=$(id beto@correo.uts.edu.co) AND mensaje LIKE '%cancel_ la modalidad%'")" = "1" ] \
+  && [ "$($MYSQL -e "SELECT COUNT(*) FROM historial WHERE proyecto_id=$PC AND descripcion LIKE 'Modalidad cancelada%'")" = "1" ]
+revisar "El estudiante recibe el aviso y queda en el historial" $?
+$MYSQL -e "UPDATE proyectos SET fecha_limite='$AYER' WHERE id=$PA"
+pedir ana GET /panel/inicio.jsp
+[ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PA")" != "Cancelado" ]; revisar "Un proyecto en la fase final no se cancela por el plazo" $?
 
 echo "== Páginas sin errores"
 for R in "admin|/admin/proyectos.jsp" "admin|/admin/auditoria.jsp" "eva|/evaluador/proyectos.jsp" "eva|/evaluador/proyecto.jsp?id=$PA" "dir|/director/proyectos.jsp" "beto|/estudiante/proyecto.jsp"; do

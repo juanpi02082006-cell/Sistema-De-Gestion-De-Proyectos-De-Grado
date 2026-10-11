@@ -6,7 +6,14 @@
      estudiantes quedan libres para empezar de nuevo (pagando otra vez) y la idea vuelve
      al banco. Solo se aplica si hay algún estudiante de plan anterior al decreto 1330 (en
      los planes nuevos la propuesta va en el Seminario de Grado, RF41) y no a la modalidad
-     Seminario, que tiene su propio proceso. --%>
+     Seminario, que tiene su propio proceso.
+     Plazo del informe final vencido (RF38; reglamento, entregado por el equipo el
+     2026-10-11): si el proyecto sigue en la fase 4 (no envió el informe al director) y
+     pasó su fecha límite (180 días más las prórrogas) sin una prórroga pendiente, se
+     cancela la modalidad: el proyecto queda "Cancelado", la propuesta pierde vigencia,
+     la idea vuelve al banco y los estudiantes empiezan de nuevo (otra propuesta u otra
+     modalidad). Igual que la semana 12, solo si hay algún estudiante de plan anterior
+     (en los planes nuevos el plazo es el del Seminario de Grado, RF42). --%>
 <sql:query var="vencidosSemana12">
     SELECT p.id, p.titulo, p.idea_id, pr.fecha_limite_propuestas
     FROM proyectos p
@@ -52,6 +59,55 @@
                 INSERT INTO historial (proyecto_id, usuario_id, accion, descripcion) VALUES (?, NULL, 'Estado', ?)
                 <sql:param value="${vencido.id}" />
                 <sql:param value="Proyecto cancelado por extemporaneidad: la propuesta no quedó aprobada antes de la semana 12 (${fechaSemana12}). El pago pierde vigencia y la idea vuelve al banco." />
+            </sql:update>
+        </c:if>
+    </sql:transaction>
+</c:forEach>
+<sql:query var="vencidosInforme">
+    SELECT p.id, p.titulo, p.idea_id, p.fecha_limite
+    FROM proyectos p
+    JOIN fases f ON f.id = p.fase_id
+    WHERE p.estado NOT IN ('Finalizado', 'Cancelado') AND p.modalidad_id <> 5 AND f.orden = 4
+      AND p.fecha_aprobacion_124 IS NOT NULL AND p.fecha_limite < CURDATE()
+      AND NOT EXISTS (SELECT 1 FROM prorrogas x WHERE x.proyecto_id = p.id AND x.estado = 'Pendiente')
+      AND EXISTS (SELECT 1 FROM proyecto_estudiantes x JOIN usuarios u ON u.id = x.estudiante_id
+                  WHERE x.proyecto_id = p.id AND x.vigente = 1 AND (u.plan_estudios IS NULL OR u.plan_estudios <> 'Nuevo'))
+</sql:query>
+<c:forEach var="vencido" items="${vencidosInforme.rows}">
+    <fmt:formatDate var="fechaInforme" value="${vencido.fecha_limite}" pattern="dd/MM/yyyy" />
+    <c:set var="textoCierre">Se canceló la modalidad del proyecto «${fn:substring(vencido.titulo, 0, 120)}»: se venció el plazo del informe final (${fechaInforme}) sin prórroga. La propuesta pierde vigencia; para seguir hay que presentar una propuesta nueva o cambiar de modalidad.</c:set>
+    <sql:transaction>
+        <sql:update var="cancelado">
+            UPDATE proyectos SET estado = 'Cancelado' WHERE id = ? AND estado NOT IN ('Finalizado', 'Cancelado')
+            <sql:param value="${vencido.id}" />
+        </sql:update>
+        <c:if test="${cancelado == 1}">
+            <%-- Avisos a todos los de ese proyecto y al comité (antes de liberar a los estudiantes) --%>
+            <sql:update>
+                INSERT INTO avisos (usuario_id, proyecto_id, mensaje, enlace)
+                SELECT x.estudiante_id, ?, ?, '/ideas/banco.jsp' FROM proyecto_estudiantes x WHERE x.proyecto_id = ? AND x.vigente = 1
+                UNION SELECT p.director_id, p.id, ?, CONCAT('/director/proyecto.jsp?id=', p.id) FROM proyectos p WHERE p.id = ? AND p.director_id IS NOT NULL
+                UNION SELECT pc.docente_id, pc.proyecto_id, ?, CONCAT('/director/proyecto.jsp?id=', pc.proyecto_id) FROM proyecto_codirectores pc WHERE pc.proyecto_id = ?
+                UNION SELECT u.id, ?, ?, CONCAT('/admin/proyecto.jsp?id=', ?) FROM usuarios u JOIN usuario_roles ur ON ur.usuario_id = u.id AND ur.rol_id = 1 WHERE u.activo = 1
+                <sql:param value="${vencido.id}" /><sql:param value="${fn:substring(textoCierre, 0, 255)}" /><sql:param value="${vencido.id}" />
+                <sql:param value="${fn:substring(textoCierre, 0, 255)}" /><sql:param value="${vencido.id}" />
+                <sql:param value="${fn:substring(textoCierre, 0, 255)}" /><sql:param value="${vencido.id}" />
+                <sql:param value="${vencido.id}" /><sql:param value="${fn:substring(textoCierre, 0, 255)}" /><sql:param value="${vencido.id}" />
+            </sql:update>
+            <sql:update>
+                UPDATE proyecto_estudiantes SET vigente = NULL WHERE proyecto_id = ? AND vigente = 1
+                <sql:param value="${vencido.id}" />
+            </sql:update>
+            <c:if test="${not empty vencido.idea_id}">
+                <sql:update>
+                    UPDATE ideas SET estado = 'Aprobada' WHERE id = ? AND estado = 'Tomada'
+                    <sql:param value="${vencido.idea_id}" />
+                </sql:update>
+            </c:if>
+            <sql:update>
+                INSERT INTO historial (proyecto_id, usuario_id, accion, descripcion) VALUES (?, NULL, 'Estado', ?)
+                <sql:param value="${vencido.id}" />
+                <sql:param value="Modalidad cancelada: se venció el plazo del informe final (${fechaInforme}) sin prórroga. La propuesta pierde vigencia y la idea vuelve al banco." />
             </sql:update>
         </c:if>
     </sql:transaction>
