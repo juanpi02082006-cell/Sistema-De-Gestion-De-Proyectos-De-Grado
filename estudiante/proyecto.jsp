@@ -27,7 +27,8 @@
            DATEDIFF(pe2.fecha_limite_propuestas, CURDATE()) AS dias_semana12,
            (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
             ORDER BY e.version DESC LIMIT 1) AS limite_director,
-           ue.nivel_id AS mi_nivel, pe.exonerado, pe.renuncia_exoneracion,
+           ue.nivel_id AS mi_nivel, pe.exonerado, pe.renuncia_exoneracion, p.nota_final,
+           ${sqlDocumentosFaltantes} AS documentos_faltantes,
            (SELECT COUNT(*) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS informes
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
@@ -61,7 +62,26 @@
     <c:set var="miPagoListo" value="${pagoCubierto or p.mi_pago == 'Aprobado'}" />
     <c:set var="pagoListo" value="${p.estado_pago == 'No aplica' or p.estado_pago == 'Aprobado'}" />
     <c:set var="terminado" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}" />
-    <c:set var="integrantesAbiertos" value="${(p.fase == 1 or p.fase == 2) and not terminado}" />
+    <c:set var="esSeminario" value="${p.modalidad_id == 5}" />
+    <c:set var="estadoSeminario" value="${p.estado}" />
+    <%-- En Seminario los integrantes se cierran cuando el comité valida la inscripción --%>
+    <c:set var="integrantesAbiertos" value="${(p.fase == 1 or p.fase == 2) and not terminado and not (esSeminario and p.estado != 'Pendiente')}" />
+    <c:if test="${esSeminario}">
+        <%-- Mis documentos de inscripción al seminario (el último de cada tipo) --%>
+        <sql:query var="misDocumentos">
+            SELECT e.id, e.tipo, e.nombre_archivo, e.subido_en FROM entregas e
+            WHERE e.proyecto_id = ? AND e.subido_por = ? AND e.tipo IN ('Formato F-AM-04', 'Documento de identidad')
+              AND e.id = (SELECT MAX(e2.id) FROM entregas e2 WHERE e2.proyecto_id = e.proyecto_id AND e2.subido_por = e.subido_por AND e2.tipo = e.tipo)
+            ORDER BY e.tipo DESC
+            <sql:param value="${p.id}" />
+            <sql:param value="${idEstudiante}" />
+        </sql:query>
+        <c:set var="tengoFormato" value="false" /><c:set var="tengoCedula" value="false" />
+        <c:forEach var="dc" items="${misDocumentos.rows}">
+            <c:if test="${dc.tipo == 'Formato F-AM-04'}"><c:set var="tengoFormato" value="true" /></c:if>
+            <c:if test="${dc.tipo == 'Documento de identidad'}"><c:set var="tengoCedula" value="true" /></c:if>
+        </c:forEach>
+    </c:if>
     <%-- Cambio de modalidad (RF12): la última solicitud del proyecto y las modalidades --%>
     <sql:query var="ultimoCambio">
         SELECT c.estado, c.motivo, c.observacion, c.solicitado_en, m.nombre AS nueva
@@ -104,14 +124,64 @@
     <c:otherwise>
         <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
-        <c:if test="${p.estado == 'Finalizado'}">
+        <c:if test="${esSeminario and p.estado == 'Finalizado'}">
+            <div class="app-resultado cumple">
+                <h2>Aprobaste el seminario con nota <fmt:formatNumber value="${p.nota_final}" minFractionDigits="1" maxFractionDigits="1" /></h2>
+                <p>El requisito de trabajo de grado quedó cumplido.</p>
+            </div>
+        </c:if>
+        <c:if test="${not esSeminario and p.estado == 'Finalizado'}">
             <div class="app-resultado cumple">
                 <h2>Tu proyecto terminó con concepto Aprobado</h2>
                 <p>Todos los integrantes quedaron exonerados por Saber TyT: se exime el informe final.<c:if test="${miExoneracion.rowCount > 0 and miExoneracion.rows[0].estado == 'Aprobada'}"> Tu estímulo: <c:out value="${miExoneracion.rows[0].estimulo}" />.</c:if></p>
             </div>
         </c:if>
 
-        <c:if test="${p.fase == 1 and not terminado}">
+        <%-- Seminario (RF17): inscripción y seminario en curso --%>
+        <c:if test="${esSeminario and p.estado == 'Pendiente'}">
+            <div class="app-tarjeta mb-4 app-formulario">
+                <h2 class="app-tarjeta-titulo">Inscripción al seminario</h2>
+                <p class="text-secondary">El pago por sí solo no te inscribe: sube también el formato F-AM-04 (solicitud de trabajo de grado, con la opción Seminario) y tu cédula ampliada al 150 %, en PDF escaneado. El comité revisa los soportes y valida tu inscripción.</p>
+                <ul class="app-lista mb-3">
+                    <li><span class="app-lista-dato">${p.integrantes > 1 ? 'Pago de todos aprobado' : 'Tu pago aprobado'}</span><span class="app-requisito ${pagoListo ? 'cumple' : ''}">${pagoListo ? 'Listo' : 'Pendiente'}</span></li>
+                    <li><span class="app-lista-dato">Formato F-AM-04</span><span class="app-requisito ${tengoFormato ? 'cumple' : ''}">${tengoFormato ? 'Subido' : 'Pendiente'}</span></li>
+                    <li><span class="app-lista-dato">Cédula ampliada al 150 %</span><span class="app-requisito ${tengoCedula ? 'cumple' : ''}">${tengoCedula ? 'Subida' : 'Pendiente'}</span></li>
+                    <li><span class="app-lista-dato">Docente del seminario asignado</span><span class="app-requisito ${empty p.director ? '' : 'cumple'}">${empty p.director ? 'Pendiente' : 'Listo'}</span></li>
+                    <li><span class="app-lista-dato">Validación del comité</span><span class="app-requisito">Pendiente</span></li>
+                </ul>
+                <c:forEach var="dc" items="${misDocumentos.rows}">
+                    <div class="app-archivo">
+                        <span><span class="app-lista-dato"><c:out value="${dc.tipo == 'Formato F-AM-04' ? 'Formato F-AM-04' : 'Cédula'}" /> · <c:out value="${dc.nombre_archivo}" /></span>
+                            <span class="app-lista-nota">Subido el <fmt:formatDate value="${dc.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span></span>
+                        <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${dc.id}" target="_blank" rel="noopener">Ver</a>
+                    </div>
+                </c:forEach>
+                <form class="mt-2" method="post" action="${ctx}/estudiante/inscripcion-guardar.jsp" enctype="multipart/form-data">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-sm-5">
+                            <label class="form-label" for="documentoInscripcion">Documento *</label>
+                            <select class="form-select" id="documentoInscripcion" name="documento" required>
+                                <option value="f-am-04">Formato F-AM-04</option>
+                                <option value="cedula">Cédula ampliada al 150 %</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-7">
+                            <label class="form-label" for="archivoInscripcion">Archivo (PDF) *</label>
+                            <input class="form-control" type="file" id="archivoInscripcion" name="archivo" accept="application/pdf,.pdf" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Subir documento</button>
+                </form>
+            </div>
+        </c:if>
+        <c:if test="${esSeminario and p.estado == 'En curso'}">
+            <div class="app-resultado">
+                <h2>Seminario en curso</h2>
+                <p>El comité validó tu inscripción. Las clases y el entregable van con tu docente${empty p.director ? '' : ' ('}<c:out value="${p.director}" />${empty p.director ? '' : ')'} en Atena; al terminar, el docente registra aquí tu nota final.</p>
+            </div>
+        </c:if>
+
+        <c:if test="${p.fase == 1 and not terminado and not esSeminario}">
             <div class="app-tarjeta mb-4">
                 <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>
                 <ul class="app-lista">
@@ -289,8 +359,8 @@
                         </p>
                     </c:if>
                     <c:choose>
-                        <c:when test="${terminado or p.fase > 3}">
-                            <p class="app-total mt-0">La modalidad solo se cambia antes de que se apruebe el FDC-124.</p>
+                        <c:when test="${terminado or p.fase > 3 or (esSeminario and p.estado != 'Pendiente')}">
+                            <p class="app-total mt-0">${esSeminario ? 'En Seminario, la modalidad solo se cambia antes de que el comité valide la inscripción.' : 'La modalidad solo se cambia antes de que se apruebe el FDC-124.'}</p>
                         </c:when>
                         <c:when test="${hayCambioPendiente}">
                             <p class="app-total mt-0">Tu solicitud está esperando la decisión del comité.</p>

@@ -8,7 +8,7 @@
 <c:set var="seccion" value="dirigidos" />
 
 <sql:query var="consulta">
-    SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.fecha_inicio, p.modalidad_id,
+    SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.fecha_inicio, p.modalidad_id, p.nota_final,
            f.orden AS fase, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
            pr.nombre AS periodo, pr.fecha_limite_propuestas,
            (p.director_id = ?) AS es_director, (p.evaluador_id IS NOT NULL) AS tiene_evaluador,
@@ -37,6 +37,8 @@
 </c:if>
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
+<c:set var="esSeminario" value="${p.modalidad_id == 5}" />
+<c:set var="estadoSeminario" value="${p.estado}" />
 
 <sql:query var="reportesTurnitin">
     SELECT id, nombre_archivo, subido_en FROM entregas WHERE proyecto_id = ? AND tipo = 'Reporte Turnitin' ORDER BY id DESC
@@ -54,6 +56,39 @@
 <%@ include file="/WEB-INF/jspf/mensajes.jspf" %>
 
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
+
+<%-- Seminario (RF17): el docente del seminario (el director) registra la nota final --%>
+<c:if test="${esSeminario}">
+    <c:choose>
+        <c:when test="${p.estado == 'Pendiente'}">
+            <div class="app-resultado mb-4"><h2>Inscripción en trámite</h2><p>El comité todavía no valida la inscripción al seminario.</p></div>
+        </c:when>
+        <c:when test="${p.estado == 'En curso' and p.es_director == 1}">
+            <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/director/nota-registrar.jsp">
+                <input type="hidden" name="id" value="${p.id}">
+                <h2 class="app-tarjeta-titulo">Nota final del seminario</h2>
+                <p class="text-secondary">Al terminar las clases y el entregable, registra la nota final (de 0.0 a 5.0). Con 3.0 o más el requisito queda cumplido y el proyecto termina; con menos, el proyecto se cancela.</p>
+                <div class="row g-3">
+                    <div class="col-sm-3">
+                        <label class="form-label" for="nota">Nota *</label>
+                        <input class="form-control" type="number" id="nota" name="nota" min="0" max="5" step="0.1" required>
+                    </div>
+                    <div class="col-sm-9">
+                        <label class="form-label" for="observacionNota">Observación *</label>
+                        <textarea class="form-control" id="observacionNota" name="observacion" required></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Registrar la nota</button>
+            </form>
+        </c:when>
+        <c:when test="${not empty p.nota_final}">
+            <div class="app-resultado ${p.estado == 'Finalizado' ? 'cumple' : ''} mb-4">
+                <h2>Nota final: <fmt:formatNumber value="${p.nota_final}" minFractionDigits="1" maxFractionDigits="1" /></h2>
+                <p>${p.estado == 'Finalizado' ? 'Aprobado: el proyecto terminó.' : 'Reprobado: el proyecto se canceló.'}</p>
+            </div>
+        </c:when>
+    </c:choose>
+</c:if>
 
 <c:if test="${p.modalidad_id != 5 and p.fase >= 2}">
     <div class="app-tarjeta mb-4">

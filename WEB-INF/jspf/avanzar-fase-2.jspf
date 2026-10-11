@@ -1,11 +1,13 @@
 <%-- Paso de la fase 1 (pago) a la fase 2 (propuesta I). Antes de incluirlo, definir
      idProyecto e incluir estado-pago.jspf. El proyecto pasa cuando el comité aprobó el
      pago (o el pago no aplica) y le asignó el director (RF11, RF32); queda "En curso",
-     con la fecha de inicio de hoy. Deja avanzoFase2 = true si el proyecto pasó. --%>
+     con la fecha de inicio de hoy. Deja avanzoFase2 = true si el proyecto pasó.
+     No se aplica a Seminario (modalidad 5): su inscripción la valida el comité
+     (admin/inscripcion-validar.jsp). --%>
 <c:set var="avanzoFase2" value="false" />
 <sql:query var="listoFase2">
     SELECT p.id FROM proyectos p JOIN fases f ON f.id = p.fase_id
-    WHERE p.id = ? AND f.orden = 1 AND p.director_id IS NOT NULL
+    WHERE p.id = ? AND f.orden = 1 AND p.director_id IS NOT NULL AND p.modalidad_id <> 5
       AND (${sqlEstadoPago}) IN ('Aprobado', 'No aplica')
     <sql:param value="${idProyecto}" />
 </sql:query>

@@ -155,8 +155,8 @@ INSERT INTO pruebas_tmp.resultados (prueba, esperado, obtenido, estado)
               = '0-6|2:FDC-124,3:FDC-124,4:FDC-125,5:FDC-125', 'OK', 'FALLA')
     FROM fases;
 INSERT INTO pruebas_tmp.resultados (prueba, esperado, obtenido, estado)
-    SELECT 'Catálogo de carreras: 30 tecnológicas y 29 universitarias', '30/29',
-           CONCAT(SUM(nivel_id = 1), '/', SUM(nivel_id = 2)), IF(SUM(nivel_id = 1) = 30 AND SUM(nivel_id = 2) = 29, 'OK', 'FALLA')
+    SELECT 'Catálogo de carreras: 30 tecnológicas y 30 universitarias', '30/30',
+           CONCAT(SUM(nivel_id = 1), '/', SUM(nivel_id = 2)), IF(SUM(nivel_id = 1) = 30 AND SUM(nivel_id = 2) = 30, 'OK', 'FALLA')
     FROM carreras;
 INSERT INTO pruebas_tmp.resultados (prueba, esperado, obtenido, estado)
     SELECT 'Festivos de 2026 y 2027', '18/18',

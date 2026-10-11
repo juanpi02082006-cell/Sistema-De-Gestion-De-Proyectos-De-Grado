@@ -39,7 +39,7 @@
     <c:set var="idEstudiante" value="${sessionScope.usuario.id}" />
     <%@ include file="/WEB-INF/jspf/habilitacion.jspf" %>
     <sql:query var="proyectoVigente">
-        SELECT p.titulo, p.estado, f.orden AS fase, f.nombre AS nombre_fase
+        SELECT p.titulo, p.estado, p.modalidad_id, f.orden AS fase, f.nombre AS nombre_fase
         FROM proyecto_estudiantes pe
         JOIN proyectos p ON p.id = pe.proyecto_id
         LEFT JOIN fases f ON f.id = p.fase_id
@@ -152,9 +152,11 @@
             <c:set var="pv" value="${proyectoVigente.rows[0]}" />
             <div class="app-resultado cumple">
                 <h2>Tu proyecto: <c:out value="${pv.titulo}" /></h2>
-                <p>Fase <c:out value="${pv.fase}" />: <c:out value="${pv.nombre_fase}" /> · Estado: <c:out value="${pv.estado}" /> · <a href="${ctx}/estudiante/proyecto.jsp">Ver mi proyecto</a></p>
+                <p><c:choose><c:when test="${pv.modalidad_id == 5}">Seminario · ${pv.estado == 'Pendiente' ? 'Inscripción' : (pv.estado == 'En curso' ? 'En curso' : pv.estado)}</c:when><c:otherwise>Fase <c:out value="${pv.fase}" />: <c:out value="${pv.nombre_fase}" /> · Estado: <c:out value="${pv.estado}" /></c:otherwise></c:choose> · <a href="${ctx}/estudiante/proyecto.jsp">Ver mi proyecto</a></p>
             </div>
             <c:set var="faseActual" value="${pv.fase}" />
+            <c:set var="esSeminario" value="${pv.modalidad_id == 5}" />
+            <c:set var="estadoSeminario" value="${pv.estado}" />
             <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
         </c:when>
         <c:otherwise>

@@ -44,6 +44,11 @@
             <c:when test="${param.ok == 'exoneracion-proyecto-terminado'}">La exoneración quedó aprobada y, como todos los integrantes están exonerados, el proyecto terminó con concepto Aprobado.</c:when>
             <c:when test="${param.ok == 'pqr-enviada'}">Tu PQR quedó enviada al comité. Te llega un aviso cuando la respondan.</c:when>
             <c:when test="${param.ok == 'pqr-respondida'}">La respuesta quedó enviada.</c:when>
+            <c:when test="${param.ok == 'inscripcion-documento'}">El documento de inscripción se subió correctamente.</c:when>
+            <c:when test="${param.ok == 'inscripcion-validada'}">La inscripción al seminario quedó validada: el seminario está en curso.</c:when>
+            <c:when test="${param.ok == 'inscripcion-devuelta'}">La inscripción se devolvió a los estudiantes con la observación.</c:when>
+            <c:when test="${param.ok == 'nota-aprobada'}">La nota quedó registrada: aprobado, el proyecto terminó.</c:when>
+            <c:when test="${param.ok == 'nota-reprobada'}">La nota quedó registrada: reprobado, el proyecto se canceló.</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
             <c:when test="${param.ok == 'sesion-eliminada'}">La sesión se quitó del calendario.</c:when>
@@ -113,6 +118,11 @@
             <c:when test="${param.error == 'sin-exoneracion'}">No tienes una exoneración aprobada a la cual renunciar.</c:when>
             <c:when test="${param.error == 'pqr-incompleta'}">Escoge el tipo y escribe tu PQR.</c:when>
             <c:when test="${param.error == 'respuesta-requerida'}">Escribe la respuesta: es obligatoria.</c:when>
+            <c:when test="${param.error == 'inscripcion-cerrada'}">La inscripción al seminario ya se validó o el proyecto ya terminó.</c:when>
+            <c:when test="${param.error == 'inscripcion-no-aplica'}">Esto solo aplica a la modalidad Seminario, en la fase 1.</c:when>
+            <c:when test="${param.error == 'inscripcion-incompleta'}">Falta el formato F-AM-04 o la cédula de algún estudiante.</c:when>
+            <c:when test="${param.error == 'nota-no-aplica'}">La nota final se registra solo en un seminario en curso.</c:when>
+            <c:when test="${param.error == 'nota-invalida'}">La nota debe ser un número de 0.0 a 5.0.</c:when>
             <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
             <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
             <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>

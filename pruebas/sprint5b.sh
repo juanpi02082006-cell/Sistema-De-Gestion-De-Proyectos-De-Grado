@@ -3,7 +3,8 @@
 # 2026-10-10): catálogo de carreras y nivel (RF24), código del proyecto (RF40), avisos y
 # alertas de vencimiento (RF5, RNF21), plazo del director en días hábiles (RF21, RNF19),
 # codirectores (RF13), anexos (RF26, RF30), cambio de modalidad (RF12), PQR (RNF1),
-# auditoría e historial (RNF12) y exoneración por Saber TyT (RNF14).
+# auditoría e historial (RNF12), exoneración por Saber TyT (RNF14), Seminario (RF17) y la
+# cancelación por extemporaneidad de la semana 12 (RF30).
 # Se corren sobre la base recién importada (usuarios de prueba con la clave 123456).
 B="http://localhost:8080/segundo-parcial"
 T="$(dirname "$0")/tmp/sprint5b"; rm -rf "$T"; mkdir -p "$T"
@@ -27,10 +28,10 @@ pedir() {
 contiene() { grep -q "$1" "$T/cuerpo.html"; }
 sinError() { ! grep -q "Exception\|HTTP Status 500\|Estado HTTP 500" "$T/cuerpo.html"; }
 entrar() { pedir "$1" POST /acceso/validar.jsp --data-urlencode "correo=$2" --data-urlencode "clave=${3:-123456}"; }
-registrar() { # correo, documento, carrera
+registrar() { # correo, documento, carrera, [plan]
     pedir anon POST /acceso/registrar.jsp --data-urlencode "nombre=Estudiante $2" --data-urlencode "tipo_documento=1" \
         --data-urlencode "numero_documento=$2" --data-urlencode "correo=$1" --data-urlencode "clave=Clave123" \
-        --data-urlencode "clave2=Clave123" --data-urlencode "carrera=$3" --data-urlencode "plan_estudios=Anterior" \
+        --data-urlencode "clave2=Clave123" --data-urlencode "carrera=$3" --data-urlencode "plan_estudios=${4:-Anterior}" \
         --data-urlencode "porcentaje_creditos=80" --data-urlencode "metodologia=on"
 }
 id() { $MYSQL -e "SELECT id FROM usuarios WHERE correo='$1'"; }
@@ -109,9 +110,9 @@ echo "== Alertas de vencimiento (RNF21)"
 $MYSQL -e "UPDATE periodos SET fecha_limite_pago='$EN3' WHERE id=$P1"
 pedir ana GET /panel/inicio.jsp; pedir ana GET /panel/inicio.jsp
 [ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=$ANA AND clave LIKE 'pago-%-p$PA'")" = "2" ]; revisar "Límite de pago a 3 días: alertas de 10 y 5 días, sin repetirse" $?
-$MYSQL -e "UPDATE periodos SET fecha_limite_pago='$EN30', fecha_limite_propuestas='$AYER' WHERE id=$P1"
+$MYSQL -e "UPDATE periodos SET fecha_limite_pago='$EN30', fecha_limite_propuestas='$EN3' WHERE id=$P1"
 pedir ana GET /panel/inicio.jsp
-[ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=$ANA AND clave='semana12-vencida-p$PA'")" = "1" ]; revisar "Semana 12 vencida: alerta (RF30)" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=$ANA AND clave LIKE 'semana12-%-p$PA'")" = "2" ]; revisar "Semana 12 a 3 días: alertas de 10 y 5 días (RF30)" $?
 $MYSQL -e "UPDATE periodos SET fecha_limite_propuestas='$EN60' WHERE id=$P1"
 
 echo "== Codirectores (RF13)"
@@ -268,6 +269,86 @@ pedir admin POST /admin/exoneracion-revisar.jsp --data-urlencode "id=$($MYSQL -e
 [ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PD")" = "Pendiente" ]; revisar "Si uno renunció, aunque el otro quede exonerado el proyecto sigue" $?
 $MYSQL -e "INSERT INTO entregas (proyecto_id, tipo, version, nombre_archivo, ruta_archivo, subido_por) VALUES ($PA, 'FDC-125', 1, 'informe.docx', 'x.docx', $ANA)"
 exonerar ana 150 "$T/certificado.pdf"; [[ "$DESTINO" == *"error=exoneracion-informe-entregado"* ]]; revisar "Con el informe final entregado ya no se pide" $?
+
+echo "== Seminario: inscripción, seminario en curso y nota final (RF17)"
+idIdea() { $MYSQL -e "SELECT id FROM ideas WHERE titulo='$1'"; }
+pedir dir POST /ideas/idea-guardar.jsp --data-urlencode "titulo=Seminario de analitica" --data-urlencode "nivel=1" --data-urlencode "modalidad=5"
+pedir admin POST /ideas/idea-revisar.jsp --data-urlencode "id=$(idIdea 'Seminario de analitica')" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
+registrar sami@correo.uts.edu.co 5000000006 1; entrar sami sami@correo.uts.edu.co Clave123
+pedir sami POST /ideas/idea-tomar.jsp --data-urlencode "id=$(idIdea 'Seminario de analitica')"
+PS=$(proyectoDe sami@correo.uts.edu.co); SAMI=$(id sami@correo.uts.edu.co)
+pedir sami GET /estudiante/proyecto.jsp; contiene "Inscripción al seminario" && contiene "Paso 1: Inscripción" && ! contiene "Para pasar a la fase 2" && sinError
+revisar "El estudiante de Seminario ve la inscripción y sus pasos, no las fases del FDC-124" $?
+inscribir() { pedir sami POST /estudiante/inscripcion-guardar.jsp -F "documento=$1" -F "archivo=@$2"; }
+inscribir f-am-04 "$T/propuesta.docx"; [[ "$DESTINO" == *"error=archivo-invalido"* ]]; revisar "Documento que no es PDF: rechazado" $?
+inscribir otro "$T/anexo.pdf;type=application/pdf"; [[ "$DESTINO" == *"error=general"* ]]; revisar "Tipo de documento inválido: rechazado" $?
+inscribir f-am-04 "$T/anexo.pdf;type=application/pdf"; [[ "$DESTINO" == *"ok=inscripcion-documento"* ]]; revisar "Sube el formato F-AM-04" $?
+pedir carlos POST /estudiante/inscripcion-guardar.jsp -F "documento=cedula" -F "archivo=@$T/anexo.pdf;type=application/pdf"
+[[ "$DESTINO" == *"error=inscripcion-no-aplica"* ]]; revisar "Fuera de Seminario no se suben documentos de inscripción" $?
+pedir admin POST /admin/proyecto-asignar.jsp --data-urlencode "id=$PS" --data-urlencode "director=3"
+pedir admin POST /admin/inscripcion-validar.jsp --data-urlencode "id=$PS" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
+[[ "$DESTINO" == *"error=pagos-pendientes"* ]]; revisar "Sin el pago aprobado no se valida" $?
+subir sami; revisarPago "$(ultimoRecibo $PS $SAMI)" aprobar "Ok"
+[ "$(fase $PS)" = "1" ] && [ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PS")" = "Pendiente" ]; revisar "Con pago y director, Seminario no pasa solo a la fase 2" $?
+pedir admin POST /admin/inscripcion-validar.jsp --data-urlencode "id=$PS" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
+[[ "$DESTINO" == *"error=inscripcion-incompleta"* ]]; revisar "Sin la cédula no se valida" $?
+inscribir cedula "$T/anexo.pdf;type=application/pdf"
+pedir admin GET "/admin/proyectos.jsp?filtro=seminario"; contiene "Seminario de analitica" && ! contiene "Idea A"; revisar "El comité filtra las inscripciones por validar" $?
+pedir admin GET "/admin/proyecto.jsp?id=$PS"; contiene "Inscripción al seminario" && contiene "Formato F-AM-04" && contiene "inscripcion-validar.jsp" && sinError
+revisar "El comité ve los documentos y el formulario de validación" $?
+pedir admin POST /admin/inscripcion-validar.jsp --data-urlencode "id=$PS" --data-urlencode "decision=devolver" --data-urlencode "observacion= "
+[[ "$DESTINO" == *"error=observacion-requerida"* ]]; revisar "Sin observación: rechazado" $?
+pedir admin POST /admin/inscripcion-validar.jsp --data-urlencode "id=$PS" --data-urlencode "decision=devolver" --data-urlencode "observacion=La cedula no esta ampliada"
+[[ "$DESTINO" == *"ok=inscripcion-devuelta"* ]]; revisar "El comité devuelve la inscripción" $?
+[ "$(avisos $SAMI '%devolvi_ tu inscripci_n%no esta ampliada%')" = "1" ]; revisar "El estudiante recibe el aviso con la observación" $?
+inscribir cedula "$T/anexo.pdf;type=application/pdf"
+pedir admin POST /admin/inscripcion-validar.jsp --data-urlencode "id=$PS" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Soportes completos"
+[[ "$DESTINO" == *"ok=inscripcion-validada"* ]] && [ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PS")" = "En curso" ]; revisar "El comité valida la inscripción: seminario en curso" $?
+inscribir cedula "$T/anexo.pdf;type=application/pdf"; [[ "$DESTINO" == *"error=inscripcion-cerrada"* ]]; revisar "Validada, ya no se suben documentos" $?
+pedir sami POST /estudiante/modalidad-solicitar.jsp --data-urlencode "modalidad=3" --data-urlencode "motivo=x"
+[[ "$DESTINO" == *"error=modalidad-fuera-de-tiempo"* ]]; revisar "Ni se cambia la modalidad" $?
+pedir sami GET /estudiante/proyecto.jsp; contiene "Seminario en curso" && contiene "Paso 2: Seminario en curso"; revisar "El estudiante ve el seminario en curso" $?
+pedir dir GET "/director/proyecto.jsp?id=$PS"; contiene "Nota final del seminario" && sinError; revisar "El docente ve el formulario de la nota final" $?
+nota() { pedir dir POST /director/nota-registrar.jsp --data-urlencode "id=$1" --data-urlencode "nota=$2" --data-urlencode "observacion=$3"; }
+nota $PS 6 "x"; [[ "$DESTINO" == *"error=nota-invalida"* ]]; revisar "Nota de 6: rechazada" $?
+nota $PS "4.5abc" "x"; [[ "$DESTINO" == *"error=nota-invalida"* ]]; revisar "Nota con letras: rechazada" $?
+nota $PS "4,5" " "; [[ "$DESTINO" == *"error=observacion-requerida"* ]]; revisar "Sin observación: rechazada" $?
+pedir doc POST /director/nota-registrar.jsp --data-urlencode "id=$PS" --data-urlencode "nota=4" --data-urlencode "observacion=x"
+[[ "$DESTINO" == *"error=no-encontrado"* ]]; revisar "Solo el docente del seminario registra la nota" $?
+nota $PS "4,5" "Buen articulo"; [[ "$DESTINO" == *"ok=nota-aprobada"* ]]; revisar "Registra 4,5: aprobado" $?
+[ "$($MYSQL -e "SELECT CONCAT(estado,'|',nota_final) FROM proyectos WHERE id=$PS")" = "Finalizado|4.5" ]; revisar "Queda Finalizado con la nota 4.5" $?
+pedir sami GET /estudiante/proyecto.jsp; contiene "Aprobaste el seminario con nota"; revisar "El estudiante ve que aprobó con su nota" $?
+nota $PS "3" "x"; [[ "$DESTINO" == *"error=nota-no-aplica"* ]]; revisar "La nota no se registra dos veces" $?
+pedir dir POST /ideas/idea-guardar.jsp --data-urlencode "titulo=Seminario B" --data-urlencode "nivel=1" --data-urlencode "modalidad=5"
+pedir admin POST /ideas/idea-revisar.jsp --data-urlencode "id=$(idIdea 'Seminario B')" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
+registrar sol@correo.uts.edu.co 5000000007 1; entrar sol sol@correo.uts.edu.co Clave123
+pedir sol POST /ideas/idea-tomar.jsp --data-urlencode "id=$(idIdea 'Seminario B')"
+PSB=$(proyectoDe sol@correo.uts.edu.co)
+$MYSQL -e "UPDATE proyectos SET estado='En curso', director_id=3 WHERE id=$PSB"
+nota $PSB "2.0" "No entrego el articulo"
+[[ "$DESTINO" == *"ok=nota-reprobada"* ]] && [ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PSB")" = "Cancelado" ]; revisar "Registra 2.0: reprobado, el proyecto se cancela" $?
+[ -z "$(proyectoDe sol@correo.uts.edu.co)" ]; revisar "El estudiante queda libre para empezar de nuevo" $?
+
+echo "== Semana 12 vencida: cancelación por extemporaneidad (RF30, RNF21)"
+pedir dir POST /ideas/idea-guardar.jsp --data-urlencode "titulo=Idea N" --data-urlencode "nivel=1" --data-urlencode "modalidad=2"
+pedir admin POST /ideas/idea-revisar.jsp --data-urlencode "id=$(idIdea 'Idea N')" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
+registrar nico@correo.uts.edu.co 5000000008 1 Nuevo; entrar nico nico@correo.uts.edu.co Clave123
+pedir nico POST /ideas/idea-tomar.jsp --data-urlencode "id=$(idIdea 'Idea N')"
+PN=$(proyectoDe nico@correo.uts.edu.co)
+$MYSQL -e "UPDATE periodos SET fecha_limite_propuestas='$AYER' WHERE id=$P1"
+pedir admin GET /panel/inicio.jsp
+[ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PA")" = "Cancelado" ]; revisar "Al usar el sistema, el proyecto con la propuesta sin aprobar se cancela" $?
+[ -z "$(proyectoDe ana@correo.uts.edu.co)" ]; revisar "La estudiante queda libre (el pago pierde vigencia)" $?
+[ "$($MYSQL -e "SELECT estado FROM ideas WHERE titulo='Idea A'")" = "Aprobada" ]; revisar "La idea vuelve al banco" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM historial WHERE proyecto_id=$PA AND descripcion LIKE '%extemporaneidad%'")" = "1" ]; revisar "Queda en el historial" $?
+[ "$(avisos $ANA '%extemporaneidad%')" = "1" ] && [ "$(avisos 3 '%extemporaneidad%')" -ge 1 ]; revisar "Se avisa a la estudiante y al director" $?
+[ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PN")" = "Pendiente" ]; revisar "Un proyecto solo de plan nuevo no se cancela (RF41)" $?
+[ "$($MYSQL -e "SELECT CONCAT(estado,'|',(SELECT estado FROM proyectos WHERE id=$PS)) FROM proyectos WHERE id=$PB")" = "Finalizado|Finalizado" ]
+revisar "Los proyectos terminados y el Seminario no se tocan" $?
+pedir admin GET /panel/inicio.jsp
+[ "$($MYSQL -e "SELECT COUNT(*) FROM historial WHERE proyecto_id=$PA AND descripcion LIKE '%extemporaneidad%'")" = "1" ]; revisar "No se cancela dos veces" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "Todavía no tienes un proyecto"; revisar "La estudiante ya no tiene proyecto vigente" $?
+$MYSQL -e "UPDATE periodos SET fecha_limite_propuestas='$EN60' WHERE id=$P1"
 
 echo "== Diseño"
 MOJIBAKE=0

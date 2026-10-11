@@ -120,6 +120,19 @@
         <servlet-name>pedirExoneracion</servlet-name>
         <url-pattern>/estudiante/exoneracion-solicitar.jsp</url-pattern>
     </servlet-mapping>
+    <!-- Los documentos de inscripción al Seminario (F-AM-04 y cédula, PDF) -->
+    <servlet>
+        <servlet-name>inscripcionSeminario</servlet-name>
+        <jsp-file>/estudiante/inscripcion-guardar.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>15728640</max-file-size>
+            <max-request-size>16777216</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>inscripcionSeminario</servlet-name>
+        <url-pattern>/estudiante/inscripcion-guardar.jsp</url-pattern>
+    </servlet-mapping>
 
     <!-- La sesión viaja solo en una cookie (nunca como ;jsessionid=... en la URL) -->
     <session-config>

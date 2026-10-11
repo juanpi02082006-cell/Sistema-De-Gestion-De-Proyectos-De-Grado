@@ -8,11 +8,12 @@
 <c:set var="titulo" value="Proyectos" />
 <c:set var="seccion" value="proyectos" />
 <c:set var="filtro" value="${param.filtro == 'pago' or param.filtro == 'director' or param.filtro == 'evaluador'
-                               or param.filtro == 'modalidad' or param.filtro == 'exoneracion' or param.filtro == 'vencidos' ? param.filtro : ''}" />
+                               or param.filtro == 'modalidad' or param.filtro == 'exoneracion' or param.filtro == 'vencidos'
+                               or param.filtro == 'seminario' ? param.filtro : ''}" />
 
 <sql:query var="proyectos">
     SELECT * FROM (
-        SELECT p.id, p.codigo, p.titulo, p.estado, p.evaluador_id, f.orden AS fase,
+        SELECT p.id, p.codigo, p.titulo, p.estado, p.evaluador_id, p.modalidad_id, f.orden AS fase,
                (SELECT COUNT(*) FROM cambios_modalidad c WHERE c.proyecto_id = p.id AND c.estado = 'Pendiente') AS cambios,
                (SELECT COUNT(*) FROM exoneraciones x WHERE x.proyecto_id = p.id AND x.estado = 'Pendiente') AS exoneraciones,
                (f.orden = 3 AND EXISTS (SELECT 1 FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
@@ -33,8 +34,10 @@
     WHERE (? = '' OR (? = 'pago' AND estado_pago = 'Por revisar') OR (? = 'director' AND director IS NULL)
            OR (? = 'evaluador' AND evaluador_id IS NULL AND fase BETWEEN 2 AND 4)
            OR (? = 'modalidad' AND cambios > 0) OR (? = 'exoneracion' AND exoneraciones > 0)
-           OR (? = 'vencidos' AND director_vencido = 1))
+           OR (? = 'vencidos' AND director_vencido = 1)
+           OR (? = 'seminario' AND modalidad_id = 5 AND estado = 'Pendiente'))
     ORDER BY fase, titulo
+    <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
@@ -63,6 +66,7 @@
             <option value="modalidad" ${filtro == 'modalidad' ? 'selected' : ''}>Cambios de modalidad por decidir</option>
             <option value="exoneracion" ${filtro == 'exoneracion' ? 'selected' : ''}>Exoneraciones por verificar</option>
             <option value="vencidos" ${filtro == 'vencidos' ? 'selected' : ''}>Plazo del director vencido</option>
+            <option value="seminario" ${filtro == 'seminario' ? 'selected' : ''}>Seminario: inscripciones por validar</option>
         </select>
         <noscript><button type="submit" class="btn btn-outline-dark rounded-pill">Filtrar</button></noscript>
     </form>
@@ -93,7 +97,8 @@
                                     <c:if test="${p.cambios > 0}"><span class="app-etiqueta ms-0">Cambio de modalidad por decidir</span></c:if>
                                     <c:if test="${p.exoneraciones > 0}"><span class="app-etiqueta ms-0">Exoneración por verificar</span></c:if>
                                     <c:if test="${p.director_vencido == 1}"><span class="app-etiqueta ms-0">Plazo del director vencido</span></c:if>
-                                    <c:if test="${p.estado == 'Finalizado'}"><span class="app-etiqueta ms-0">Finalizado</span></c:if>
+                                    <c:if test="${p.modalidad_id == 5 and p.estado == 'Pendiente'}"><span class="app-etiqueta ms-0">Seminario: inscripción por validar</span></c:if>
+                                    <c:if test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><span class="app-etiqueta ms-0"><c:out value="${p.estado}" /></span></c:if>
                                     <span class="app-lista-nota"><c:out value="${p.modalidad}" /> · <c:out value="${p.nivel}" /><c:if test="${not empty p.periodo}"> · <c:out value="${p.periodo}" /></c:if></span>
                                 </td>
                                 <td><c:out value="${p.estudiantes}" /></td>

@@ -10,7 +10,7 @@
 
 <sql:query var="consulta">
     SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.director_id, p.evaluador_id, p.fecha_inicio, p.modalidad_id,
-           p.interdisciplinario,
+           p.interdisciplinario, p.nota_final, ${sqlDocumentosFaltantes} AS documentos_faltantes,
            f.orden AS fase, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
            pr.nombre AS periodo, pr.fecha_limite_pago, pr.fecha_limite_propuestas, ${sqlEstadoPago} AS estado_pago,
            (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
@@ -32,6 +32,8 @@
 </c:if>
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
+<c:set var="esSeminario" value="${p.modalidad_id == 5}" />
+<c:set var="estadoSeminario" value="${p.estado}" />
 
 <%-- Recibos de los estudiantes vigentes (cada uno sube el suyo), agrupados por estudiante
      y del más reciente al más antiguo, con la revisión del comité si la tienen --%>
@@ -162,7 +164,50 @@
     </div>
 </c:if>
 
-<c:if test="${p.fase == 1}">
+<%-- Seminario (RF17): inscripción (documentos y validación) y nota final --%>
+<c:if test="${esSeminario}">
+    <sql:query var="documentosSeminario">
+        SELECT e.id, e.tipo, e.nombre_archivo, e.subido_en, u.nombre AS estudiante
+        FROM entregas e JOIN usuarios u ON u.id = e.subido_por
+        JOIN proyecto_estudiantes x ON x.proyecto_id = e.proyecto_id AND x.estudiante_id = e.subido_por AND x.vigente = 1
+        WHERE e.proyecto_id = ? AND e.tipo IN ('Formato F-AM-04', 'Documento de identidad')
+          AND e.id = (SELECT MAX(e2.id) FROM entregas e2 WHERE e2.proyecto_id = e.proyecto_id AND e2.subido_por = e.subido_por AND e2.tipo = e.tipo)
+        ORDER BY u.nombre, e.tipo DESC
+        <sql:param value="${p.id}" />
+    </sql:query>
+    <div class="app-tarjeta mb-4">
+        <h2 class="app-tarjeta-titulo">Inscripción al seminario</h2>
+        <c:choose>
+            <c:when test="${p.estado == 'Pendiente'}">
+                <c:set var="pagoListoSeminario" value="${p.estado_pago == 'Aprobado' or p.estado_pago == 'No aplica'}" />
+                <ul class="app-lista mb-3">
+                    <li><span class="app-lista-dato">Pago de todos aprobado</span><span class="app-requisito ${pagoListoSeminario ? 'cumple' : ''}">${pagoListoSeminario ? 'Listo' : 'Pendiente'}</span></li>
+                    <li><span class="app-lista-dato">Formato F-AM-04 y cédula de todos</span><span class="app-requisito ${p.documentos_faltantes == 0 ? 'cumple' : ''}">${p.documentos_faltantes == 0 ? 'Listo' : 'Pendiente'}</span></li>
+                    <li><span class="app-lista-dato">Docente del seminario (director)</span><span class="app-requisito ${empty p.director_id ? '' : 'cumple'}">${empty p.director_id ? 'Pendiente' : 'Listo'}</span></li>
+                </ul>
+            </c:when>
+            <c:when test="${p.estado == 'En curso'}"><p class="text-secondary">Inscripción validada: el seminario está en curso. La nota final la registra el docente.</p></c:when>
+            <c:when test="${not empty p.nota_final}"><p class="mb-3">Nota final: <strong><fmt:formatNumber value="${p.nota_final}" minFractionDigits="1" maxFractionDigits="1" /></strong> (${p.estado == 'Finalizado' ? 'aprobado' : 'reprobado'}).</p></c:when>
+        </c:choose>
+        <c:forEach var="dc" items="${documentosSeminario.rows}">
+            <div class="app-archivo">
+                <span><span class="app-lista-dato"><c:out value="${dc.estudiante}" /> · <c:out value="${dc.tipo}" /></span>
+                    <span class="app-lista-nota"><c:out value="${dc.nombre_archivo}" /> · <fmt:formatDate value="${dc.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span></span>
+                <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${dc.id}" target="_blank" rel="noopener">Ver</a>
+            </div>
+        </c:forEach>
+        <c:if test="${p.estado == 'Pendiente'}">
+            <form class="app-revision" method="post" action="${ctx}/admin/inscripcion-validar.jsp">
+                <input type="hidden" name="id" value="${p.id}">
+                <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre la inscripción" required></textarea>
+                <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Validar la inscripción</button>
+                <button type="submit" name="decision" value="devolver" class="btn btn-sm btn-outline-dark rounded-pill">Devolver a los estudiantes</button>
+            </form>
+        </c:if>
+    </div>
+</c:if>
+
+<c:if test="${p.fase == 1 and not esSeminario}">
     <c:set var="pagoListo" value="${p.estado_pago == 'Aprobado' or p.estado_pago == 'No aplica'}" />
     <div class="app-tarjeta mb-4">
         <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>

@@ -34,7 +34,7 @@
 <c:set var="motivo" value="" />
 <c:choose>
     <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
-    <c:when test="${p.fase < 1 or p.fase > 3}"><c:set var="motivo" value="modalidad-fuera-de-tiempo" /></c:when>
+    <c:when test="${p.fase < 1 or p.fase > 3 or (p.modalidad_id == 5 and p.estado != 'Pendiente')}"><c:set var="motivo" value="modalidad-fuera-de-tiempo" /></c:when>
     <c:when test="${p.pendientes > 0}"><c:set var="motivo" value="modalidad-pendiente" /></c:when>
     <c:when test="${nueva.rowCount == 0 or param.modalidad == idModalidadActual}"><c:set var="motivo" value="modalidad-invalida" /></c:when>
     <c:when test="${p.integrantes > ((p.interdisciplinario == true and (nueva.rows[0].id == 1 or nueva.rows[0].id == 2)) ? 4 : nueva.rows[0].max_integrantes)}"><c:set var="motivo" value="modalidad-integrantes" /></c:when>

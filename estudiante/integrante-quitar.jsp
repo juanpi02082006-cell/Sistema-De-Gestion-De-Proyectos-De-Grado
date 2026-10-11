@@ -8,7 +8,7 @@
 </c:if>
 
 <sql:query var="consulta">
-    SELECT p.id, p.estado, p.titulo, f.orden AS fase, u.nombre AS companero
+    SELECT p.id, p.estado, p.titulo, p.modalidad_id, f.orden AS fase, u.nombre AS companero
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
     LEFT JOIN fases f ON f.id = p.fase_id
@@ -23,7 +23,7 @@
 <c:choose>
     <c:when test="${consulta.rowCount == 0}"><c:set var="motivo" value="no-encontrado" /></c:when>
     <c:when test="${consulta.rows[0].estado == 'Finalizado' or consulta.rows[0].estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
-    <c:when test="${consulta.rows[0].fase != 1 and consulta.rows[0].fase != 2}"><c:set var="motivo" value="integrantes-cerrados" /></c:when>
+    <c:when test="${(consulta.rows[0].fase != 1 and consulta.rows[0].fase != 2) or (consulta.rows[0].modalidad_id == 5 and consulta.rows[0].estado != 'Pendiente')}"><c:set var="motivo" value="integrantes-cerrados" /></c:when>
 </c:choose>
 <c:if test="${not empty motivo}">
     <c:redirect url="/estudiante/proyecto.jsp">

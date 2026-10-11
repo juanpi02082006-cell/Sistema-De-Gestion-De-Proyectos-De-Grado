@@ -12,7 +12,7 @@
 </c:if>
 
 <sql:query var="consulta">
-    SELECT p.id, p.estado, p.titulo, p.nivel_id, f.orden AS fase,
+    SELECT p.id, p.estado, p.titulo, p.nivel_id, p.modalidad_id, f.orden AS fase,
            CASE WHEN p.interdisciplinario = 1 THEN 4 ELSE m.max_integrantes END AS maximo,
            (SELECT COUNT(*) FROM proyecto_estudiantes x WHERE x.proyecto_id = p.id AND x.vigente = 1) AS integrantes
     FROM proyecto_estudiantes pe
@@ -49,7 +49,7 @@
 <c:set var="motivo" value="" />
 <c:choose>
     <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
-    <c:when test="${p.fase != 1 and p.fase != 2}"><c:set var="motivo" value="integrantes-cerrados" /></c:when>
+    <c:when test="${(p.fase != 1 and p.fase != 2) or (p.modalidad_id == 5 and p.estado != 'Pendiente')}"><c:set var="motivo" value="integrantes-cerrados" /></c:when>
     <c:when test="${empty correo or companero.rowCount == 0}"><c:set var="motivo" value="integrante-no-existe" /></c:when>
     <c:when test="${c.con_proyecto > 0}"><c:set var="motivo" value="integrante-con-proyecto" /></c:when>
     <c:when test="${idNivelCompanero != idNivelProyecto}"><c:set var="motivo" value="integrante-otro-nivel" /></c:when>

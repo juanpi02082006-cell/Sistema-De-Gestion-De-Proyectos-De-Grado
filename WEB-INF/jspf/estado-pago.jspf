@@ -47,3 +47,11 @@
      FROM proyecto_estudiantes px JOIN usuarios ue ON ue.id = px.estudiante_id
      WHERE px.proyecto_id = p.id AND px.vigente = 1)
 </c:set>
+<%-- Seminario (RF17): cuántos estudiantes vigentes del proyecto "p" todavía no subieron
+     sus dos documentos de inscripción (formato F-AM-04 y documento de identidad). --%>
+<c:set var="sqlDocumentosFaltantes">
+    (SELECT COUNT(*) FROM proyecto_estudiantes dx
+     WHERE dx.proyecto_id = p.id AND dx.vigente = 1
+       AND (NOT EXISTS (SELECT 1 FROM entregas de WHERE de.proyecto_id = p.id AND de.subido_por = dx.estudiante_id AND de.tipo = 'Formato F-AM-04')
+            OR NOT EXISTS (SELECT 1 FROM entregas de WHERE de.proyecto_id = p.id AND de.subido_por = dx.estudiante_id AND de.tipo = 'Documento de identidad')))
+</c:set>

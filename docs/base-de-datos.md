@@ -1,6 +1,6 @@
 # Base de datos
 
-Última actualización: 2026-10-10 (versión 5: carreras, avisos, exoneraciones, codirectores y PQR)
+Última actualización: 2026-10-11 (versión 5: carreras, avisos, exoneraciones, codirectores, PQR y Seminario)
 
 - **Base:** `sistemas_proyectos_grado` (MySQL; en local, MariaDB 10.4 de XAMPP), con 31 tablas.
 - **Script:** [`bd/sistemas_proyectos_grado.sql`](../bd/sistemas_proyectos_grado.sql). Crea la base, las tablas, los catálogos y los usuarios de prueba.
@@ -118,7 +118,7 @@ erDiagram
 | `roles` | Los roles del sistema | Administrador (comité), Director, Evaluador, Estudiante |
 | `tipos_documentos` | Tipo de documento del usuario | Tarjeta de identidad, Cédula de ciudadanía, Cédula de extranjería |
 | `niveles` | Nivel del estudiante y de la idea (RF25, RF40) | Tecnológico, Universitario (antes "Ingeniería") |
-| `carreras` | Carreras de la UTS: nombre, nivel, código SNIES, campus y metodología (presencial o virtual). El nivel del estudiante sale de su carrera (RF24) | Las 59 de la lista del equipo (30 tecnológicas y 29 universitarias; Anexo L de los requerimientos) |
+| `carreras` | Carreras de la UTS: nombre, nivel, código SNIES, campus y metodología (presencial o virtual). El nivel del estudiante sale de su carrera (RF24) | Las 60 ofertas de la lista del equipo (30 tecnológicas y 30 universitarias; Anexo L de los requerimientos) |
 | `modalidades` | Modalidades de grado (RF4), con su máximo de integrantes (RF36) | Las 5 del reglamento sin Práctica: Proyecto de investigación y Desarrollo tecnológico hasta 3; Monografía, Emprendimiento y Seminario hasta 2 |
 | `lineas_investigacion` | Líneas de investigación | Las 4 de la original |
 | `fases` | Fases del proyecto (RF37) y el formato de cada una, como en el sistema actual de la UTS | 0 Aprobación de la idea, 1 Pago, 2 Propuesta I (FDC-124), 3 Propuesta II (FDC-124), 4 Informe I (FDC-125), 5 Informe II (FDC-125), 6 Fase final (sustentación). El `id` no es el número de la fase: el número es `orden` |
@@ -140,10 +140,10 @@ erDiagram
 | --- | --- | --- | --- |
 | `periodos` | Calendario de cada semestre: estado (planeado, activo o cerrado), inicio, cierre del banco (semana 4), límite de pago (semana 8), límite de propuestas (semana 12) y fechas del informe final | RF3, RF25, RF30, RF32 | Nombre de periodo único; estado Planeado, Activo o Cerrado |
 | `ideas` | Banco de ideas: las registran los docentes, o es la propuesta propia de un estudiante (`origen`); las aprueba el comité (el administrador) | RF10, RF25, RF29 | Origen Docente o Estudiante; estado Pendiente, Aprobada, Rechazada o Tomada |
-| `proyectos` | Código, título, modalidad, nivel, fase, estado, si es interdisciplinario, director, evaluador, fecha de aprobación del FDC-124, fecha de notificación al estudiante (dato del F-DC-124) y fecha límite (180 días desde la aprobación del FDC-124) | RF2, RF6, RF9, RF11, RF12, RF13, RF27, RF31, RF38–RF40 | **Director ≠ evaluador**; código único; estado incluye Cancelado |
+| `proyectos` | Código, título, modalidad, nivel, fase, estado, si es interdisciplinario, director, evaluador, fecha de aprobación del FDC-124, fecha de notificación al estudiante (dato del F-DC-124), fecha límite (180 días desde la aprobación del FDC-124) y nota final del Seminario | RF2, RF6, RF9, RF11, RF12, RF13, RF17, RF27, RF31, RF38–RF40 | **Director ≠ evaluador**; código único; estado incluye Cancelado; nota final de 0 a 5 |
 | `proyecto_codirectores` | Codirectores de los proyectos interdisciplinarios | RF13 | Un docente no se repite en el mismo proyecto |
 | `proyecto_estudiantes` | Integrantes de cada proyecto, con su exoneración por Saber TyT | RF35, RF36, RF38, RNF14 | **Un solo proyecto vigente por estudiante**; solo renuncia a la exoneración quien fue exonerado |
-| `entregas` | Archivos: propuesta, FDC-124, FDC-125, FDC-129, reporte Turnitin, recibo de pago, certificado de Saber TyT, anexos y entregables de la modalidad (evidencias, manual de usuario, código fuente), con su versión y cuál es la oficial | RF21, RF26, RF29–RF31, RF43, RNF15, RNF16 | **Una sola versión N y una sola oficial por tipo** en cada proyecto; versión desde 1 |
+| `entregas` | Archivos: propuesta, FDC-124, FDC-125, FDC-129, reporte Turnitin, recibo de pago, certificado de Saber TyT, formato F-AM-04 y documento de identidad (inscripción al Seminario), anexos y entregables de la modalidad (evidencias, manual de usuario, código fuente), con su versión y cuál es la oficial | RF21, RF26, RF29–RF31, RF43, RNF15, RNF16 | **Una sola versión N y una sola oficial por tipo** en cada proyecto; versión desde 1 |
 | `revisiones` | Aprobaciones en orden director → evaluador → comité, con nota y observación; la evaluación puede estar en borrador. Los codirectores solo dejan observaciones | RF13, RF14, RF18, RF22, RF23, RF34, RF42 | **Observación y decisión obligatorias al enviar** (el codirector deja observación sin decisión, y no puede decidir); estado Borrador o Enviada; decisión Aprobado, Aplazado, No aprobado o Devuelto (F-DC-124); nota de 0 a 5 |
 | `revision_indicadores` | Respuestas de la rejilla en cada evaluación: Cumple Sí, No o N/A en cada indicador, con su observación | RF23 | Cada indicador una vez por evaluación; Sí, No, N/A (solo F-DC-129) o sin responder (borrador) |
 | `cambios_modalidad` | Solicitudes de cambio de modalidad: anterior y nueva, quién la pidió y cuándo, decisión del comité, quién decidió y cuándo | RF12 | La modalidad nueva es distinta de la anterior; aprobada o rechazada solo con quién y cuándo decidió |
@@ -173,7 +173,9 @@ erDiagram
 - Cambio de modalidad (RF12): solo antes de aprobar el FDC-124; al aprobarse, se cambia `proyectos.modalidad_id` y queda en el historial.
 - Banco de ideas (RF25): después de `periodos.fecha_cierre_banco` no se pueden tomar ideas.
 - Habilitación (RF33): con el plan de estudios, el % de créditos y `metodologia_aprobada` se decide qué modalidades puede tomar el estudiante y qué requisito le falta.
-- Avisos de vencimiento y de cada movimiento (RF5): se muestran **dentro del sistema**, sin correo (decisión del profesor). Para eso, en el Sprint 7 se agregará una tabla de avisos.
+- Avisos de vencimiento y de cada movimiento (RF5): se muestran **dentro del sistema**, sin correo (decisión del profesor), con la tabla `avisos`.
+- Semana 12 vencida (RF30, RNF21): `WEB-INF/jspf/cierres.jspf`, incluido en la cabecera, cancela por extemporaneidad los proyectos sin el FDC-124 aprobado (`fecha_aprobacion_124` vacía) cuando pasa `periodos.fecha_limite_propuestas`, si algún integrante es de un plan anterior y no es Seminario: estado Cancelado, estudiantes sin vigencia, la idea vuelve a "Aprobada", avisos e historial.
+- Seminario (RF17): cada estudiante sube su recibo, el F-AM-04 y su documento de identidad; el comité valida la inscripción (proyecto "En curso") y el director registra `proyectos.nota_final`: con 3.0 o más queda "Finalizado"; con menos, "Cancelado".
 
 ## Pruebas hechas
 
@@ -200,6 +202,8 @@ Las pruebas de punta a punta pasan con la versión 4 y la contraseña nueva (`12
 
 **Versión 5 (2026-10-10):** catálogo de `carreras` (`usuarios.carrera` pasa a `carrera_id`), nivel "Universitario", `avisos`, `exoneraciones`, rol Codirector en `revisiones`, tipos de PQR y festivos de 2027 (31 tablas). Pruebas: 95 de 95 de la base, 63 de 63 de los Sprints 2 y 3, 127 de 127 del Sprint 4, 136 de 136 del Sprint 5 y 116 de 116 de `sprint5b.sh`. La base se reinició conservando los usuarios, el periodo 2026-2, sus sesiones y las ideas (las tomadas volvieron a "Aprobada"); se borraron los proyectos y los archivos subidos.
 
+**Seminario y semana 12 (2026-10-11):** columna `proyectos.nota_final` (`DECIMAL(3,1)`, de 0 a 5) y tipos de entrega "Formato F-AM-04" y "Documento de identidad"; Negocios Internacionales en Bucaramanga y en el Campus Virtual. Pruebas: 95 de 95 de la base, 63 de 63, 127 de 127, 136 de 136 y 153 de 153 de `sprint5b.sh`. La base se volvió a reiniciar con los mismos datos del equipo.
+
 **Columnas `TINYINT(1)`:** el driver de MySQL las entrega como verdadero o falso (`leido`, `exonerado`, `renuncia_exoneracion`, `interdisciplinario`, `oficial`, `activo`, `metodologia_aprobada`). En EL se comparan con `== true`, nunca con `== 1` (da error). Las expresiones de SQL que dan verdadero o falso, en cambio, llegan como número y se comparan con `== 1`.
 
 **Archivos que suben los usuarios:** se guardan en `WEB-INF/archivos` (no se abre desde el navegador ni se sube a Git) con un nombre que pone el sistema (por ejemplo `recibo-p12-1760000000000.pdf`); en `entregas` quedan el nombre original y el guardado. Se ven con `archivos/ver.jsp?id=`, que revisa que quien pide el archivo sea del comité o del proyecto. Para recibir archivos, `web.xml` le da `multipart-config` (hasta 15 MB) a la página que los guarda.
@@ -212,7 +216,7 @@ C:/xampp/mysql/bin/mysql.exe -u root --default-character-set=utf8mb4 < pruebas/b
 bash pruebas/sprints2-3.sh   # login, usuarios y roles (importar la base antes)
 bash pruebas/sprint4.sh      # registro, habilitación, periodos, modalidades y banco de ideas (importar la base antes)
 bash pruebas/sprint5.sh      # pago, integrantes, director y evaluador, fases 2 y 3 (importar la base antes)
-bash pruebas/sprint5b.sh     # carreras, código, avisos, plazos, codirectores, anexos, cambio de modalidad, PQR, auditoría y exoneración
+bash pruebas/sprint5b.sh     # carreras, código, avisos, plazos, codirectores, anexos, cambio de modalidad, PQR, auditoría, exoneración, Seminario y semana 12
 ```
 
 Importar la base borra los datos que haya. Para conservarlos, hacer antes una copia con `C:/xampp/mysql/bin/mysqldump.exe -u root --databases sistemas_proyectos_grado > copia.sql` (y de `WEB-INF/archivos`, porque `sprint4.sh` borra los recibos), y devolverla al final con `mysql -u root < copia.sql`.

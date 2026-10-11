@@ -1,7 +1,31 @@
 <%-- Tarjetas con las fases del proyecto (RF2, RF37), como el seguimiento del sistema
      actual de la UTS: las fases pasadas en lima con un chulo, la actual en lima suave
      con un reloj de arena y las que faltan en blanco. Antes de incluirlo, definir
-     faseActual (el número de la fase, fases.orden). --%>
+     faseActual (el número de la fase, fases.orden). En Seminario (esSeminario = true),
+     que no usa el F-DC-124 ni las fases de la propuesta, muestra sus tres pasos según el
+     estado del proyecto (estadoSeminario): inscripción, seminario en curso y nota final. --%>
+<c:choose>
+<c:when test="${esSeminario}">
+    <c:set var="pasoSeminario" value="${estadoSeminario == 'Pendiente' ? 1 : (estadoSeminario == 'En curso' ? 2 : (estadoSeminario == 'Finalizado' ? 4 : 0))}" />
+    <div class="app-fases">
+        <c:forEach var="paso" begin="1" end="3">
+            <c:set var="estadoFase" value="${paso < pasoSeminario ? 'completa' : (paso == pasoSeminario ? 'actual' : 'pendiente')}" />
+            <div class="app-fase ${estadoFase}">
+                <span class="app-fase-icono" aria-hidden="true">
+                    <c:choose>
+                        <c:when test="${estadoFase == 'completa'}"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></c:when>
+                        <c:when test="${estadoFase == 'actual'}"><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 10 5 10 9s-10 4-10 9"/><path d="M17 3c0 5-10 5-10 9s10 4 10 9"/></svg></c:when>
+                        <c:otherwise><svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></c:otherwise>
+                    </c:choose>
+                </span>
+                <span class="app-fase-nombre">Paso ${paso}: ${paso == 1 ? 'Inscripción' : (paso == 2 ? 'Seminario en curso' : 'Nota final')}</span>
+                <span class="app-fase-texto">${paso == 1 ? 'Recibo de pago, formato F-AM-04 y cédula; el comité valida la inscripción' : (paso == 2 ? 'Clases y entregable con el docente del seminario (en Atena)' : 'El docente registra la nota; aprobada, el requisito queda cumplido')}</span>
+                <span class="visually-hidden">${estadoFase == 'completa' ? '(completado)' : (estadoFase == 'actual' ? '(paso actual)' : '(pendiente)')}</span>
+            </div>
+        </c:forEach>
+    </div>
+</c:when>
+<c:otherwise>
 <sql:query var="fasesTodas">SELECT orden, nombre, descripcion FROM fases ORDER BY orden</sql:query>
 <div class="app-fases">
     <c:forEach var="f" items="${fasesTodas.rows}">
@@ -21,3 +45,5 @@
         </div>
     </c:forEach>
 </div>
+</c:otherwise>
+</c:choose>

@@ -13,7 +13,8 @@
 -- Versión 5 (2026-10-10): catálogo de carreras de la UTS (el nivel se toma de la
 -- carrera; "Ingeniería" pasa a llamarse "Universitario"), avisos dentro del sistema,
 -- solicitudes de exoneración por Saber TyT, observaciones de los codirectores, tipos
--- de PQR y festivos de 2027.
+-- de PQR y festivos de 2027. Seminario: documentos de inscripción (F-AM-04 y cédula) y
+-- nota final del proyecto.
 -- Cada ENUM lleva CHECK (columna <> ''): MariaDB de XAMPP no está en modo estricto y
 -- guardaría un valor inválido como '' con solo una advertencia.
 --
@@ -247,6 +248,7 @@ CREATE TABLE proyectos (
     fecha_aprobacion_124 DATE         NULL COMMENT 'Aprobación total del FDC-124 por el comité: desde aquí se cuentan los 90 días mínimos y los 180 para entregar el FDC-125 (RF31, RF38)',
     fecha_notificacion   DATE         NULL COMMENT 'Notificación de la aprobación al estudiante (dato del F-DC-124)',
     fecha_limite         DATE         NULL COMMENT 'Fecha límite vigente (180 días desde la aprobación del FDC-124, más las prórrogas, RF38)',
+    nota_final           DECIMAL(3,1) NULL COMMENT 'Seminario: nota final que registra el docente (RF17); planes nuevos (RF42)',
     creado_en            TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizado_en       TIMESTAMP    NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -262,7 +264,8 @@ CREATE TABLE proyectos (
     -- RF11: un docente nunca evalúa el proyecto que dirige.
     CONSTRAINT chk_proyectos_director_evaluador
         CHECK (director_id IS NULL OR evaluador_id IS NULL OR director_id <> evaluador_id),
-    CONSTRAINT chk_proyectos_estado_valido CHECK (estado <> '')
+    CONSTRAINT chk_proyectos_estado_valido CHECK (estado <> ''),
+    CONSTRAINT chk_proyectos_nota_final CHECK (nota_final IS NULL OR nota_final BETWEEN 0 AND 5)
 ) ENGINE=InnoDB;
 
 -- Codirectores de los proyectos interdisciplinarios (RF13): hasta 2 por
@@ -310,7 +313,7 @@ CREATE TABLE entregas (
     id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
     proyecto_id           INT UNSIGNED NOT NULL,
     fase_id               INT UNSIGNED NULL,
-    tipo                  ENUM('Propuesta', 'FDC-124', 'FDC-125', 'FDC-129', 'Reporte Turnitin', 'Recibo de pago', 'Anexo', 'Evidencia', 'Manual de usuario', 'Código fuente', 'Certificado Saber TyT') NOT NULL,
+    tipo                  ENUM('Propuesta', 'FDC-124', 'FDC-125', 'FDC-129', 'Reporte Turnitin', 'Recibo de pago', 'Anexo', 'Evidencia', 'Manual de usuario', 'Código fuente', 'Certificado Saber TyT', 'Formato F-AM-04', 'Documento de identidad') NOT NULL,
     version               SMALLINT UNSIGNED NULL COMMENT 'RF43: 1, 2, 3…; NULL si el archivo no se versiona',
     oficial               TINYINT(1)   NULL DEFAULT NULL COMMENT 'RF43: 1 en la versión aprobada; NULL en las demás',
     nombre_archivo        VARCHAR(255) NOT NULL,
@@ -623,8 +626,8 @@ INSERT INTO niveles (id, nombre) VALUES
     (2, 'Universitario');
 
 -- Carreras de la UTS, tal como las entregó el equipo (2026-10-10). "Negocios
--- Internacionales" llegó sin nivel, SNIES ni campus: se dejó como universitaria del
--- Campus Virtual, sin SNIES, mientras se completa el dato.
+-- Internacionales" es universitaria y se ofrece en Bucaramanga y en el Campus Virtual
+-- (confirmado por el equipo); su SNIES no llegó.
 INSERT INTO carreras (id, nombre, nivel_id, snies, campus, metodologia) VALUES
     (1, 'Tecnología en Desarrollo de Sistemas Informáticos', 1, '101597', 'Bucaramanga', 'Presencial'),
     (2, 'Tecnología en Entrenamiento Deportivo', 1, '17664', 'Bucaramanga', 'Presencial'),
@@ -684,7 +687,8 @@ INSERT INTO carreras (id, nombre, nivel_id, snies, campus, metodologia) VALUES
     (56, 'Administración de Empresas Turísticas y Hoteleras', 2, '118607', 'Campus Virtual', 'Virtual'),
     (57, 'Contaduría Pública', 2, '107060', 'Campus Virtual', 'Virtual'),
     (58, 'Ingeniería en Inteligencia Artificial y Ciencia de Datos', 2, '119105', 'Campus Virtual', 'Virtual'),
-    (59, 'Negocios Internacionales', 2, NULL, 'Campus Virtual', 'Virtual');
+    (59, 'Negocios Internacionales', 2, NULL, 'Campus Virtual', 'Virtual'),
+    (60, 'Negocios Internacionales', 2, NULL, 'Bucaramanga', 'Presencial');
 
 INSERT INTO modalidades (id, nombre, descripcion, max_integrantes) VALUES
     (1, 'Proyecto de investigación', 'Proyecto de investigación', 3),
