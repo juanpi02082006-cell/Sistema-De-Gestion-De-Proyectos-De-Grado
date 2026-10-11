@@ -1,0 +1,17 @@
+<%-- Fecha límite a N días hábiles desde hoy (RF21, RNF19): sin sábados, domingos ni
+     festivos de Colombia (tabla festivos). La calcula la base con una consulta
+     recursiva (MariaDB 10.2 o más nuevo, MySQL 8). Antes de incluirlo, definir
+     diasHabiles. Deja fechaPlazo (java.util.Date). --%>
+<sql:query var="consultaPlazo">
+    WITH RECURSIVE dias (d, habiles) AS (
+        SELECT CURDATE(), 0
+        UNION ALL
+        SELECT d + INTERVAL 1 DAY,
+               habiles + (CASE WHEN DAYOFWEEK(d + INTERVAL 1 DAY) IN (1, 7)
+                                 OR EXISTS (SELECT 1 FROM festivos fe WHERE fe.fecha = d + INTERVAL 1 DAY) THEN 0 ELSE 1 END)
+        FROM dias WHERE habiles < ?
+    )
+    SELECT MAX(d) AS plazo FROM dias
+    <sql:param value="${diasHabiles}" />
+</sql:query>
+<c:set var="fechaPlazo" value="${consultaPlazo.rows[0].plazo}" />

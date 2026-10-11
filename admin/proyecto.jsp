@@ -12,7 +12,11 @@
     SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.director_id, p.evaluador_id, p.fecha_inicio, p.modalidad_id,
            p.interdisciplinario,
            f.orden AS fase, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
-           pr.nombre AS periodo, pr.fecha_limite_pago, ${sqlEstadoPago} AS estado_pago
+           pr.nombre AS periodo, pr.fecha_limite_pago, pr.fecha_limite_propuestas, ${sqlEstadoPago} AS estado_pago,
+           (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+            ORDER BY e.version DESC LIMIT 1) AS limite_director,
+           (SELECT e.fecha_limite_revision < CURDATE() FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+            ORDER BY e.version DESC LIMIT 1) AS director_vencido
     FROM proyectos p
     JOIN modalidades m ON m.id = p.modalidad_id
     JOIN niveles n ON n.id = p.nivel_id
@@ -52,6 +56,13 @@
     SELECT u.id, u.nombre FROM usuarios u JOIN usuario_roles ur ON ur.usuario_id = u.id
     WHERE ur.rol_id = 4 AND u.activo = 1 ORDER BY u.nombre
 </sql:query>
+<%-- Codirectores actuales (RF13), como "|id|id|" --%>
+<sql:query var="codirectoresActuales">
+    SELECT docente_id FROM proyecto_codirectores WHERE proyecto_id = ? ORDER BY docente_id
+    <sql:param value="${p.id}" />
+</sql:query>
+<c:set var="idCodirector1">${codirectoresActuales.rowCount > 0 ? codirectoresActuales.rows[0].docente_id : ''}</c:set>
+<c:set var="idCodirector2">${codirectoresActuales.rowCount > 1 ? codirectoresActuales.rows[1].docente_id : ''}</c:set>
 <c:set var="idDirector">${p.director_id}</c:set>
 <c:set var="idEvaluador">${p.evaluador_id}</c:set>
 
@@ -66,6 +77,90 @@
 <%@ include file="/WEB-INF/jspf/mensajes.jspf" %>
 
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
+
+<%-- Solicitudes por decidir: cambio de modalidad (RF12) y exoneración (RNF14) --%>
+<sql:query var="cambiosPendientes">
+    SELECT c.id, c.motivo, c.solicitado_en, ma.nombre AS anterior, mn.nombre AS nueva, u.nombre AS solicitante
+    FROM cambios_modalidad c
+    JOIN modalidades ma ON ma.id = c.modalidad_anterior_id
+    JOIN modalidades mn ON mn.id = c.modalidad_nueva_id
+    JOIN usuarios u ON u.id = c.solicitado_por
+    WHERE c.proyecto_id = ? AND c.estado = 'Pendiente'
+    <sql:param value="${p.id}" />
+</sql:query>
+<sql:query var="exoneraciones">
+    SELECT x.id, x.puntaje, x.estado, x.observacion, x.entrega_id, u.nombre AS estudiante, pe.renuncia_exoneracion,
+           CASE WHEN x.puntaje >= 171 THEN '5.0 y 100 % de beca' WHEN x.puntaje >= 151 THEN '4.7 y 50 % de beca' ELSE '4.5' END AS estimulo
+    FROM exoneraciones x
+    JOIN usuarios u ON u.id = x.estudiante_id
+    LEFT JOIN proyecto_estudiantes pe ON pe.proyecto_id = x.proyecto_id AND pe.estudiante_id = x.estudiante_id
+    WHERE x.proyecto_id = ?
+    ORDER BY x.id DESC
+    <sql:param value="${p.id}" />
+</sql:query>
+
+<c:if test="${p.estado == 'Finalizado'}">
+    <div class="app-resultado cumple">
+        <h2>Proyecto terminado</h2>
+        <p>Estado: Finalizado. Revisa el historial para ver cómo terminó.</p>
+    </div>
+</c:if>
+
+<c:if test="${cambiosPendientes.rowCount > 0}">
+    <div class="app-tarjeta mb-4">
+        <h2 class="app-tarjeta-titulo">Cambio de modalidad por decidir</h2>
+        <c:forEach var="cm" items="${cambiosPendientes.rows}">
+            <p class="mb-1"><strong><c:out value="${cm.solicitante}" /></strong> pide pasar de <c:out value="${cm.anterior}" /> a <strong><c:out value="${cm.nueva}" /></strong>.</p>
+            <p class="app-observacion mt-0">Motivo: <c:out value="${cm.motivo}" /> <span class="app-lista-nota"><fmt:formatDate value="${cm.solicitado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
+            <form class="app-revision" method="post" action="${ctx}/admin/modalidad-decidir.jsp">
+                <input type="hidden" name="id" value="${cm.id}">
+                <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre el cambio de modalidad" required></textarea>
+                <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar el cambio</button>
+                <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
+            </form>
+        </c:forEach>
+    </div>
+</c:if>
+
+<c:if test="${exoneraciones.rowCount > 0}">
+    <div class="app-tarjeta mb-4">
+        <h2 class="app-tarjeta-titulo">Exoneraciones por Saber TyT</h2>
+        <c:forEach var="xo" items="${exoneraciones.rows}">
+            <div class="app-archivo">
+                <span>
+                    <span class="app-lista-dato"><c:out value="${xo.estudiante}" /> · <c:out value="${xo.puntaje}" /> puntos</span>
+                    <span class="app-lista-nota">Estímulo: <c:out value="${xo.estimulo}" /><c:if test="${xo.estado == 'Aprobada' and xo.renuncia_exoneracion == true}"> · renunció a la exoneración</c:if></span>
+                </span>
+                <span class="app-acciones">
+                    <span class="app-estado ${xo.estado == 'Aprobada' ? 'activo' : 'inactivo'}"><c:out value="${xo.estado}" /></span>
+                    <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${xo.entrega_id}" target="_blank" rel="noopener">Certificado</a>
+                </span>
+            </div>
+            <c:choose>
+                <c:when test="${xo.estado == 'Pendiente' and p.estado != 'Finalizado'}">
+                    <form class="app-revision mb-3" method="post" action="${ctx}/admin/exoneracion-revisar.jsp">
+                        <input type="hidden" name="id" value="${xo.id}">
+                        <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre la exoneración" required></textarea>
+                        <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar la exoneración</button>
+                        <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
+                    </form>
+                </c:when>
+                <c:when test="${not empty xo.observacion}">
+                    <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${xo.observacion}" /></p>
+                </c:when>
+            </c:choose>
+        </c:forEach>
+    </div>
+</c:if>
+
+<c:if test="${p.fase == 3 and not empty p.limite_director}">
+    <div class="${p.director_vencido == 1 ? 'alert alert-warning app-aviso' : 'app-resultado'}" role="status">
+        <c:choose>
+            <c:when test="${p.director_vencido == 1}">Se venció el plazo del director para revisar la propuesta (<fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" />). No hay aprobación automática.</c:when>
+            <c:otherwise>El director tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para revisar la propuesta (5 días hábiles).</c:otherwise>
+        </c:choose>
+    </div>
+</c:if>
 
 <c:if test="${p.fase == 1}">
     <c:set var="pagoListo" value="${p.estado_pago == 'Aprobado' or p.estado_pago == 'No aplica'}" />
@@ -202,15 +297,32 @@
                 <c:if test="${p.modalidad_id == 1 or p.modalidad_id == 2}">
                     <div class="col-12">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="interdisciplinario" name="interdisciplinario" ${p.interdisciplinario == 1 ? 'checked' : ''}>
-                            <label class="form-check-label" for="interdisciplinario">Proyecto interdisciplinario (hasta 4 estudiantes)</label>
+                            <input class="form-check-input" type="checkbox" role="switch" id="interdisciplinario" name="interdisciplinario" ${p.interdisciplinario == true ? 'checked' : ''}>
+                            <label class="form-check-label" for="interdisciplinario">Proyecto interdisciplinario (hasta 4 estudiantes y 2 codirectores)</label>
                         </div>
                     </div>
+                    <c:forEach var="numero" begin="1" end="2">
+                        <c:set var="idCodirectorElegido" value="${numero == 1 ? idCodirector1 : idCodirector2}" />
+                        <div class="col-md-6">
+                            <label class="form-label" for="codirector${numero}">Codirector ${numero}</label>
+                            <select class="form-select" id="codirector${numero}" name="codirector${numero}">
+                                <option value="">Sin codirector</option>
+                                <c:forEach var="d" items="${directores.rows}">
+                                    <c:set var="idOpcion">${d.id}</c:set>
+                                    <option value="${d.id}" ${idOpcion == idCodirectorElegido ? 'selected' : ''}><c:out value="${d.nombre}" /></option>
+                                </c:forEach>
+                            </select>
+                        </div>
+                    </c:forEach>
+                    <div class="col-12"><div class="form-text mt-0">Los codirectores solo se guardan si el proyecto es interdisciplinario. Ven el proyecto y dejan observaciones; decide el director.</div></div>
                 </c:if>
             </div>
             <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Guardar</button>
         </form>
     </div>
 </div>
+
+<c:set var="idProyectoHistorial" value="${p.id}" />
+<%@ include file="/WEB-INF/jspf/historial-proyecto.jspf" %>
 
 <%@ include file="/WEB-INF/jspf/pie.jspf" %>

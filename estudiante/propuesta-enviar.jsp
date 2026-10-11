@@ -12,7 +12,7 @@
 </c:if>
 
 <sql:query var="consulta">
-    SELECT p.id, p.modalidad_id, p.director_id, f.orden AS fase, ${sqlEstadoPago} AS estado_pago,
+    SELECT p.id, p.estado, p.titulo, p.modalidad_id, p.director_id, f.orden AS fase, ${sqlEstadoPago} AS estado_pago,
            CASE WHEN p.interdisciplinario = 1 THEN 4 ELSE m.max_integrantes END AS maximo,
            (SELECT COUNT(*) FROM proyecto_estudiantes x WHERE x.proyecto_id = p.id AND x.vigente = 1) AS integrantes,
            (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version,
@@ -45,6 +45,7 @@
 
 <c:set var="motivo" value="" />
 <c:choose>
+    <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${p.modalidad_id == 5}"><c:set var="motivo" value="seminario-sin-124" /></c:when>
     <c:when test="${p.fase != 2}"><c:set var="motivo" value="fase-no-permite-propuesta" /></c:when>
     <c:when test="${empty p.director_id}"><c:set var="motivo" value="sin-director" /></c:when>
@@ -60,6 +61,11 @@
     </c:redirect>
 </c:if>
 
+<%-- El director tiene 5 días hábiles para revisarla (RF21; que sean hábiles es un
+     supuesto, igual que los del evaluador) --%>
+<c:set var="diasHabiles" value="5" />
+<%@ include file="/WEB-INF/jspf/plazo-habil.jspf" %>
+
 <sql:transaction>
     <sql:update var="cambiados">
         UPDATE proyectos SET fase_id = (SELECT id FROM fases WHERE orden = 3)
@@ -74,6 +80,19 @@
             <sql:param value="${sessionScope.usuario.id}" />
             <sql:param value="El estudiante envió la versión ${p.version} del FDC-124 al director. El proyecto pasó a la fase 3 (Propuesta II)." />
         </sql:update>
+        <sql:update>
+            UPDATE entregas SET fecha_limite_revision = ? WHERE proyecto_id = ? AND tipo = 'FDC-124' AND version = ?
+            <sql:dateParam value="${fechaPlazo}" type="date" />
+            <sql:param value="${p.id}" />
+            <sql:param value="${p.version}" />
+        </sql:update>
+        <c:set var="avisoProyecto" value="${p.id}" />
+        <c:set var="avisoMensaje">Te enviaron la versión ${p.version} de la propuesta de «${p.titulo}» para revisarla. Tienes hasta el <fmt:formatDate value="${fechaPlazo}" pattern="dd/MM/yyyy" />.</c:set>
+        <c:set var="avisoPara" value="director,codirectores" />
+        <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
+        <c:set var="avisoMensaje">Se envió la versión ${p.version} de la propuesta al director. Está en revisión.</c:set>
+        <c:set var="avisoPara" value="estudiantes" />
+        <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
     </c:if>
 </sql:transaction>
 

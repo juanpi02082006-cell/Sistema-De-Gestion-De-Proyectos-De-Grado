@@ -12,7 +12,7 @@
 </c:if>
 
 <sql:query var="consulta">
-    SELECT p.id, p.nivel_id, f.orden AS fase,
+    SELECT p.id, p.estado, p.titulo, p.nivel_id, f.orden AS fase,
            CASE WHEN p.interdisciplinario = 1 THEN 4 ELSE m.max_integrantes END AS maximo,
            (SELECT COUNT(*) FROM proyecto_estudiantes x WHERE x.proyecto_id = p.id AND x.vigente = 1) AS integrantes
     FROM proyecto_estudiantes pe
@@ -48,6 +48,7 @@
 
 <c:set var="motivo" value="" />
 <c:choose>
+    <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${p.fase != 1 and p.fase != 2}"><c:set var="motivo" value="integrantes-cerrados" /></c:when>
     <c:when test="${empty correo or companero.rowCount == 0}"><c:set var="motivo" value="integrante-no-existe" /></c:when>
     <c:when test="${c.con_proyecto > 0}"><c:set var="motivo" value="integrante-con-proyecto" /></c:when>
@@ -83,6 +84,12 @@
             <sql:param value="${sessionScope.usuario.id}" />
             <sql:param value="${sessionScope.usuario.nombre} agregó a ${c.nombre} al proyecto." />
         </sql:update>
+        <c:set var="avisoProyecto" value="${p.id}" />
+        <c:set var="avisoMensaje">${sessionScope.usuario.nombre} te agregó al proyecto «${p.titulo}». Recuerda subir tu recibo de pago.</c:set>
+        <c:set var="avisoPara" value="usuario" />
+        <c:set var="avisoUsuario" value="${idCompanero}" />
+        <c:set var="avisoEnlace" value="/estudiante/proyecto.jsp" />
+        <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
     </sql:transaction>
 </c:catch>
 

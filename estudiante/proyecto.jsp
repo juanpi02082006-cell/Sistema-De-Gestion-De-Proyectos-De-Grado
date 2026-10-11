@@ -2,7 +2,10 @@
      (RF2, RF37), los integrantes (en las fases 1 y 2 se agregan o se quitan, RF36), el
      pago de la fase 1 (RF29, RF32; cada estudiante sube el suyo y el comité lo revisa) y
      la propuesta de la fase 2 (FDC-124 con sus versiones, RF26, RF30, RF43), que envía a
-     su director. El estudiante no ve a su evaluador (RF27). --%>
+     su director, con sus anexos en PDF. También: el código del proyecto (RF40), el
+     plazo de la semana 12 (RF30) y el del director (RF21), el cambio de modalidad
+     (RF12), la exoneración por Saber TyT (RNF14) y el historial (RNF12). El estudiante
+     no ve a su evaluador (RF27). --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <c:set var="titulo" value="Mi proyecto" />
@@ -20,7 +23,12 @@
            (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version_propuesta,
            (SELECT COUNT(*) FROM entregas e JOIN revisiones r ON r.entrega_id = e.id
             WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.estado = 'Enviada' AND r.decision = 'Devuelto'
-              AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')) AS propuesta_devuelta
+              AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')) AS propuesta_devuelta,
+           DATEDIFF(pe2.fecha_limite_propuestas, CURDATE()) AS dias_semana12,
+           (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+            ORDER BY e.version DESC LIMIT 1) AS limite_director,
+           ue.nivel_id AS mi_nivel, pe.exonerado, pe.renuncia_exoneracion,
+           (SELECT COUNT(*) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS informes
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
     JOIN usuarios ue ON ue.id = pe.estudiante_id
@@ -52,7 +60,29 @@
     <c:set var="pagoCubierto" value="${p.mi_pago == 'No aplica'}" />
     <c:set var="miPagoListo" value="${pagoCubierto or p.mi_pago == 'Aprobado'}" />
     <c:set var="pagoListo" value="${p.estado_pago == 'No aplica' or p.estado_pago == 'Aprobado'}" />
-    <c:set var="integrantesAbiertos" value="${p.fase == 1 or p.fase == 2}" />
+    <c:set var="terminado" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}" />
+    <c:set var="integrantesAbiertos" value="${(p.fase == 1 or p.fase == 2) and not terminado}" />
+    <%-- Cambio de modalidad (RF12): la última solicitud del proyecto y las modalidades --%>
+    <sql:query var="ultimoCambio">
+        SELECT c.estado, c.motivo, c.observacion, c.solicitado_en, m.nombre AS nueva
+        FROM cambios_modalidad c JOIN modalidades m ON m.id = c.modalidad_nueva_id
+        WHERE c.proyecto_id = ? ORDER BY c.id DESC LIMIT 1
+        <sql:param value="${p.id}" />
+    </sql:query>
+    <sql:query var="otrasModalidades">
+        SELECT id, nombre, max_integrantes FROM modalidades WHERE id <> ? ORDER BY id
+        <sql:param value="${p.modalidad_id}" />
+    </sql:query>
+    <%-- Exoneración por Saber TyT (RNF14): mi última solicitud, con el estímulo --%>
+    <sql:query var="miExoneracion">
+        SELECT x.estado, x.puntaje, x.observacion,
+               CASE WHEN x.puntaje >= 171 THEN '5.0 y 100 % de beca en los derechos de grado'
+                    WHEN x.puntaje >= 151 THEN '4.7 y 50 % de beca en los derechos de grado'
+                    ELSE '4.5' END AS estimulo
+        FROM exoneraciones x WHERE x.proyecto_id = ? AND x.estudiante_id = ? ORDER BY x.id DESC LIMIT 1
+        <sql:param value="${p.id}" />
+        <sql:param value="${idEstudiante}" />
+    </sql:query>
     <c:set var="faseActual" value="${p.fase}" />
 </c:if>
 
@@ -74,7 +104,14 @@
     <c:otherwise>
         <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
-        <c:if test="${p.fase == 1}">
+        <c:if test="${p.estado == 'Finalizado'}">
+            <div class="app-resultado cumple">
+                <h2>Tu proyecto terminó con concepto Aprobado</h2>
+                <p>Todos los integrantes quedaron exonerados por Saber TyT: se exime el informe final.<c:if test="${miExoneracion.rowCount > 0 and miExoneracion.rows[0].estado == 'Aprobada'}"> Tu estímulo: <c:out value="${miExoneracion.rows[0].estimulo}" />.</c:if></p>
+            </div>
+        </c:if>
+
+        <c:if test="${p.fase == 1 and not terminado}">
             <div class="app-tarjeta mb-4">
                 <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>
                 <ul class="app-lista">
@@ -97,7 +134,7 @@
                 <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
                 <c:choose>
                     <c:when test="${p.modalidad_id == 5}">
-                        <p class="mb-0">La modalidad Seminario no usa el F-DC-124.</p>
+                        <p class="mb-0">La modalidad Seminario no usa el F-DC-124. El siguiente paso de tu seminario lo define el comité.</p>
                     </c:when>
                     <c:otherwise>
                         <c:choose>
@@ -105,7 +142,7 @@
                                 <p class="text-secondary">
                                     Diligencia el FDC-124 en Word (.doc o .docx, hasta 15 MB) y súbelo. Cada vez que lo subes queda una versión nueva;
                                     cuando esté lista, envíasela a tu director: él la revisa en la fase 3.
-                                    <c:if test="${not empty p.fecha_limite_propuestas}">La propuesta debe quedar aprobada a más tardar el <fmt:formatDate value="${p.fecha_limite_propuestas}" pattern="dd/MM/yyyy" />.</c:if>
+                                    <c:if test="${not empty p.fecha_limite_propuestas}">La propuesta debe quedar aprobada a más tardar el <fmt:formatDate value="${p.fecha_limite_propuestas}" pattern="dd/MM/yyyy" /> (semana 12)${p.dias_semana12 >= 0 ? ': faltan ' : ''}${p.dias_semana12 >= 0 ? p.dias_semana12 : ''}${p.dias_semana12 >= 0 ? ' días' : ''}.</c:if>
                                 </p>
                                 <c:if test="${p.propuesta_devuelta > 0}">
                                     <div class="alert alert-warning app-aviso" role="status">Tu director devolvió la última versión. Revisa sus observaciones y sube una versión corregida antes de enviarla otra vez.</div>
@@ -115,7 +152,7 @@
                                 </c:if>
                             </c:when>
                             <c:when test="${p.fase == 3}">
-                                <p class="text-secondary">Enviaste la versión <c:out value="${p.version_propuesta}" /> a tu director. Está en revisión.</p>
+                                <p class="text-secondary">Enviaste la versión <c:out value="${p.version_propuesta}" /> a tu director. Está en revisión<c:if test="${not empty p.limite_director}">: tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para revisarla</c:if>.</p>
                             </c:when>
                             <c:when test="${p.fase == 4}">
                                 <p class="text-secondary">Tu director aprobó la versión <c:out value="${p.version_propuesta}" />, la pasó por Turnitin y la envió al evaluador y al comité.</p>
@@ -123,9 +160,20 @@
                         </c:choose>
 
                         <c:set var="idProyectoPropuesta" value="${p.id}" />
+                        <c:set var="anexosQuitar" value="${p.fase == 2 and not terminado}" />
                         <%@ include file="/WEB-INF/jspf/propuesta-versiones.jspf" %>
 
-                        <c:if test="${p.fase == 2}">
+                        <c:if test="${p.fase == 2 and not terminado}">
+                            <form class="mt-3" method="post" action="${ctx}/estudiante/anexo-guardar.jsp" enctype="multipart/form-data">
+                                <label class="form-label" for="anexo">Agregar un anexo (PDF, opcional)</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <input class="form-control flex-grow-1 w-auto" type="file" id="anexo" name="anexo" accept="application/pdf,.pdf" required>
+                                    <button type="submit" class="btn btn-outline-dark rounded-pill">Subir anexo</button>
+                                </div>
+                            </form>
+                        </c:if>
+
+                        <c:if test="${p.fase == 2 and not terminado}">
                             <div class="row g-3 align-items-end mt-1">
                                 <form class="col-lg-8" method="post" action="${ctx}/estudiante/propuesta-guardar.jsp" enctype="multipart/form-data">
                                     <label class="form-label" for="propuesta">${empty p.version_propuesta ? 'FDC-124 (Word) *' : 'Subir una versión nueva (Word)'}</label>
@@ -226,6 +274,98 @@
                 </div>
             </div>
         </div>
+
+        <div class="row g-4 mt-0">
+            <%-- Cambio de modalidad (RF12): antes de que se apruebe el FDC-124 --%>
+            <div class="col-lg-6">
+                <div class="app-tarjeta h-100 app-formulario">
+                    <h2 class="app-tarjeta-titulo">Cambio de modalidad</h2>
+                    <c:set var="hayCambioPendiente" value="${ultimoCambio.rowCount > 0 and ultimoCambio.rows[0].estado == 'Pendiente'}" />
+                    <c:if test="${ultimoCambio.rowCount > 0}">
+                        <c:set var="uc" value="${ultimoCambio.rows[0]}" />
+                        <p class="app-observacion mt-0 mb-3">
+                            <strong>Última solicitud:</strong> pasar a <c:out value="${uc.nueva}" /> · <c:out value="${uc.estado}" />
+                            <span class="app-lista-nota">Motivo: <c:out value="${uc.motivo}" /><c:if test="${not empty uc.observacion}"> · Comité: <c:out value="${uc.observacion}" /></c:if></span>
+                        </p>
+                    </c:if>
+                    <c:choose>
+                        <c:when test="${terminado or p.fase > 3}">
+                            <p class="app-total mt-0">La modalidad solo se cambia antes de que se apruebe el FDC-124.</p>
+                        </c:when>
+                        <c:when test="${hayCambioPendiente}">
+                            <p class="app-total mt-0">Tu solicitud está esperando la decisión del comité.</p>
+                        </c:when>
+                        <c:otherwise>
+                            <p class="text-secondary">Puedes pedir cambiar de modalidad sin perder lo que llevas; lo decide el comité.</p>
+                            <form method="post" action="${ctx}/estudiante/modalidad-solicitar.jsp">
+                                <label class="form-label" for="modalidadNueva">Nueva modalidad *</label>
+                                <select class="form-select" id="modalidadNueva" name="modalidad" required>
+                                    <option value="">Escoge la modalidad</option>
+                                    <c:forEach var="mo" items="${otrasModalidades.rows}">
+                                        <option value="${mo.id}"><c:out value="${mo.nombre}" /> (hasta <c:out value="${mo.max_integrantes}" />)</option>
+                                    </c:forEach>
+                                </select>
+                                <label class="form-label mt-3" for="motivoCambio">Motivo *</label>
+                                <textarea class="form-control" id="motivoCambio" name="motivo" required></textarea>
+                                <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Pedir el cambio</button>
+                            </form>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+
+            <%-- Exoneración por Saber TyT (RNF14): solo nivel tecnológico --%>
+            <c:if test="${p.mi_nivel == 1}">
+                <div class="col-lg-6">
+                    <div class="app-tarjeta h-100 app-formulario">
+                        <h2 class="app-tarjeta-titulo">Exoneración por Saber TyT</h2>
+                        <c:set var="ex" value="${miExoneracion.rowCount > 0 ? miExoneracion.rows[0] : null}" />
+                        <c:choose>
+                            <c:when test="${p.renuncia_exoneracion == true}">
+                                <p class="mb-0">Renunciaste a la exoneración y sigues con el proyecto. La renuncia no tiene vuelta atrás.</p>
+                            </c:when>
+                            <c:when test="${p.exonerado == true}">
+                                <p>Estás exonerado del informe final con <strong><c:out value="${ex.estimulo}" /></strong> (<c:out value="${ex.puntaje}" /> puntos). Tus compañeros siguen con el proyecto.</p>
+                                <c:if test="${not terminado}">
+                                    <form method="post" action="${ctx}/estudiante/exoneracion-renunciar.jsp"
+                                          onsubmit="return confirm('¿Renunciar a la exoneración? Seguirás con el proyecto y no podrás volver a pedirla.');">
+                                        <button type="submit" class="btn btn-outline-danger rounded-pill">Renunciar a la exoneración</button>
+                                    </form>
+                                </c:if>
+                            </c:when>
+                            <c:when test="${not empty ex and ex.estado == 'Pendiente'}">
+                                <p class="mb-0">Pediste la exoneración con <c:out value="${ex.puntaje}" /> puntos. El comité está verificando tu certificado.</p>
+                            </c:when>
+                            <c:when test="${terminado or p.informes > 0}">
+                                <p class="mb-0">La exoneración se pide antes de entregar el informe final.</p>
+                            </c:when>
+                            <c:otherwise>
+                                <c:if test="${not empty ex and ex.estado == 'Rechazada'}">
+                                    <p class="app-observacion mt-0 mb-3"><strong>El comité rechazó tu solicitud:</strong> <c:out value="${ex.observacion}" /></p>
+                                </c:if>
+                                <p class="text-secondary">Si obtuviste 120 puntos o más en Saber TyT, quedas exento del informe final: 120–150, nota 4.5; 151–170, 4.7 y 50 % de beca; 171 o más, 5.0 y 100 % de beca (Acuerdo 01-009).</p>
+                                <form method="post" action="${ctx}/estudiante/exoneracion-solicitar.jsp" enctype="multipart/form-data">
+                                    <div class="row g-3">
+                                        <div class="col-sm-4">
+                                            <label class="form-label" for="puntaje">Puntaje *</label>
+                                            <input class="form-control" type="number" id="puntaje" name="puntaje" min="120" max="300" step="1" required>
+                                        </div>
+                                        <div class="col-sm-8">
+                                            <label class="form-label" for="certificado">Certificado (PDF) *</label>
+                                            <input class="form-control" type="file" id="certificado" name="certificado" accept="application/pdf,.pdf" required>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Pedir la exoneración</button>
+                                </form>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </c:if>
+        </div>
+
+        <c:set var="idProyectoHistorial" value="${p.id}" />
+        <%@ include file="/WEB-INF/jspf/historial-proyecto.jspf" %>
     </c:otherwise>
 </c:choose>
 

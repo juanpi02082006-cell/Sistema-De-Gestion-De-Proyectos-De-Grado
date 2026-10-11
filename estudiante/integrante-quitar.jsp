@@ -8,7 +8,7 @@
 </c:if>
 
 <sql:query var="consulta">
-    SELECT p.id, f.orden AS fase, u.nombre AS companero
+    SELECT p.id, p.estado, p.titulo, f.orden AS fase, u.nombre AS companero
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
     LEFT JOIN fases f ON f.id = p.fase_id
@@ -22,6 +22,7 @@
 <c:set var="motivo" value="" />
 <c:choose>
     <c:when test="${consulta.rowCount == 0}"><c:set var="motivo" value="no-encontrado" /></c:when>
+    <c:when test="${consulta.rows[0].estado == 'Finalizado' or consulta.rows[0].estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${consulta.rows[0].fase != 1 and consulta.rows[0].fase != 2}"><c:set var="motivo" value="integrantes-cerrados" /></c:when>
 </c:choose>
 <c:if test="${not empty motivo}">
@@ -44,6 +45,12 @@
         <sql:param value="${sessionScope.usuario.id}" />
         <sql:param value="${sessionScope.usuario.nombre} quitó a ${p.companero} del proyecto." />
     </sql:update>
+    <c:set var="avisoProyecto" value="${p.id}" />
+    <c:set var="avisoMensaje">${sessionScope.usuario.nombre} te quitó del proyecto «${p.titulo}». Ya puedes tomar otra idea del banco.</c:set>
+    <c:set var="avisoPara" value="usuario" />
+    <c:set var="avisoUsuario" value="${param.estudiante}" />
+    <c:set var="avisoEnlace" value="/ideas/banco.jsp" />
+    <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
 </sql:transaction>
 
 <c:redirect url="/estudiante/proyecto.jsp">

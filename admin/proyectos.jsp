@@ -7,11 +7,17 @@
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <c:set var="titulo" value="Proyectos" />
 <c:set var="seccion" value="proyectos" />
-<c:set var="filtro" value="${param.filtro == 'pago' or param.filtro == 'director' or param.filtro == 'evaluador' ? param.filtro : ''}" />
+<c:set var="filtro" value="${param.filtro == 'pago' or param.filtro == 'director' or param.filtro == 'evaluador'
+                               or param.filtro == 'modalidad' or param.filtro == 'exoneracion' or param.filtro == 'vencidos' ? param.filtro : ''}" />
 
 <sql:query var="proyectos">
     SELECT * FROM (
-        SELECT p.id, p.titulo, p.estado, p.evaluador_id, f.orden AS fase, f.nombre AS nombre_fase,
+        SELECT p.id, p.codigo, p.titulo, p.estado, p.evaluador_id, f.orden AS fase,
+               (SELECT COUNT(*) FROM cambios_modalidad c WHERE c.proyecto_id = p.id AND c.estado = 'Pendiente') AS cambios,
+               (SELECT COUNT(*) FROM exoneraciones x WHERE x.proyecto_id = p.id AND x.estado = 'Pendiente') AS exoneraciones,
+               (f.orden = 3 AND EXISTS (SELECT 1 FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+                   AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')
+                   AND e.fecha_limite_revision < CURDATE())) AS director_vencido, f.nombre AS nombre_fase,
                m.nombre AS modalidad, n.nombre AS nivel, pr.nombre AS periodo, d.nombre AS director,
                (SELECT GROUP_CONCAT(u.nombre ORDER BY u.nombre SEPARATOR ', ')
                 FROM proyecto_estudiantes pe JOIN usuarios u ON u.id = pe.estudiante_id
@@ -25,8 +31,13 @@
         LEFT JOIN usuarios d ON d.id = p.director_id
     ) t
     WHERE (? = '' OR (? = 'pago' AND estado_pago = 'Por revisar') OR (? = 'director' AND director IS NULL)
-           OR (? = 'evaluador' AND evaluador_id IS NULL AND fase BETWEEN 2 AND 4))
+           OR (? = 'evaluador' AND evaluador_id IS NULL AND fase BETWEEN 2 AND 4)
+           OR (? = 'modalidad' AND cambios > 0) OR (? = 'exoneracion' AND exoneraciones > 0)
+           OR (? = 'vencidos' AND director_vencido = 1))
     ORDER BY fase, titulo
+    <sql:param value="${filtro}" />
+    <sql:param value="${filtro}" />
+    <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
     <sql:param value="${filtro}" />
@@ -49,6 +60,9 @@
             <option value="pago" ${filtro == 'pago' ? 'selected' : ''}>Pagos por revisar</option>
             <option value="director" ${filtro == 'director' ? 'selected' : ''}>Sin director</option>
             <option value="evaluador" ${filtro == 'evaluador' ? 'selected' : ''}>Sin evaluador (fases 2 a 4)</option>
+            <option value="modalidad" ${filtro == 'modalidad' ? 'selected' : ''}>Cambios de modalidad por decidir</option>
+            <option value="exoneracion" ${filtro == 'exoneracion' ? 'selected' : ''}>Exoneraciones por verificar</option>
+            <option value="vencidos" ${filtro == 'vencidos' ? 'selected' : ''}>Plazo del director vencido</option>
         </select>
         <noscript><button type="submit" class="btn btn-outline-dark rounded-pill">Filtrar</button></noscript>
     </form>
@@ -75,6 +89,11 @@
                             <tr>
                                 <td>
                                     <span class="fw-semibold"><c:out value="${p.titulo}" /></span>
+                                    <c:if test="${not empty p.codigo}"><span class="app-lista-nota"><c:out value="${p.codigo}" /></span></c:if>
+                                    <c:if test="${p.cambios > 0}"><span class="app-etiqueta ms-0">Cambio de modalidad por decidir</span></c:if>
+                                    <c:if test="${p.exoneraciones > 0}"><span class="app-etiqueta ms-0">Exoneración por verificar</span></c:if>
+                                    <c:if test="${p.director_vencido == 1}"><span class="app-etiqueta ms-0">Plazo del director vencido</span></c:if>
+                                    <c:if test="${p.estado == 'Finalizado'}"><span class="app-etiqueta ms-0">Finalizado</span></c:if>
                                     <span class="app-lista-nota"><c:out value="${p.modalidad}" /> · <c:out value="${p.nivel}" /><c:if test="${not empty p.periodo}"> · <c:out value="${p.periodo}" /></c:if></span>
                                 </td>
                                 <td><c:out value="${p.estudiantes}" /></td>

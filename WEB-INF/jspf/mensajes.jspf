@@ -31,6 +31,19 @@
             <c:when test="${param.ok == 'propuesta-aprobada-director'}">Aprobaste la propuesta y la enviaste al evaluador y al comité: el proyecto pasó a la fase 4.</c:when>
             <c:when test="${param.ok == 'integrante-agregado'}">Tu compañero quedó en el proyecto. Recuerda que cada uno sube su propio recibo de pago.</c:when>
             <c:when test="${param.ok == 'integrante-quitado'}">El compañero salió del proyecto.</c:when>
+            <c:when test="${param.ok == 'observacion-codirector'}">Tu observación quedó en la versión. El director la ve antes de decidir.</c:when>
+            <c:when test="${param.ok == 'anexo-subido'}">El anexo se subió correctamente.</c:when>
+            <c:when test="${param.ok == 'anexo-quitado'}">El anexo se quitó.</c:when>
+            <c:when test="${param.ok == 'modalidad-solicitada'}">Tu solicitud de cambio de modalidad quedó enviada al comité.</c:when>
+            <c:when test="${param.ok == 'modalidad-aprobada'}">El cambio de modalidad quedó aprobado.</c:when>
+            <c:when test="${param.ok == 'modalidad-rechazada'}">El cambio de modalidad quedó rechazado.</c:when>
+            <c:when test="${param.ok == 'exoneracion-solicitada'}">Tu solicitud de exoneración quedó enviada: el comité verificará el certificado.</c:when>
+            <c:when test="${param.ok == 'exoneracion-renunciada'}">Renunciaste a la exoneración: sigues con el proyecto.</c:when>
+            <c:when test="${param.ok == 'exoneracion-aprobada'}">La exoneración quedó aprobada.</c:when>
+            <c:when test="${param.ok == 'exoneracion-rechazada'}">La exoneración quedó rechazada.</c:when>
+            <c:when test="${param.ok == 'exoneracion-proyecto-terminado'}">La exoneración quedó aprobada y, como todos los integrantes están exonerados, el proyecto terminó con concepto Aprobado.</c:when>
+            <c:when test="${param.ok == 'pqr-enviada'}">Tu PQR quedó enviada al comité. Te llega un aviso cuando la respondan.</c:when>
+            <c:when test="${param.ok == 'pqr-respondida'}">La respuesta quedó enviada.</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
             <c:when test="${param.ok == 'sesion-eliminada'}">La sesión se quitó del calendario.</c:when>
@@ -80,11 +93,26 @@
             <c:when test="${param.error == 'integrantes-cerrados'}">Los integrantes solo se cambian en las fases 1 y 2: al enviar la propuesta al director, el grupo queda cerrado.</c:when>
             <c:when test="${param.error == 'integrante-no-existe'}">No hay un estudiante registrado y activo con ese correo. Tu compañero debe crear su cuenta primero.</c:when>
             <c:when test="${param.error == 'integrante-con-proyecto'}">Ese estudiante ya tiene un proyecto vigente: solo se puede tener uno a la vez.</c:when>
-            <c:when test="${param.error == 'integrante-otro-nivel'}">Ese estudiante es de otro nivel (tecnológico o ingeniería) que el proyecto.</c:when>
+            <c:when test="${param.error == 'integrante-otro-nivel'}">Ese estudiante es de otro nivel (tecnológico o universitario) que el proyecto.</c:when>
             <c:when test="${param.error == 'integrante-no-habilitado'}">Hay un integrante que no está habilitado (créditos o Metodología). Debe revisar su habilitación.</c:when>
             <c:when test="${param.error == 'integrantes-completos'}">El proyecto ya tiene el máximo de integrantes de su modalidad.</c:when>
             <c:when test="${param.error == 'demasiados-integrantes'}">El proyecto tiene más integrantes de los que permite su modalidad.</c:when>
             <c:when test="${param.error == 'pagos-pendientes'}">Todos los integrantes deben tener el pago aprobado por el comité antes de enviar la propuesta.</c:when>
+            <c:when test="${param.error == 'codirector-invalido'}">Los codirectores deben ser docentes activos con el rol Director, distintos entre sí, del director y del evaluador.</c:when>
+            <c:when test="${param.error == 'modalidad-fuera-de-tiempo'}">La modalidad solo se cambia antes de que se apruebe el FDC-124 (fases 1 a 3).</c:when>
+            <c:when test="${param.error == 'modalidad-pendiente'}">Ya hay una solicitud de cambio de modalidad esperando la decisión del comité.</c:when>
+            <c:when test="${param.error == 'modalidad-invalida'}">Escoge una modalidad distinta a la actual.</c:when>
+            <c:when test="${param.error == 'modalidad-integrantes'}">Esa modalidad no admite la cantidad de integrantes del proyecto.</c:when>
+            <c:when test="${param.error == 'motivo-requerido'}">Escribe el motivo del cambio de modalidad.</c:when>
+            <c:when test="${param.error == 'modalidad-ya-decidida'}">Esa solicitud ya fue decidida.</c:when>
+            <c:when test="${param.error == 'exoneracion-solo-tecnologia'}">La exoneración por Saber TyT es solo para el nivel tecnológico.</c:when>
+            <c:when test="${param.error == 'exoneracion-informe-entregado'}">Ya se entregó el informe final: la exoneración se pide antes.</c:when>
+            <c:when test="${param.error == 'exoneracion-ya-decidida'}">Ya tienes una exoneración aprobada o renunciaste a ella (no tiene vuelta atrás).</c:when>
+            <c:when test="${param.error == 'exoneracion-pendiente'}">Ya tienes una solicitud de exoneración esperando la verificación del comité.</c:when>
+            <c:when test="${param.error == 'puntaje-invalido'}">El puntaje debe ser un número entero entre 120 y 300.</c:when>
+            <c:when test="${param.error == 'sin-exoneracion'}">No tienes una exoneración aprobada a la cual renunciar.</c:when>
+            <c:when test="${param.error == 'pqr-incompleta'}">Escoge el tipo y escribe tu PQR.</c:when>
+            <c:when test="${param.error == 'respuesta-requerida'}">Escribe la respuesta: es obligatoria.</c:when>
             <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
             <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
             <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>

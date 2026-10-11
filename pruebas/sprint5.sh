@@ -31,7 +31,7 @@ entrar() { pedir "$1" POST /acceso/validar.jsp --data-urlencode "correo=$2" --da
 registrar() { # correo, documento, plan
     pedir anon POST /acceso/registrar.jsp --data-urlencode "nombre=Estudiante $2" --data-urlencode "tipo_documento=1" \
         --data-urlencode "numero_documento=$2" --data-urlencode "correo=$1" --data-urlencode "clave=Clave123" \
-        --data-urlencode "clave2=Clave123" --data-urlencode "nivel=1" --data-urlencode "carrera=Sistemas" \
+        --data-urlencode "clave2=Clave123" --data-urlencode "carrera=1" \
         --data-urlencode "plan_estudios=$3" --data-urlencode "porcentaje_creditos=80" --data-urlencode "metodologia=on"
 }
 subir() { pedir "$1" POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf;type=application/pdf"; }
@@ -85,13 +85,13 @@ revisarPago ana $R1 aprobar "x"; [[ "$DESTINO" == *"error=denegado"* ]]; revisar
 revisarPago admin $R1 devolver "El recibo no tiene la marca de pagado"; [[ "$DESTINO" == *"ok=pago-devuelto"* ]]; revisar "El comité devuelve el recibo" $?
 [ "$($MYSQL -e "SELECT CONCAT(rol,'|',estado,'|',decision,'|',revisor_id) FROM revisiones WHERE entrega_id=$R1")" = "Comité|Enviada|Devuelto|1" ]; revisar "En la base: revisión del comité, devuelta, con quién revisó" $?
 revisarPago admin $R1 aprobar "x"; [[ "$DESTINO" == *"error=pago-ya-revisado"* ]]; revisar "Un recibo ya revisado no se vuelve a revisar" $?
-pedir ana GET /estudiante/proyecto.jsp; contiene "Devuelto" && contiene "no tiene la marca de pagado" && contiene 'enctype="multipart/form-data"'; revisar "La estudiante ve la devolución con la observación y puede subirlo otra vez" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "Devuelto" && contiene "no tiene la marca de pagado" && contiene 'pago-guardar.jsp'; revisar "La estudiante ve la devolución con la observación y puede subirlo otra vez" $?
 subir ana; R2=$(ultimoRecibo $PA)
 revisarPago admin $R1 aprobar "x"; [[ "$DESTINO" == *"error=pago-ya-revisado"* ]]; revisar "Solo se revisa el último recibo" $?
 revisarPago admin $R2 aprobar "Pago verificado"; [[ "$DESTINO" == *"ok=pago-aprobado"* && "$DESTINO" != *"fase-2"* ]]; revisar "El comité aprueba el pago (sin director, sigue en la fase 1)" $?
 [ "$(fase $PA)" = "1" ]; revisar "Sin director no pasa a la fase 2" $?
 subir ana; [[ "$DESTINO" == *"error=pago-aprobado"* ]]; revisar "Con el pago aprobado no se sube otro recibo" $?
-pedir ana GET /estudiante/proyecto.jsp; contiene "El comité aprobó tu pago" && ! contiene 'enctype="multipart/form-data"'; revisar "La estudiante ve el pago aprobado, sin el formulario" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "El comité aprobó tu pago" && ! contiene 'pago-guardar.jsp'; revisar "La estudiante ve el pago aprobado, sin el formulario" $?
 pedir caro POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf"; [[ "$DESTINO" == *"error=pago-no-aplica"* ]]; revisar "Plan nuevo: sigue sin subir recibo" $?
 pedir admin GET /admin/pago-revisar.jsp; [[ "$DESTINO" == *"/admin/proyectos.jsp" ]]; revisar "Por GET no revisa nada" $?
 
@@ -196,7 +196,7 @@ quitar() { pedir "$1" POST /estudiante/integrante-quitar.jsp --data-urlencode "e
 for N in gema hugo ines juan kike luz mia; do
     registrar "$N@correo.uts.edu.co" "40000001${#N}$(printf '%d' "'$N")" Anterior; entrar "$N" "$N@correo.uts.edu.co" Clave123
 done
-$MYSQL -e "UPDATE usuarios SET porcentaje_creditos=60 WHERE correo='kike@correo.uts.edu.co'; UPDATE usuarios SET nivel_id=2 WHERE correo='luz@correo.uts.edu.co'"
+$MYSQL -e "UPDATE usuarios SET porcentaje_creditos=60 WHERE correo='kike@correo.uts.edu.co'; UPDATE usuarios SET nivel_id=2, carrera_id=35 WHERE correo='luz@correo.uts.edu.co'"
 pedir dir POST /ideas/idea-guardar.jsp --data-urlencode "titulo=Idea C" --data-urlencode "nivel=1" --data-urlencode "modalidad=2"
 IC=$($MYSQL -e "SELECT id FROM ideas WHERE titulo='Idea C'")
 pedir admin POST /ideas/idea-revisar.jsp --data-urlencode "id=$IC" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"

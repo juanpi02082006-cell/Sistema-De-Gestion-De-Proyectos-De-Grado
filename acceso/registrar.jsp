@@ -1,5 +1,6 @@
 <%-- Guarda la cuenta de un estudiante que se registra solo (RF24), con el rol
-     Estudiante (id 5). Si algo falla, vuelve a registro.jsp con el error y los datos. --%>
+     Estudiante (id 5). La carrera sale del catálogo de la UTS y el nivel se toma de la
+     carrera. Si algo falla, vuelve a registro.jsp con el error y los datos. --%>
 <c:if test="${pageContext.request.method != 'POST'}">
     <c:redirect url="/registro.jsp" />
 </c:if>
@@ -20,9 +21,15 @@
                                           and creditosNumero >= 0 and creditosNumero <= 100}" />
 </c:if>
 
+<%-- La carrera debe existir en el catálogo; de ella sale el nivel --%>
+<sql:query var="carrera">
+    SELECT id, nivel_id FROM carreras WHERE id = ?
+    <sql:param value="${empty param.carrera ? 0 : param.carrera}" />
+</sql:query>
+
 <c:choose>
     <c:when test="${empty fn:trim(param.nombre) or empty param.tipo_documento or empty fn:trim(param.numero_documento)
-                    or empty correo or empty param.clave or empty param.nivel or empty fn:trim(param.carrera)
+                    or empty correo or empty param.clave or empty param.carrera
                     or empty creditosTexto}">
         <jsp:forward page="/registro.jsp"><jsp:param name="error" value="faltan-datos" /></jsp:forward>
     </c:when>
@@ -31,6 +38,9 @@
     </c:when>
     <c:when test="${param.clave != param.clave2}">
         <jsp:forward page="/registro.jsp"><jsp:param name="error" value="claves-distintas" /></jsp:forward>
+    </c:when>
+    <c:when test="${carrera.rowCount == 0}">
+        <jsp:forward page="/registro.jsp"><jsp:param name="error" value="carrera-invalida" /></jsp:forward>
     </c:when>
     <c:when test="${param.plan_estudios != 'Anterior' and param.plan_estudios != 'Nuevo'}">
         <jsp:forward page="/registro.jsp"><jsp:param name="error" value="plan-invalido" /></jsp:forward>
@@ -44,7 +54,7 @@
     <sql:transaction>
         <sql:update>
             INSERT INTO usuarios (nombre, tipo_documento_id, numero_documento, correo, contrasena, celular,
-                                  nivel_id, carrera, plan_estudios, porcentaje_creditos, metodologia_aprobada)
+                                  nivel_id, carrera_id, plan_estudios, porcentaje_creditos, metodologia_aprobada)
             VALUES (?, ?, ?, ?, SHA2(?, 256), NULLIF(?, ''), ?, ?, ?, ?, ?)
             <sql:param value="${fn:trim(param.nombre)}" />
             <sql:param value="${param.tipo_documento}" />
@@ -52,8 +62,8 @@
             <sql:param value="${correo}" />
             <sql:param value="${param.clave}" />
             <sql:param value="${fn:trim(param.celular)}" />
-            <sql:param value="${param.nivel}" />
-            <sql:param value="${fn:trim(param.carrera)}" />
+            <sql:param value="${carrera.rows[0].nivel_id}" />
+            <sql:param value="${carrera.rows[0].id}" />
             <sql:param value="${param.plan_estudios}" />
             <sql:param value="${creditosTexto}" />
             <sql:param value="${param.metodologia == 'on' ? 1 : 0}" />

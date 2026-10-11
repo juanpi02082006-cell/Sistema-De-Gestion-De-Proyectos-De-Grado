@@ -1,4 +1,4 @@
--- Pruebas de las restricciones de la base v4 (incluye las de la v3 y las del 2026-10-10). Los resultados van en una base aparte (pruebas_tmp);
+-- Pruebas de las restricciones de la base v5 (incluye las de la v3, la v4 y las del 2026-10-10). Los resultados van en una base aparte (pruebas_tmp);
 -- el procedimiento se crea en la base del proyecto (así sus sentencias ven las tablas). Al final hay que reimportar el script.
 DROP DATABASE IF EXISTS pruebas_tmp;
 CREATE DATABASE pruebas_tmp;
@@ -108,6 +108,30 @@ CALL prueba('Sustentación con fecha y lugar', "INSERT INTO sustentaciones (proy
 CALL prueba('Sustentación sin lugar', "INSERT INTO sustentaciones (proyecto_id, fecha_hora, lugar, programada_por) VALUES (3, '2027-05-20 10:00', '  ', 3)", 1);
 CALL prueba('Segunda sustentación del mismo proyecto', "INSERT INTO sustentaciones (proyecto_id, fecha_hora, lugar, programada_por) VALUES (1, '2027-06-01 10:00', 'Sala 2', 3)", 1);
 
+-- Versión 5: carreras, avisos, exoneraciones, codirectores y PQR
+CALL prueba('Carrera que no existe en el catálogo', "UPDATE usuarios SET carrera_id = 9999 WHERE id = 5", 1);
+CALL prueba('Carrera del catálogo', "UPDATE usuarios SET carrera_id = 35, nivel_id = 2 WHERE id = 5", 0);
+CALL prueba('Dos ofertas con el mismo SNIES', "INSERT INTO carreras (nombre, nivel_id, snies, campus) VALUES ('Otra', 1, '101597', 'Vélez')", 1);
+CALL prueba('Carrera con metodología vacía', "INSERT INTO carreras (nombre, nivel_id, campus, metodologia) VALUES ('Otra', 1, 'Vélez', '')", 1);
+CALL prueba('Aviso sin mensaje', "INSERT INTO avisos (usuario_id, mensaje) VALUES (5, '  ')", 1);
+CALL prueba('Aviso normal (sin clave)', "INSERT INTO avisos (usuario_id, proyecto_id, mensaje) VALUES (5, 1, 'Hola')", 0);
+CALL prueba('Otro aviso normal (las claves NULL no chocan)', "INSERT INTO avisos (usuario_id, proyecto_id, mensaje) VALUES (5, 1, 'Hola')", 0);
+CALL prueba('Alerta con clave', "INSERT INTO avisos (usuario_id, mensaje, clave) VALUES (5, 'Vence', 'pago-10-p1')", 0);
+CALL prueba('La misma alerta otra vez', "INSERT INTO avisos (usuario_id, mensaje, clave) VALUES (5, 'Vence', 'pago-10-p1')", 1);
+INSERT INTO sistemas_proyectos_grado.entregas (id, proyecto_id, fase_id, tipo, nombre_archivo, ruta_archivo, subido_por) VALUES (2, 1, 1, 'Certificado Saber TyT', 'c.pdf', 'c.pdf', 5);
+CALL prueba('Exoneración con 110 puntos', "INSERT INTO exoneraciones (proyecto_id, estudiante_id, puntaje, entrega_id) VALUES (1, 5, 110, 2)", 1);
+CALL prueba('Exoneración con 160 puntos', "INSERT INTO exoneraciones (id, proyecto_id, estudiante_id, puntaje, entrega_id) VALUES (1, 1, 5, 160, 2)", 0);
+CALL prueba('Exoneración aprobada sin observación', "UPDATE exoneraciones SET estado = 'Aprobada', revisada_por = 1, revisada_en = NOW() WHERE id = 1", 1);
+CALL prueba('Exoneración con estado vacío', "UPDATE exoneraciones SET estado = '' WHERE id = 1", 1);
+CALL prueba('Exoneración aprobada con observación', "UPDATE exoneraciones SET estado = 'Aprobada', revisada_por = 1, revisada_en = NOW(), observacion = 'Ok' WHERE id = 1", 0);
+CALL prueba('Observación de codirector sin decisión', "INSERT INTO revisiones (entrega_id, revisor_id, rol, estado, observacion) VALUES (1, 6, 'Codirector', 'Enviada', 'Revisar')", 0);
+CALL prueba('Codirector con decisión (decide el director)', "INSERT INTO revisiones (entrega_id, revisor_id, rol, estado, decision, observacion) VALUES (1, 6, 'Codirector', 'Enviada', 'Aprobado', 'Ok')", 1);
+CALL prueba('Revisión enviada del director sin decisión', "INSERT INTO revisiones (entrega_id, revisor_id, rol, estado, observacion) VALUES (1, 3, 'Director', 'Enviada', 'Ok')", 1);
+CALL prueba('PQR de tipo que no existe', "INSERT INTO pqrs (usuario_id, tipo, comentario) VALUES (5, 'Otra', 'x')", 1);
+CALL prueba('PQR vacía', "INSERT INTO pqrs (usuario_id, tipo, comentario) VALUES (5, 'Queja', '  ')", 1);
+CALL prueba('PQR de petición', "INSERT INTO pqrs (id, usuario_id, tipo, comentario) VALUES (1, 5, 'Petición', 'Necesito ayuda')", 0);
+CALL prueba('PQR respondida sin respuesta', "UPDATE pqrs SET estado = 'Respondida', respondida_por = 1, respondida_en = NOW() WHERE id = 1", 1);
+
 -- Datos de las rejillas (no son restricciones: se comprueban los conteos)
 INSERT INTO pruebas_tmp.resultados (prueba, esperado, obtenido, estado)
     SELECT 'Rejilla F-DC-124: 12 criterios y 28 indicadores', '12/28', CONCAT(COUNT(DISTINCT c.id), '/', COUNT(i.id)),
@@ -130,6 +154,14 @@ INSERT INTO pruebas_tmp.resultados (prueba, esperado, obtenido, estado)
            IF(CONCAT(MIN(orden), '-', MAX(orden), '|', GROUP_CONCAT(IF(formato IS NULL, NULL, CONCAT(orden, ':', formato)) ORDER BY orden))
               = '0-6|2:FDC-124,3:FDC-124,4:FDC-125,5:FDC-125', 'OK', 'FALLA')
     FROM fases;
+INSERT INTO pruebas_tmp.resultados (prueba, esperado, obtenido, estado)
+    SELECT 'Catálogo de carreras: 30 tecnológicas y 29 universitarias', '30/29',
+           CONCAT(SUM(nivel_id = 1), '/', SUM(nivel_id = 2)), IF(SUM(nivel_id = 1) = 30 AND SUM(nivel_id = 2) = 29, 'OK', 'FALLA')
+    FROM carreras;
+INSERT INTO pruebas_tmp.resultados (prueba, esperado, obtenido, estado)
+    SELECT 'Festivos de 2026 y 2027', '18/18',
+           CONCAT(SUM(YEAR(fecha) = 2026), '/', SUM(YEAR(fecha) = 2027)), IF(SUM(YEAR(fecha) = 2026) = 18 AND SUM(YEAR(fecha) = 2027) = 18, 'OK', 'FALLA')
+    FROM festivos;
 
 SELECT n, estado, esperado, obtenido, prueba FROM pruebas_tmp.resultados ORDER BY n;
 SELECT CONCAT(SUM(estado = 'OK'), ' de ', COUNT(*), ' pruebas OK') AS total FROM pruebas_tmp.resultados;

@@ -10,7 +10,7 @@
 </c:if>
 
 <sql:query var="consulta">
-    SELECT e.id, e.proyecto_id, f.orden AS fase,
+    SELECT e.id, e.proyecto_id, e.subido_por, p.estado, f.orden AS fase,
            (e.id = (SELECT MAX(e2.id) FROM entregas e2
                     WHERE e2.proyecto_id = e.proyecto_id AND e2.tipo = 'Recibo de pago' AND e2.subido_por = e.subido_por)) AS ultimo,
            (SELECT COUNT(*) FROM revisiones r WHERE r.entrega_id = e.id) AS revisiones
@@ -31,6 +31,7 @@
 <c:set var="observacion" value="${fn:trim(param.observacion)}" />
 <c:set var="motivo" value="" />
 <c:choose>
+    <c:when test="${recibo.estado == 'Finalizado' or recibo.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${(recibo.fase != 1 and recibo.fase != 2) or recibo.ultimo != 1 or recibo.revisiones > 0}"><c:set var="motivo" value="pago-ya-revisado" /></c:when>
     <c:when test="${param.decision != 'aprobar' and param.decision != 'devolver'}"><c:set var="motivo" value="general" /></c:when>
     <c:when test="${empty observacion}"><c:set var="motivo" value="observacion-requerida" /></c:when>
@@ -59,6 +60,13 @@
         <sql:param value="${sessionScope.usuario.id}" />
         <sql:param value="${aprobar ? 'El comité aprobó el recibo de pago.' : 'El comité devolvió el recibo de pago.'}" />
     </sql:update>
+    <%-- Aviso al estudiante del recibo (RF5) --%>
+    <c:set var="avisoProyecto" value="${idProyecto}" />
+    <c:set var="avisoMensaje">El comité ${aprobar ? 'aprobó' : 'devolvió'} tu recibo de pago. Observación: ${observacion}</c:set>
+    <c:set var="avisoPara" value="usuario" />
+    <c:set var="avisoUsuario" value="${recibo.subido_por}" />
+    <c:set var="avisoEnlace" value="/estudiante/proyecto.jsp" />
+    <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
 </sql:transaction>
 
 <c:if test="${aprobar}">

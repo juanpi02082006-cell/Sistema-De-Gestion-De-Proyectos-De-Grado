@@ -1,0 +1,89 @@
+<%-- Alertas de vencimiento del usuario de la sesión (RF5, RNF21): no hay un proceso
+     programado, así que se revisan cada vez que la persona usa el sistema (lo incluye
+     cabecera.jspf). Cada alerta lleva una clave y se inserta con INSERT IGNORE, así
+     que no se repite. Alertas:
+       - límite de pago a 10 y a 5 días, para el estudiante sin el pago aprobado (RF32);
+       - semana 12 (propuesta aprobada a tiempo) a 10 y a 5 días y al vencer, para los
+         estudiantes y el director de los proyectos en las fases 1 a 3 (RF30);
+       - plazo del director para revisar la propuesta, al vencer (RF21). --%>
+<%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
+<c:set var="idAlerta" value="${sessionScope.usuario.id}" />
+<c:forEach var="diasAlerta" items="10,5">
+    <%-- Pago --%>
+    <sql:update>
+        INSERT IGNORE INTO avisos (usuario_id, proyecto_id, mensaje, enlace, clave)
+        SELECT ue.id, p.id,
+               CONCAT('Faltan ', DATEDIFF(pr.fecha_limite_pago, CURDATE()), ' días para el límite de pago (',
+                      DATE_FORMAT(pr.fecha_limite_pago, '%d/%m/%Y'), ') y tu pago todavía no está aprobado.'),
+               '/estudiante/proyecto.jsp', CONCAT('pago-', ?, '-p', p.id)
+        FROM proyecto_estudiantes pe
+        JOIN proyectos p ON p.id = pe.proyecto_id
+        JOIN usuarios ue ON ue.id = pe.estudiante_id
+        JOIN fases f ON f.id = p.fase_id
+        JOIN periodos pr ON pr.id = p.periodo_id
+        WHERE pe.estudiante_id = ? AND pe.vigente = 1 AND f.orden IN (1, 2)
+          AND p.estado NOT IN ('Finalizado', 'Cancelado')
+          AND DATEDIFF(pr.fecha_limite_pago, CURDATE()) BETWEEN 0 AND ?
+          AND ${sqlEstadoPagoEstudiante} NOT IN ('Aprobado', 'No aplica')
+        <sql:param value="${diasAlerta}" />
+        <sql:param value="${idAlerta}" />
+        <sql:param value="${diasAlerta}" />
+    </sql:update>
+    <%-- Semana 12: estudiantes y director --%>
+    <sql:update>
+        INSERT IGNORE INTO avisos (usuario_id, proyecto_id, mensaje, enlace, clave)
+        SELECT ?, p.id,
+               CONCAT('Faltan ', DATEDIFF(pr.fecha_limite_propuestas, CURDATE()), ' días para que la propuesta de «',
+                      LEFT(p.titulo, 80), '» quede aprobada (límite: ', DATE_FORMAT(pr.fecha_limite_propuestas, '%d/%m/%Y'), ').'),
+               CASE WHEN p.director_id = ? THEN CONCAT('/director/proyecto.jsp?id=', p.id) ELSE '/estudiante/proyecto.jsp' END,
+               CONCAT('semana12-', ?, '-p', p.id)
+        FROM proyectos p
+        JOIN fases f ON f.id = p.fase_id
+        JOIN periodos pr ON pr.id = p.periodo_id
+        WHERE f.orden IN (1, 2, 3) AND p.estado NOT IN ('Finalizado', 'Cancelado') AND p.modalidad_id <> 5
+          AND DATEDIFF(pr.fecha_limite_propuestas, CURDATE()) BETWEEN 0 AND ?
+          AND (p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_estudiantes x
+                                            WHERE x.proyecto_id = p.id AND x.vigente = 1 AND x.estudiante_id = ?))
+        <sql:param value="${idAlerta}" />
+        <sql:param value="${idAlerta}" />
+        <sql:param value="${diasAlerta}" />
+        <sql:param value="${diasAlerta}" />
+        <sql:param value="${idAlerta}" />
+        <sql:param value="${idAlerta}" />
+    </sql:update>
+</c:forEach>
+<%-- Semana 12 vencida --%>
+<sql:update>
+    INSERT IGNORE INTO avisos (usuario_id, proyecto_id, mensaje, enlace, clave)
+    SELECT ?, p.id,
+           CONCAT('Pasó el límite para aprobar la propuesta de «', LEFT(p.titulo, 80), '» (semana 12: ',
+                  DATE_FORMAT(pr.fecha_limite_propuestas, '%d/%m/%Y'), '). Consulta con el comité.'),
+           CASE WHEN p.director_id = ? THEN CONCAT('/director/proyecto.jsp?id=', p.id) ELSE '/estudiante/proyecto.jsp' END,
+           CONCAT('semana12-vencida-p', p.id)
+    FROM proyectos p
+    JOIN fases f ON f.id = p.fase_id
+    JOIN periodos pr ON pr.id = p.periodo_id
+    WHERE f.orden IN (1, 2, 3) AND p.estado NOT IN ('Finalizado', 'Cancelado') AND p.modalidad_id <> 5
+      AND pr.fecha_limite_propuestas < CURDATE()
+      AND (p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_estudiantes x
+                                        WHERE x.proyecto_id = p.id AND x.vigente = 1 AND x.estudiante_id = ?))
+    <sql:param value="${idAlerta}" />
+    <sql:param value="${idAlerta}" />
+    <sql:param value="${idAlerta}" />
+    <sql:param value="${idAlerta}" />
+</sql:update>
+<%-- Plazo del director para revisar la propuesta (fase 3), vencido --%>
+<sql:update>
+    INSERT IGNORE INTO avisos (usuario_id, proyecto_id, mensaje, enlace, clave)
+    SELECT p.director_id, p.id,
+           CONCAT('Se venció el plazo para revisar la propuesta de «', LEFT(p.titulo, 80), '» (',
+                  DATE_FORMAT(e.fecha_limite_revision, '%d/%m/%Y'), ').'),
+           CONCAT('/director/proyecto.jsp?id=', p.id), CONCAT('revision-e', e.id)
+    FROM proyectos p
+    JOIN fases f ON f.id = p.fase_id AND f.orden = 3
+    JOIN entregas e ON e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+         AND e.version = (SELECT MAX(e2.version) FROM entregas e2 WHERE e2.proyecto_id = p.id AND e2.tipo = 'FDC-124')
+    WHERE p.director_id = ? AND p.estado NOT IN ('Finalizado', 'Cancelado')
+      AND e.fecha_limite_revision < CURDATE()
+    <sql:param value="${idAlerta}" />
+</sql:update>

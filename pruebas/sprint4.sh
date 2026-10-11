@@ -22,10 +22,10 @@ pedir() {
 contiene() { grep -q "$1" "$T/cuerpo.html"; }
 sinError() { ! grep -q "Exception\|HTTP Status 500" "$T/cuerpo.html"; }
 entrar() { pedir "$1" POST /acceso/validar.jsp --data-urlencode "correo=$2" --data-urlencode "clave=${3:-123456}"; }
-registrar() { # correo, documento, nivel, plan, créditos, metodología(on|""), clave2
+registrar() { # correo, documento, nivel (1: carrera 1, tecnológica; 2: carrera 35, universitaria), plan, créditos, metodología(on|""), clave2
     pedir anon POST /acceso/registrar.jsp --data "nombre=Ana%20Mar%C3%ADa%20P%C3%A9rez" --data-urlencode "tipo_documento=1" \
         --data-urlencode "numero_documento=$2" --data-urlencode "correo=$1" --data-urlencode "clave=Clave123" \
-        --data-urlencode "clave2=${7:-Clave123}" --data-urlencode "nivel=$3" --data "carrera=Tecnolog%C3%ADa%20en%20Sistemas" \
+        --data-urlencode "clave2=${7:-Clave123}" --data-urlencode "carrera=$( [ "$3" = 2 ] && echo 35 || echo 1 )" \
         --data-urlencode "plan_estudios=$4" --data-urlencode "porcentaje_creditos=$5" ${6:+--data-urlencode "metodologia=$6"}
 }
 
@@ -73,14 +73,14 @@ echo "== Usuarios: filtros y datos académicos (RF7)"
 entrar admin admin.prueba@uts.edu.co
 pedir admin GET "/admin/usuarios.jsp?plan=Nuevo"; contiene "caro@correo.uts.edu.co" && ! contiene "ana.perez"; revisar "Filtro por plan nuevo" $?
 pedir admin GET "/admin/usuarios.jsp?nivel=2"; contiene "caro@correo.uts.edu.co" && ! contiene "ana.perez"; revisar "Filtro por nivel" $?
-pedir admin GET "/admin/usuarios.jsp?q=Carrera%20de%20prueba"; contiene "estudiante.prueba@correo.uts.edu.co"; revisar "Búsqueda por carrera" $?
+pedir admin GET "/admin/usuarios.jsp?q=Desarrollo%20de%20Sistemas"; contiene "estudiante.prueba@correo.uts.edu.co"; revisar "Búsqueda por carrera" $?
 $MYSQL -e "UPDATE usuarios SET activo=0 WHERE correo='beto@correo.uts.edu.co'"
 pedir admin GET "/admin/usuarios.jsp?estado=inactivo"; contiene "beto@correo.uts.edu.co" && ! contiene "ana.perez"; revisar "Filtro por estado inactivo" $?
 $MYSQL -e "UPDATE usuarios SET activo=1 WHERE correo='beto@correo.uts.edu.co'"
 pedir admin GET "/admin/usuario-form.jsp?id=5"; contiene 'id="plan_estudios"' && contiene 'id="metodologia"'; revisar "El formulario tiene plan y Metodología" $?
 pedir admin POST /admin/usuario-guardar.jsp --data-urlencode "id=5" --data-urlencode "nombre=Estudiante de Prueba" --data-urlencode "tipo_documento=1" \
     --data-urlencode "numero_documento=1000000005" --data-urlencode "correo=estudiante.prueba@correo.uts.edu.co" --data-urlencode "roles=5" \
-    --data-urlencode "nivel=1" --data-urlencode "carrera=Carrera de prueba" --data-urlencode "porcentaje_creditos=80" \
+    --data-urlencode "carrera=1" --data-urlencode "porcentaje_creditos=80" \
     --data-urlencode "plan_estudios=Anterior" --data-urlencode "metodologia=on" --data-urlencode "activo=on"
 [[ "$DESTINO" == *"ok=usuario-actualizado"* ]]; revisar "El admin actualiza los datos académicos" $?
 [ "$($MYSQL -e "SELECT CONCAT(plan_estudios,'|',metodologia_aprobada) FROM usuarios WHERE id=5")" = "Anterior|1" ]; revisar "Quedaron plan Anterior y Metodología aprobada" $?

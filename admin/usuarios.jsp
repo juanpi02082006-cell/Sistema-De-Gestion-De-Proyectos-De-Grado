@@ -19,10 +19,11 @@
            GROUP_CONCAT(r.nombre ORDER BY r.id SEPARATOR ', ') AS roles
     FROM usuarios u
     JOIN tipos_documentos td ON td.id = u.tipo_documento_id
+    LEFT JOIN carreras ca ON ca.id = u.carrera_id
     LEFT JOIN usuario_roles ur ON ur.usuario_id = u.id
     LEFT JOIN roles r ON r.id = ur.rol_id
     WHERE (? = '' OR u.nombre LIKE CONCAT('%', ?, '%') OR u.correo LIKE CONCAT('%', ?, '%')
-           OR u.numero_documento LIKE CONCAT('%', ?, '%') OR u.carrera LIKE CONCAT('%', ?, '%'))
+           OR u.numero_documento LIKE CONCAT('%', ?, '%') OR ca.nombre LIKE CONCAT('%', ?, '%'))
       AND (? = '' OR u.id IN (SELECT usuario_id FROM usuario_roles WHERE rol_id = ?))
       AND (? = '' OR u.nivel_id = ?)
       AND (? = '' OR u.plan_estudios = ?)

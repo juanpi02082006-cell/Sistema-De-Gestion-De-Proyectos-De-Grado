@@ -43,16 +43,17 @@ pedir admin GET "/admin/usuarios.jsp?q=docente"; contiene "docente.prueba@uts.ed
 
 echo "== Crear, editar y validar usuarios"
 # Texto con tildes ya codificado en UTF-8, como lo envía un navegador:
-#   nombre  = "José Pérez Ñáñez"        carrera = "Ingeniería de Sistemas"
+#   nombre  = "José Pérez Ñáñez". La carrera es la 35 del catálogo: Ingeniería de Sistemas
+#   (Bucaramanga), del nivel universitario (2).
 NOMBRE_UTF8="Jos%C3%A9%20P%C3%A9rez%20%C3%91%C3%A1%C3%B1ez"
-CARRERA_UTF8="Ingenier%C3%ADa%20de%20Sistemas"
+CARRERA=35
 pedir admin POST /admin/usuario-guardar.jsp --data "nombre=$NOMBRE_UTF8" --data-urlencode "tipo_documento=2" \
     --data-urlencode "numero_documento=2000000001" --data-urlencode "correo=jose.perez@correo.uts.edu.co" --data-urlencode "clave=Clave123*" \
-    --data-urlencode "celular=3001234567" --data-urlencode "roles=5" --data-urlencode "nivel=2" --data "carrera=$CARRERA_UTF8"
+    --data-urlencode "celular=3001234567" --data-urlencode "roles=5" --data-urlencode "carrera=$CARRERA"
 [[ "$CODIGO" = 302 && "$DESTINO" == *"ok=usuario-creado"* ]]; revisar "Crear estudiante con tildes y eñe" $?
 # Se compara en hexadecimal para no depender de la codificación de la consola
-FILA=$($MYSQL -e "SELECT CONCAT(HEX(nombre), '|', HEX(carrera), '|', nivel_id) FROM usuarios WHERE correo='jose.perez@correo.uts.edu.co'")
-[ "$FILA" = "4A6F73C3A92050C3A972657A20C391C3A1C3B1657A|496E67656E696572C3AD612064652053697374656D6173|2" ]; revisar "En la base quedó bien escrito (tildes, carrera, nivel)" $?
+FILA=$($MYSQL -e "SELECT CONCAT(HEX(u.nombre), '|', HEX(c.nombre), '|', u.nivel_id) FROM usuarios u JOIN carreras c ON c.id = u.carrera_id WHERE u.correo='jose.perez@correo.uts.edu.co'")
+[ "$FILA" = "4A6F73C3A92050C3A972657A20C391C3A1C3B1657A|496E67656E696572C3AD612064652053697374656D6173|2" ]; revisar "En la base quedó bien escrito (tildes, carrera del catálogo y el nivel que sale de ella)" $?
 ID=$($MYSQL -e "SELECT id FROM usuarios WHERE correo='jose.perez@correo.uts.edu.co'")
 
 pedir admin POST /admin/usuario-guardar.jsp --data-urlencode "nombre=Otro" --data-urlencode "tipo_documento=2" \
@@ -74,7 +75,7 @@ grep -q "$(printf 'Jos\xc3\xa9 P\xc3\xa9rez')" "$T/cuerpo.html"; revisar "Editar
 HASH_ANTES=$($MYSQL -e "SELECT contrasena FROM usuarios WHERE id=$ID")
 pedir admin POST /admin/usuario-guardar.jsp --data-urlencode "id=$ID" --data "nombre=Jos%C3%A9%20Editado" --data-urlencode "tipo_documento=2" \
     --data-urlencode "numero_documento=2000000001" --data-urlencode "correo=jose.perez@correo.uts.edu.co" --data-urlencode "roles=5" --data-urlencode "roles=3" \
-    --data-urlencode "nivel=2" --data "carrera=$CARRERA_UTF8" --data-urlencode "activo=on"
+    --data-urlencode "carrera=$CARRERA" --data-urlencode "activo=on"
 [[ "$CODIGO" = 302 && "$DESTINO" == *"ok=usuario-actualizado"* ]]; revisar "Editar: guarda los cambios" $?
 [ "$($MYSQL -e "SELECT contrasena FROM usuarios WHERE id=$ID")" = "$HASH_ANTES" ]; revisar "Editar sin contraseña: conserva la anterior" $?
 [ "$($MYSQL -e "SELECT GROUP_CONCAT(rol_id ORDER BY rol_id) FROM usuario_roles WHERE usuario_id=$ID")" = "3,5" ]; revisar "Editar: roles actualizados (Director y Estudiante)" $?
@@ -168,7 +169,7 @@ for MALO in 150 abc 80.5 -3; do
 done
 pedir admin2 POST /admin/usuario-guardar.jsp --data-urlencode "nombre=Est Creditos" --data-urlencode "tipo_documento=2" \
     --data-urlencode "numero_documento=4000000002" --data-urlencode "correo=Est.Creditos@Correo.UTS.edu.co" --data-urlencode "clave=x" \
-    --data-urlencode "roles=5" --data-urlencode "nivel=1" --data-urlencode "porcentaje_creditos=85"
+    --data-urlencode "roles=5" --data-urlencode "carrera=1" --data-urlencode "porcentaje_creditos=85"
 [[ "$DESTINO" == *"ok=usuario-creado"* ]]; revisar "Estudiante con 85 % de créditos: se crea" $?
 [ "$($MYSQL -e "SELECT CONCAT(correo, '|', porcentaje_creditos) FROM usuarios WHERE numero_documento='4000000002'")" = "est.creditos@correo.uts.edu.co|85" ]; revisar "Se guardó el correo en minúsculas y los créditos (85)" $?
 IDC=$($MYSQL -e "SELECT id FROM usuarios WHERE numero_documento='4000000002'")

@@ -10,7 +10,7 @@
 
 <c:set var="idEstudiante" value="${sessionScope.usuario.id}" />
 <sql:query var="consulta">
-    SELECT p.id, p.modalidad_id, f.orden AS fase, f.id AS fase_id,
+    SELECT p.id, p.estado, p.modalidad_id, f.orden AS fase, f.id AS fase_id,
            (SELECT COALESCE(MAX(e.version), 0) + 1 FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
@@ -32,6 +32,7 @@
 
 <c:set var="motivo" value="" />
 <c:choose>
+    <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${p.modalidad_id == 5}"><c:set var="motivo" value="seminario-sin-124" /></c:when>
     <c:when test="${p.fase != 2}"><c:set var="motivo" value="fase-no-permite-propuesta" /></c:when>
     <c:when test="${not empty errorArchivo}"><c:set var="motivo" value="archivo-grande" /></c:when>
@@ -51,7 +52,8 @@
 <c:set var="carpeta" value="${pageContext.servletContext.getRealPath('/WEB-INF/archivos')}" />
 
 <c:catch var="errorGuardar">
-    <c:set var="escrito" value="${parte.write(carpeta.concat('/').concat(nombreGuardado))}" />
+    <c:set var="rutaGuardada">${carpeta}/${nombreGuardado}</c:set>
+        <c:set var="escrito" value="${parte.write(rutaGuardada)}" />
     <sql:transaction>
         <sql:update>
             INSERT INTO entregas (proyecto_id, fase_id, tipo, version, nombre_archivo, ruta_archivo, subido_por)

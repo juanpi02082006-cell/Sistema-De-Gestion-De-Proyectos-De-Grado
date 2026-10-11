@@ -3,10 +3,17 @@
      Antes de incluirlo, definir:
        <c:set var="titulo"  value="..." />   título de la pestaña
        <c:set var="seccion" value="..." />   opción del menú que se marca (inicio, usuarios, roles,
-                                             periodos, proyectos, dirigidos, ideas, habilitacion, proyecto,
-                                             calendario, modalidades) --%>
+                                             periodos, proyectos, pqrs, auditoria, dirigidos, ideas,
+                                             habilitacion, proyecto, calendario, modalidades, avisos, pqr) --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="rolMenu" value="${sessionScope.rolActivo.id}" />
+<%-- Alertas de vencimiento (RNF21) y avisos sin leer (RF5) --%>
+<%@ include file="/WEB-INF/jspf/alertas.jspf" %>
+<sql:query var="avisosSinLeer">
+    SELECT COUNT(*) AS total FROM avisos WHERE usuario_id = ? AND leido = 0
+    <sql:param value="${sessionScope.usuario.id}" />
+</sql:query>
+<c:set var="totalAvisos" value="${avisosSinLeer.rows[0].total}" />
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -39,6 +46,10 @@
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Periodos</a>
                 <a href="${ctx}/admin/proyectos.jsp" class="${seccion == 'proyectos' ? 'activo' : ''}">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Proyectos</a>
+                <a href="${ctx}/admin/pqrs.jsp" class="${seccion == 'pqrs' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>PQR</a>
+                <a href="${ctx}/admin/auditoria.jsp" class="${seccion == 'auditoria' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>Auditoría</a>
             </c:if>
             <c:if test="${rolMenu == 3}">
                 <a href="${ctx}/director/proyectos.jsp" class="${seccion == 'dirigidos' ? 'activo' : ''}">
@@ -75,6 +86,11 @@
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
             <span class="app-cabecera-saludo">Bienvenido</span>
+            <a class="app-cabecera-boton" href="${ctx}/panel/pqr.jsp" title="Peticiones, quejas y reclamos">PQR</a>
+            <a class="app-campana" href="${ctx}/panel/avisos.jsp" aria-label="Avisos${totalAvisos > 0 ? ' sin leer: ' : ''}${totalAvisos > 0 ? totalAvisos : ''}">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                <c:if test="${totalAvisos > 0}"><span class="app-campana-numero"><c:out value="${totalAvisos > 99 ? '99+' : totalAvisos}" /></span></c:if>
+            </a>
             <div class="app-usuario">
                 <span class="app-avatar" aria-hidden="true"><c:out value="${fn:toUpperCase(fn:substring(sessionScope.usuario.nombre, 0, 1))}" /></span>
                 <span class="app-usuario-datos">

@@ -15,7 +15,7 @@
 <c:set var="idEstudiante" value="${sessionScope.usuario.id}" />
 
 <sql:query var="consulta">
-    SELECT p.id, p.modalidad_id, f.orden AS fase, f.id AS fase_id, ${sqlEstadoPagoEstudiante} AS estado_pago,
+    SELECT p.id, p.estado, p.modalidad_id, f.orden AS fase, f.id AS fase_id, ${sqlEstadoPagoEstudiante} AS estado_pago,
            (pe2.fecha_limite_pago IS NULL OR CURDATE() <= pe2.fecha_limite_pago) AS pago_a_tiempo
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
@@ -39,6 +39,7 @@
 
 <c:set var="motivo" value="" />
 <c:choose>
+    <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${p.estado_pago == 'No aplica'}"><c:set var="motivo" value="pago-no-aplica" /></c:when>
     <c:when test="${p.estado_pago == 'Aprobado'}"><c:set var="motivo" value="pago-aprobado" /></c:when>
     <c:when test="${p.fase != 1 and p.fase != 2}"><c:set var="motivo" value="fase-no-permite" /></c:when>
@@ -59,7 +60,8 @@
 <c:set var="carpeta" value="${pageContext.servletContext.getRealPath('/WEB-INF/archivos')}" />
 
 <c:catch var="errorGuardar">
-    <c:set var="escrito" value="${parte.write(carpeta.concat('/').concat(nombreGuardado))}" />
+    <c:set var="rutaGuardada">${carpeta}/${nombreGuardado}</c:set>
+        <c:set var="escrito" value="${parte.write(rutaGuardada)}" />
     <sql:transaction>
         <sql:update>
             INSERT INTO entregas (proyecto_id, fase_id, tipo, nombre_archivo, ruta_archivo, subido_por)
@@ -76,6 +78,10 @@
             <sql:param value="${p.id}" />
             <sql:param value="${idEstudiante}" />
         </sql:update>
+        <c:set var="avisoProyecto" value="${p.id}" />
+        <c:set var="avisoMensaje" value="${sessionScope.usuario.nombre} subió su recibo de pago: está por revisar." />
+        <c:set var="avisoPara" value="comite" />
+        <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
     </sql:transaction>
 </c:catch>
 

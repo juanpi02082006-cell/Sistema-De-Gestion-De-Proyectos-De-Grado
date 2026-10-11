@@ -10,12 +10,13 @@
                               1 y 2 (RF36). --%>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <sql:query var="consultaIntegrantes">
-    SELECT ue.id, ue.nombre, ue.correo, ue.celular, ue.carrera, n.nombre AS nivel, ue.plan_estudios, ue.porcentaje_creditos,
+    SELECT ue.id, ue.nombre, ue.correo, ue.celular, ca.nombre AS carrera, ca.campus, n.nombre AS nivel, ue.plan_estudios, ue.porcentaje_creditos,
            ${sqlEstadoPagoEstudiante} AS pago
     FROM proyecto_estudiantes pe
     JOIN proyectos p ON p.id = pe.proyecto_id
     JOIN usuarios ue ON ue.id = pe.estudiante_id
     LEFT JOIN niveles n ON n.id = ue.nivel_id
+    LEFT JOIN carreras ca ON ca.id = ue.carrera_id
     WHERE pe.proyecto_id = ? AND pe.vigente = 1 ORDER BY ue.nombre
     <sql:param value="${idProyectoIntegrantes}" />
 </sql:query>
@@ -40,7 +41,7 @@
             <c:if test="${integrantesDetalle}">
                 <div><dt>Celular</dt><dd><c:out value="${empty i.celular ? 'Sin registrar' : i.celular}" /></dd></div>
                 <div><dt>Nivel</dt><dd><c:out value="${empty i.nivel ? 'Sin registrar' : i.nivel}" /></dd></div>
-                <div class="ancho"><dt>Carrera</dt><dd><c:out value="${empty i.carrera ? 'Sin registrar' : i.carrera}" /></dd></div>
+                <div class="ancho"><dt>Carrera</dt><dd><c:out value="${empty i.carrera ? 'Sin registrar' : i.carrera}" /><c:if test="${not empty i.campus}"> · <c:out value="${i.campus}" /></c:if></dd></div>
                 <div><dt>Plan de estudios</dt><dd><c:out value="${empty i.plan_estudios ? 'Sin registrar' : (i.plan_estudios == 'Nuevo' ? 'Posterior al 1330' : 'Anterior al 1330')}" /></dd></div>
                 <div><dt>Créditos aprobados</dt><dd><c:out value="${empty i.porcentaje_creditos ? 'Sin registrar' : i.porcentaje_creditos}" /><c:if test="${not empty i.porcentaje_creditos}"> %</c:if></dd></div>
             </c:if>

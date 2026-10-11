@@ -2,7 +2,8 @@
      una con quién la subió y cuándo, y las observaciones enviadas sobre ella. De quien
      revisa solo se muestra el rol, nunca el nombre: así el estudiante no sabe quién es
      su evaluador (RF27). Antes de incluirlo, definir idProyectoPropuesta. Deja
-     versionesPropuesta (la consulta). --%>
+     versionesPropuesta (la consulta). Debajo van los anexos en PDF (RF26, RF30); con
+     anexosQuitar = true, quien subió un anexo ve el botón para quitarlo. --%>
 <sql:query var="versionesPropuesta">
     SELECT e.id, e.version, e.oficial, e.nombre_archivo, e.subido_en, u.nombre AS subida_por,
            r.rol AS rol_revision, r.decision, r.observacion, r.revisado_en
@@ -27,16 +28,44 @@
                         <span class="app-lista-nota">Subida por <c:out value="${v.subida_por}" /> el <fmt:formatDate value="${v.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
                     </span>
                     <span class="app-acciones">
-                        <c:if test="${v.oficial == 1}"><span class="app-estado activo">Oficial</span></c:if>
+                        <c:if test="${v.oficial == true}"><span class="app-estado activo">Oficial</span></c:if>
                         <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${v.id}">Descargar</a>
                     </span>
                 </div>
             </c:if>
-            <c:if test="${not empty v.decision}">
-                <p class="app-observacion mb-3"><strong><c:out value="${v.rol_revision}" /> · <c:out value="${v.decision}" />:</strong> <c:out value="${v.observacion}" />
+            <c:if test="${not empty v.rol_revision}">
+                <p class="app-observacion mb-3"><strong><c:out value="${v.rol_revision}" /><c:if test="${not empty v.decision}"> · <c:out value="${v.decision}" /></c:if>:</strong> <c:out value="${v.observacion}" />
                     <span class="app-lista-nota"><fmt:formatDate value="${v.revisado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
             </c:if>
             <c:set var="idVersionAnterior" value="${v.id}" />
         </c:forEach>
     </c:otherwise>
 </c:choose>
+<sql:query var="anexosPropuesta">
+    SELECT e.id, e.nombre_archivo, e.subido_en, e.subido_por, u.nombre AS subido
+    FROM entregas e JOIN usuarios u ON u.id = e.subido_por
+    WHERE e.proyecto_id = ? AND e.tipo = 'Anexo' ORDER BY e.id
+    <sql:param value="${idProyectoPropuesta}" />
+</sql:query>
+<c:if test="${anexosPropuesta.rowCount > 0}">
+    <h3 class="h6 fw-bold mt-4 mb-2">Anexos</h3>
+    <c:forEach var="ax" items="${anexosPropuesta.rows}">
+        <c:set var="idSubioAnexo">${ax.subido_por}</c:set>
+        <c:set var="idSesionAnexo">${sessionScope.usuario.id}</c:set>
+        <div class="app-archivo">
+            <span>
+                <span class="app-lista-dato"><c:out value="${ax.nombre_archivo}" /></span>
+                <span class="app-lista-nota">Subido por <c:out value="${ax.subido}" /> el <fmt:formatDate value="${ax.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
+            </span>
+            <span class="app-acciones">
+                <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${ax.id}" target="_blank" rel="noopener">Ver</a>
+                <c:if test="${anexosQuitar and idSubioAnexo == idSesionAnexo}">
+                    <form method="post" action="${ctx}/estudiante/anexo-quitar.jsp" class="d-inline" onsubmit="return confirm('¿Quitar este anexo?');">
+                        <input type="hidden" name="id" value="${ax.id}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Quitar</button>
+                    </form>
+                </c:if>
+            </span>
+        </div>
+    </c:forEach>
+</c:if>

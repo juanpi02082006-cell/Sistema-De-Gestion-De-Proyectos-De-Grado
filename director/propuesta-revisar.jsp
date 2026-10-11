@@ -14,7 +14,7 @@
 
 <%-- En multipart, los campos de texto también llegan como param --%>
 <sql:query var="consulta">
-    SELECT p.id, p.evaluador_id, f.orden AS fase, f.id AS fase_id,
+    SELECT p.id, p.estado, p.titulo, p.evaluador_id, f.orden AS fase, f.id AS fase_id,
            e.id AS entrega_id, e.version,
            (SELECT COUNT(*) FROM revisiones r WHERE r.entrega_id = e.id AND r.rol = 'Director' AND r.estado = 'Enviada') AS revisada
     FROM proyectos p
@@ -43,6 +43,7 @@
 
 <c:set var="motivo" value="" />
 <c:choose>
+    <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${p.fase != 3 or empty p.entrega_id or p.revisada > 0}"><c:set var="motivo" value="propuesta-no-revisable" /></c:when>
     <c:when test="${param.decision != 'aprobar' and param.decision != 'devolver'}"><c:set var="motivo" value="general" /></c:when>
     <c:when test="${empty observacion}"><c:set var="motivo" value="observacion-requerida" /></c:when>
@@ -70,7 +71,8 @@
 
 <c:catch var="errorGuardar">
     <c:if test="${aprobar}">
-        <c:set var="escrito" value="${parte.write(carpeta.concat('/').concat(nombreGuardado))}" />
+        <c:set var="rutaGuardada">${carpeta}/${nombreGuardado}</c:set>
+        <c:set var="escrito" value="${parte.write(rutaGuardada)}" />
     </c:if>
     <sql:transaction>
         <sql:update>
@@ -104,6 +106,22 @@
             <sql:param value="${sessionScope.usuario.id}" />
             <sql:param value="${textoHistorial}" />
         </sql:update>
+        <c:set var="avisoProyecto" value="${p.id}" />
+        <c:choose>
+            <c:when test="${aprobar}">
+                <c:set var="avisoMensaje">El director aprobó la versión ${p.version} de la propuesta y la envió al evaluador y al comité. Observación: ${observacion}</c:set>
+                <c:set var="avisoPara" value="estudiantes,codirectores,comite" />
+                <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
+                <c:set var="avisoMensaje">Te enviaron la propuesta de «${p.titulo}» para evaluarla con la rejilla del F-DC-124.</c:set>
+                <c:set var="avisoPara" value="evaluador" />
+                <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
+            </c:when>
+            <c:otherwise>
+                <c:set var="avisoMensaje">El director devolvió la versión ${p.version} de la propuesta: revisa sus observaciones y sube una versión corregida. Observación: ${observacion}</c:set>
+                <c:set var="avisoPara" value="estudiantes,codirectores" />
+                <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
+            </c:otherwise>
+        </c:choose>
     </sql:transaction>
 </c:catch>
 

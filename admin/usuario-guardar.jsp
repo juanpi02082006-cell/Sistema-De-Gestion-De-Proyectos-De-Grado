@@ -63,8 +63,8 @@
 </c:choose>
 
 <%-- Los datos académicos solo se guardan si el usuario es estudiante --%>
-<c:set var="nivel" value="${esEstudiante ? param.nivel : ''}" />
-<c:set var="carrera" value="${esEstudiante ? fn:trim(param.carrera) : ''}" />
+<%-- La carrera es del catálogo; el nivel se toma de ella --%>
+<c:set var="carrera" value="${esEstudiante ? param.carrera : ''}" />
 <c:set var="creditos" value="${esEstudiante ? creditosTexto : ''}" />
 <c:set var="plan" value="${esEstudiante ? param.plan_estudios : ''}" />
 <c:set var="metodologia" value="${esEstudiante ? (param.metodologia == 'on' ? '1' : '0') : ''}" />
@@ -74,16 +74,17 @@
         <c:choose>
             <c:when test="${not editando}">
                 <sql:update>
-                    INSERT INTO usuarios (nombre, tipo_documento_id, numero_documento, correo, contrasena, celular, nivel_id, carrera,
+                    INSERT INTO usuarios (nombre, tipo_documento_id, numero_documento, correo, contrasena, celular, nivel_id, carrera_id,
                                           porcentaje_creditos, plan_estudios, metodologia_aprobada)
-                    VALUES (?, ?, ?, ?, SHA2(?, 256), NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''))
+                    VALUES (?, ?, ?, ?, SHA2(?, 256), NULLIF(?, ''), (SELECT k.nivel_id FROM carreras k WHERE k.id = NULLIF(?, '')),
+                            NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''))
                     <sql:param value="${fn:trim(param.nombre)}" />
                     <sql:param value="${param.tipo_documento}" />
                     <sql:param value="${fn:trim(param.numero_documento)}" />
                     <sql:param value="${correo}" />
                     <sql:param value="${param.clave}" />
                     <sql:param value="${fn:trim(param.celular)}" />
-                    <sql:param value="${nivel}" />
+                    <sql:param value="${carrera}" />
                     <sql:param value="${carrera}" />
                     <sql:param value="${creditos}" />
                     <sql:param value="${plan}" />
@@ -96,7 +97,8 @@
                 <sql:update>
                     UPDATE usuarios
                     SET nombre = ?, tipo_documento_id = ?, numero_documento = ?, correo = ?,
-                        celular = NULLIF(?, ''), nivel_id = NULLIF(?, ''), carrera = NULLIF(?, ''),
+                        celular = NULLIF(?, ''), nivel_id = (SELECT k.nivel_id FROM carreras k WHERE k.id = NULLIF(?, '')),
+                        carrera_id = NULLIF(?, ''),
                         porcentaje_creditos = NULLIF(?, ''), plan_estudios = NULLIF(?, ''),
                         metodologia_aprobada = NULLIF(?, ''), activo = ?
                     WHERE id = ?
@@ -105,7 +107,7 @@
                     <sql:param value="${fn:trim(param.numero_documento)}" />
                     <sql:param value="${correo}" />
                     <sql:param value="${fn:trim(param.celular)}" />
-                    <sql:param value="${nivel}" />
+                    <sql:param value="${carrera}" />
                     <sql:param value="${carrera}" />
                     <sql:param value="${creditos}" />
                     <sql:param value="${plan}" />

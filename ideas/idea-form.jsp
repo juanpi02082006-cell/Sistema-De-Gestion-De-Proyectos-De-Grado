@@ -96,7 +96,7 @@
                             <option value="${n.id}" ${idNivel == vNivel ? 'selected' : ''}><c:out value="${n.nombre}" /></option>
                         </c:forEach>
                     </select>
-                    <div class="form-text">Un estudiante de tecnología no puede tomar ideas de ingeniería.</div>
+                    <div class="form-text">Un estudiante del nivel tecnológico no puede tomar ideas del nivel universitario.</div>
                 </c:otherwise>
             </c:choose>
         </div>

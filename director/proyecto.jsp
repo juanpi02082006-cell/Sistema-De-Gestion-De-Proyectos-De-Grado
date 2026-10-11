@@ -12,7 +12,12 @@
            f.orden AS fase, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
            pr.nombre AS periodo, pr.fecha_limite_propuestas,
            (p.director_id = ?) AS es_director, (p.evaluador_id IS NOT NULL) AS tiene_evaluador,
-           (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version_propuesta
+           (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version_propuesta,
+           (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+            ORDER BY e.version DESC LIMIT 1) AS limite_director,
+           (SELECT e.fecha_limite_revision < CURDATE() FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
+            ORDER BY e.version DESC LIMIT 1) AS director_vencido,
+           DATEDIFF(pr.fecha_limite_propuestas, CURDATE()) AS dias_semana12
     FROM proyectos p
     JOIN modalidades m ON m.id = p.modalidad_id
     JOIN niveles n ON n.id = p.nivel_id
@@ -55,7 +60,12 @@
         <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
         <c:choose>
             <c:when test="${p.fase == 2}"><p class="text-secondary">El estudiante está diligenciando la propuesta; te llega cuando te la envíe.</p></c:when>
-            <c:when test="${p.fase == 3}"><p class="text-secondary">El estudiante te envió la versión <c:out value="${p.version_propuesta}" /> para revisarla.</p></c:when>
+            <c:when test="${p.fase == 3}">
+                <p class="text-secondary">El estudiante te envió la versión <c:out value="${p.version_propuesta}" /> para revisarla.
+                    <c:if test="${not empty p.limite_director}">Tienes hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> (5 días hábiles).</c:if>
+                    <c:if test="${not empty p.dias_semana12 and p.dias_semana12 >= 0}">Faltan <c:out value="${p.dias_semana12}" /> días para el límite de la semana 12.</c:if></p>
+                <c:if test="${p.director_vencido == 1}"><div class="alert alert-warning app-aviso" role="status">Se venció el plazo para revisar esta propuesta. No hay aprobación automática: revísala cuanto antes.</div></c:if>
+            </c:when>
             <c:when test="${p.fase == 4}"><p class="text-secondary">Aprobaste la propuesta y la enviaste al evaluador y al comité.</p></c:when>
         </c:choose>
         <c:set var="idProyectoPropuesta" value="${p.id}" />
@@ -75,8 +85,20 @@
         </c:if>
     </div>
 
+    <%-- Fase 3: los codirectores dejan observaciones; decide el director (RF13) --%>
+    <c:if test="${p.fase == 3 and p.es_director != 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
+        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/director/propuesta-observar.jsp">
+            <input type="hidden" name="id" value="${p.id}">
+            <h2 class="app-tarjeta-titulo">Observación de codirector sobre la versión <c:out value="${p.version_propuesta}" /></h2>
+            <p class="text-secondary">Como codirector puedes dejar observaciones de forma y contenido. La decisión de devolverla o aprobarla es del director.</p>
+            <label class="form-label" for="observacionCodirector">Observación *</label>
+            <textarea class="form-control" id="observacionCodirector" name="observacion" required></textarea>
+            <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Enviar observación</button>
+        </form>
+    </c:if>
+
     <%-- Fase 3: la revisión del director (solo el director, no los codirectores) --%>
-    <c:if test="${p.fase == 3 and p.es_director == 1}">
+    <c:if test="${p.fase == 3 and p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
         <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/director/propuesta-revisar.jsp" enctype="multipart/form-data">
             <input type="hidden" name="id" value="${p.id}">
             <h2 class="app-tarjeta-titulo">Revisar la versión <c:out value="${p.version_propuesta}" /></h2>
@@ -120,5 +142,8 @@
         </div>
     </div>
 </div>
+
+<c:set var="idProyectoHistorial" value="${p.id}" />
+<%@ include file="/WEB-INF/jspf/historial-proyecto.jspf" %>
 
 <%@ include file="/WEB-INF/jspf/pie.jspf" %>

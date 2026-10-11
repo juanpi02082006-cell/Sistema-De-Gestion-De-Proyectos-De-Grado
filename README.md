@@ -71,6 +71,7 @@ C:/xampp/mysql/bin/mysql.exe -u root --default-character-set=utf8mb4 < pruebas/b
 bash pruebas/sprints2-3.sh
 bash pruebas/sprint4.sh
 bash pruebas/sprint5.sh
+bash pruebas/sprint5b.sh
 ```
 
 ## Estructura del proyecto

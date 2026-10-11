@@ -1,0 +1,24 @@
+<%-- Lista de carreras del catálogo de la UTS, agrupadas por nivel (tecnológico y
+     universitario), con el campus de cada oferta. Antes de incluirlo, definir:
+       carreraElegida   id de la carrera marcada, como texto (vacío si no hay)
+       carreraRequerida true si el campo es obligatorio --%>
+<sql:query var="catalogoCarreras">
+    SELECT c.id, c.nombre, c.campus, c.metodologia, c.nivel_id, n.nombre AS nivel
+    FROM carreras c JOIN niveles n ON n.id = c.nivel_id
+    ORDER BY c.nivel_id, c.nombre, c.campus
+</sql:query>
+<select class="form-select" id="carrera" name="carrera" ${carreraRequerida ? 'required' : ''}>
+    <option value="">Escoge la carrera</option>
+    <c:set var="nivelAnterior" value="" />
+    <c:forEach var="k" items="${catalogoCarreras.rows}" varStatus="vuelta">
+        <c:set var="nivelActual">${k.nivel_id}</c:set>
+        <c:if test="${nivelActual != nivelAnterior}">
+            <c:if test="${not vuelta.first}"></optgroup></c:if>
+            <optgroup label="${fn:escapeXml(k.nivel)}">
+        </c:if>
+        <c:set var="idCarrera">${k.id}</c:set>
+        <option value="${k.id}" ${idCarrera == carreraElegida ? 'selected' : ''}><c:out value="${k.nombre}" /> — <c:out value="${k.campus}" /></option>
+        <c:set var="nivelAnterior" value="${nivelActual}" />
+    </c:forEach>
+    <c:if test="${catalogoCarreras.rowCount > 0}"></optgroup></c:if>
+</select>

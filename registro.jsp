@@ -7,7 +7,6 @@
 </c:if>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <sql:query var="tiposDocumento">SELECT id, nombre FROM tipos_documentos ORDER BY id</sql:query>
-<sql:query var="niveles">SELECT id, nombre FROM niveles ORDER BY id</sql:query>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -37,6 +36,7 @@
                         <c:when test="${param.error == 'correo-no-institucional'}">Usa tu correo institucional: @uts.edu.co o @correo.uts.edu.co.</c:when>
                         <c:when test="${param.error == 'claves-distintas'}">Las dos contraseñas no coinciden.</c:when>
                         <c:when test="${param.error == 'creditos-invalidos'}">El porcentaje de créditos debe ser un número entero entre 0 y 100.</c:when>
+                        <c:when test="${param.error == 'carrera-invalida'}">Escoge tu carrera de la lista.</c:when>
                         <c:when test="${param.error == 'plan-invalido'}">Escoge si tu plan de estudios es anterior o posterior al decreto 1330.</c:when>
                         <c:when test="${param.error == 'correo-duplicado'}">Ya hay una cuenta con ese correo. Inicia sesión.</c:when>
                         <c:when test="${param.error == 'documento-duplicado'}">Ya hay una cuenta con ese número de documento.</c:when>
@@ -87,19 +87,12 @@
 
             <h2 class="app-tarjeta-titulo mt-4">Datos académicos</h2>
             <div class="row g-3">
-                <div class="col-md-5">
-                    <label class="form-label" for="nivel">Nivel *</label>
-                    <select class="form-select" id="nivel" name="nivel" required>
-                        <option value="">Escoge tu nivel</option>
-                        <c:forEach var="n" items="${niveles.rows}">
-                            <c:set var="idNivel">${n.id}</c:set>
-                            <option value="${n.id}" ${idNivel == param.nivel ? 'selected' : ''}><c:out value="${n.nombre}" /></option>
-                        </c:forEach>
-                    </select>
-                </div>
-                <div class="col-md-7">
+                <div class="col-12">
                     <label class="form-label" for="carrera">Carrera *</label>
-                    <input class="form-control" type="text" id="carrera" name="carrera" maxlength="150" value="${fn:escapeXml(param.carrera)}" required>
+                    <c:set var="carreraElegida" value="${param.carrera}" />
+                    <c:set var="carreraRequerida" value="true" />
+                    <%@ include file="/WEB-INF/jspf/selector-carrera.jspf" %>
+                    <div class="form-text">Tu nivel (tecnológico o universitario) sale de tu carrera.</div>
                 </div>
                 <div class="col-md-7">
                     <label class="form-label" for="plan_estudios">Plan de estudios *</label>

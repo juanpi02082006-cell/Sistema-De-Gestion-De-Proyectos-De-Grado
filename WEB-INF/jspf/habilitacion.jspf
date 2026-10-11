@@ -11,10 +11,11 @@
      que el sistema no puede verificar. --%>
 <c:set var="minimoCreditos" value="75" />
 <sql:query var="consultaHabilitacion">
-    SELECT u.nivel_id, n.nombre AS nivel, u.carrera, u.plan_estudios,
+    SELECT u.nivel_id, n.nombre AS nivel, ca.nombre AS carrera, ca.campus, u.plan_estudios,
            u.porcentaje_creditos, u.metodologia_aprobada
     FROM usuarios u
     LEFT JOIN niveles n ON n.id = u.nivel_id
+    LEFT JOIN carreras ca ON ca.id = u.carrera_id
     WHERE u.id = ?
     <sql:param value="${idEstudiante}" />
 </sql:query>

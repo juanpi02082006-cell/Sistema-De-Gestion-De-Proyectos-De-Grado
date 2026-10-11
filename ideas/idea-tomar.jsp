@@ -3,7 +3,7 @@
      Reglas:
      - Debe estar habilitado (RF33).
      - Hay un periodo activo y el banco no ha cerrado (RF3, RF25).
-     - La idea es de su nivel: el de tecnología no toma ideas de ingeniería (RF25).
+     - La idea es de su nivel: el de tecnología no toma ideas del nivel universitario (RF25).
      - Si la idea es la propuesta de un estudiante, solo la toma quien la formuló.
      - Un solo proyecto vigente (RF35; la base también lo impide).
      - Si la idea no tiene modalidad, el estudiante la escoge. --%>
@@ -74,6 +74,26 @@
                 <sql:param value="${idea.id}" />
             </sql:update>
             <sql:query var="nuevo">SELECT LAST_INSERT_ID() AS id</sql:query>
+            <%-- Código del proyecto (RF40): prefijo (65 tecnológico, 125 universitario),
+                 periodo (2026-2) y consecutivo dentro del prefijo y el periodo, desde 1
+                 (supuesto). Ejemplo: 65-2026-2/1. La clave única del código evita que dos
+                 proyectos queden con el mismo. --%>
+            <sql:query var="consecutivo">
+                SELECT COUNT(*) AS n FROM proyectos WHERE periodo_id = ? AND nivel_id = ?
+                <sql:param value="${periodoActivo.rows[0].id}" />
+                <sql:param value="${est.nivel_id}" />
+            </sql:query>
+            <sql:update>
+                UPDATE proyectos p JOIN periodos pr ON pr.id = p.periodo_id
+                SET p.codigo = CONCAT(IF(p.nivel_id = 1, '65', '125'), '-', pr.nombre, '/', ?)
+                WHERE p.id = ?
+                <sql:param value="${consecutivo.rows[0].n}" />
+                <sql:param value="${nuevo.rows[0].id}" />
+            </sql:update>
+            <sql:query var="codigoNuevo">
+                SELECT codigo FROM proyectos WHERE id = ?
+                <sql:param value="${nuevo.rows[0].id}" />
+            </sql:query>
             <sql:update>
                 INSERT INTO proyecto_estudiantes (proyecto_id, estudiante_id) VALUES (?, ?)
                 <sql:param value="${nuevo.rows[0].id}" />
@@ -81,10 +101,11 @@
             </sql:update>
             <sql:update>
                 INSERT INTO historial (proyecto_id, usuario_id, accion, descripcion)
-                VALUES (?, ?, 'Estado', CONCAT('El estudiante tomó la idea "', LEFT(?, 200), '". Proyecto en la fase 1.'))
+                VALUES (?, ?, 'Estado', CONCAT('El estudiante tomó la idea "', LEFT(?, 160), '". Proyecto ', ?, ' en la fase 1.'))
                 <sql:param value="${nuevo.rows[0].id}" />
                 <sql:param value="${idEstudiante}" />
                 <sql:param value="${idea.titulo}" />
+                <sql:param value="${codigoNuevo.rows[0].codigo}" />
             </sql:update>
         </c:if>
     </sql:transaction>

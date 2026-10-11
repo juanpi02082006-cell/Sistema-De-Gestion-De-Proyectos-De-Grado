@@ -1,11 +1,11 @@
 # Base de datos
 
-Última actualización: 2026-10-08 (versión 4, con lo que se tomó de la lista de otro equipo)
+Última actualización: 2026-10-10 (versión 5: carreras, avisos, exoneraciones, codirectores y PQR)
 
-- **Base:** `sistemas_proyectos_grado` (MySQL; en local, MariaDB 10.4 de XAMPP), con 28 tablas.
+- **Base:** `sistemas_proyectos_grado` (MySQL; en local, MariaDB 10.4 de XAMPP), con 31 tablas.
 - **Script:** [`bd/sistemas_proyectos_grado.sql`](../bd/sistemas_proyectos_grado.sql). Crea la base, las tablas, los catálogos y los usuarios de prueba.
 - **Diagrama entidad-relación:** [`bd/diagrama-entidad-relacion.png`](../bd/diagrama-entidad-relacion.png), con todas las tablas y columnas. Para draw.io: [`bd/diagrama-drawio.txt`](../bd/diagrama-drawio.txt) (se pega en *Extras → Edit Diagram*).
-- **Requerimiento:** RNF22 (Tomcat 11 y MySQL). Versión 1 en el Sprint 2; versión 2 en el Sprint 3; versiones 3 y 4 antes del Sprint 4.
+- **Requerimiento:** RNF22 (Tomcat 11 y MySQL). Versión 1 en el Sprint 2; versión 2 en el Sprint 3; versiones 3 y 4 antes del Sprint 4; versión 5 en el Sprint 5.
 
 ## Cómo importarla
 
@@ -117,11 +117,12 @@ erDiagram
 | --- | --- | --- |
 | `roles` | Los roles del sistema | Administrador (comité), Director, Evaluador, Estudiante |
 | `tipos_documentos` | Tipo de documento del usuario | Tarjeta de identidad, Cédula de ciudadanía, Cédula de extranjería |
-| `niveles` | Nivel del estudiante y de la idea (RF25, RF40) | Tecnológico, Ingeniería |
+| `niveles` | Nivel del estudiante y de la idea (RF25, RF40) | Tecnológico, Universitario (antes "Ingeniería") |
+| `carreras` | Carreras de la UTS: nombre, nivel, código SNIES, campus y metodología (presencial o virtual). El nivel del estudiante sale de su carrera (RF24) | Las 59 de la lista del equipo (30 tecnológicas y 29 universitarias; Anexo L de los requerimientos) |
 | `modalidades` | Modalidades de grado (RF4), con su máximo de integrantes (RF36) | Las 5 del reglamento sin Práctica: Proyecto de investigación y Desarrollo tecnológico hasta 3; Monografía, Emprendimiento y Seminario hasta 2 |
 | `lineas_investigacion` | Líneas de investigación | Las 4 de la original |
 | `fases` | Fases del proyecto (RF37) y el formato de cada una, como en el sistema actual de la UTS | 0 Aprobación de la idea, 1 Pago, 2 Propuesta I (FDC-124), 3 Propuesta II (FDC-124), 4 Informe I (FDC-125), 5 Informe II (FDC-125), 6 Fase final (sustentación). El `id` no es el número de la fase: el número es `orden` |
-| `festivos` | Festivos de Colombia para contar los días hábiles de los plazos (RNF19) | Los 18 festivos de 2026 (hay que agregar los de cada año) |
+| `festivos` | Festivos de Colombia para contar los días hábiles de los plazos (RNF19) | Los 18 festivos de 2026 y los 18 de 2027 (hay que agregar los de cada año) |
 | `criterios_rejilla` | Criterios de las rejillas (RF23), con su formato | Los 12 del F-DC-124 versión 2.0 (ficha técnica, descripción del problema, justificación, objetivos, estado del arte, fundamento teórico, resultados esperados, plan de actividades, presupuesto, consideraciones éticas, referencias bibliográficas y resumen de similitud) y los 17 del F-DC-129 versión 2 (formato, resumen, introducción, planteamiento de la problemática, justificación, objetivos, estado del arte o antecedentes, marcos referenciales, desarrollo del trabajo, resultados, conclusiones y recomendaciones, consideraciones éticas, referencias, anexos, certificados, sustentación e índice de similitud) |
 | `indicadores_rejilla` | Indicadores (preguntas) de cada criterio, que marca el evaluador (RF23) | Los 28 del F-DC-124 y los 40 del F-DC-129, transcritos tal cual (`docs/requerimientos.md`, anexos J y K) |
 | `criterio_modalidades` | Qué criterios aplican a cada modalidad (RF23) | F-DC-124: todos, menos el estado del arte en Monografía y Emprendimiento; Seminario no usa este formato. F-DC-129: todos a todas (el evaluador marca N/A lo que no aplique) |
@@ -130,7 +131,7 @@ erDiagram
 
 | Tabla | Para qué | Requerimientos | Reglas que aplica la base |
 | --- | --- | --- | --- |
-| `usuarios` | Nombre completo, documento (la cédula del docente), correo (login), contraseña, celular. Para estudiantes: nivel, carrera, plan de estudios (anterior o nuevo), % de créditos, si aprobó Metodología y puntaje de Saber TyT (solo tecnología; ingeniería presenta Saber Pro, que no está en el sistema) | RF1, RF7, RF24, RF29, RF33, RNF14 | **Solo correos institucionales**; créditos de 0 a 100; plan Anterior o Nuevo; Metodología 0 o 1; correo y documento únicos |
+| `usuarios` | Nombre completo, documento (la cédula del docente), correo (login), contraseña, celular. Para estudiantes: nivel (el de su carrera), carrera (del catálogo), plan de estudios (anterior o nuevo), % de créditos, si aprobó Metodología y puntaje de Saber TyT (solo tecnología; ingeniería presenta Saber Pro, que no está en el sistema) | RF1, RF7, RF24, RF29, RF33, RNF14 | **Solo correos institucionales**; carrera del catálogo; créditos de 0 a 100; plan Anterior o Nuevo; Metodología 0 o 1; correo y documento únicos |
 | `usuario_roles` | Qué roles tiene cada usuario | RF7, RF8 | |
 
 ### Ideas y proyectos
@@ -142,8 +143,8 @@ erDiagram
 | `proyectos` | Código, título, modalidad, nivel, fase, estado, si es interdisciplinario, director, evaluador, fecha de aprobación del FDC-124, fecha de notificación al estudiante (dato del F-DC-124) y fecha límite (180 días desde la aprobación del FDC-124) | RF2, RF6, RF9, RF11, RF12, RF13, RF27, RF31, RF38–RF40 | **Director ≠ evaluador**; código único; estado incluye Cancelado |
 | `proyecto_codirectores` | Codirectores de los proyectos interdisciplinarios | RF13 | Un docente no se repite en el mismo proyecto |
 | `proyecto_estudiantes` | Integrantes de cada proyecto, con su exoneración por Saber TyT | RF35, RF36, RF38, RNF14 | **Un solo proyecto vigente por estudiante**; solo renuncia a la exoneración quien fue exonerado |
-| `entregas` | Archivos: propuesta, FDC-124, FDC-125, FDC-129, reporte Turnitin, recibo de pago, anexos y entregables de la modalidad (evidencias, manual de usuario, código fuente), con su versión y cuál es la oficial | RF21, RF26, RF29–RF31, RF43, RNF15, RNF16 | **Una sola versión N y una sola oficial por tipo** en cada proyecto; versión desde 1 |
-| `revisiones` | Aprobaciones en orden director → evaluador → comité, con nota y observación; la evaluación puede estar en borrador | RF14, RF18, RF22, RF23, RF34, RF42 | **Observación y decisión obligatorias al enviar**; estado Borrador o Enviada; decisión Aprobado, Aplazado, No aprobado o Devuelto (F-DC-124); nota de 0 a 5 |
+| `entregas` | Archivos: propuesta, FDC-124, FDC-125, FDC-129, reporte Turnitin, recibo de pago, certificado de Saber TyT, anexos y entregables de la modalidad (evidencias, manual de usuario, código fuente), con su versión y cuál es la oficial | RF21, RF26, RF29–RF31, RF43, RNF15, RNF16 | **Una sola versión N y una sola oficial por tipo** en cada proyecto; versión desde 1 |
+| `revisiones` | Aprobaciones en orden director → evaluador → comité, con nota y observación; la evaluación puede estar en borrador. Los codirectores solo dejan observaciones | RF13, RF14, RF18, RF22, RF23, RF34, RF42 | **Observación y decisión obligatorias al enviar** (el codirector deja observación sin decisión, y no puede decidir); estado Borrador o Enviada; decisión Aprobado, Aplazado, No aprobado o Devuelto (F-DC-124); nota de 0 a 5 |
 | `revision_indicadores` | Respuestas de la rejilla en cada evaluación: Cumple Sí, No o N/A en cada indicador, con su observación | RF23 | Cada indicador una vez por evaluación; Sí, No, N/A (solo F-DC-129) o sin responder (borrador) |
 | `cambios_modalidad` | Solicitudes de cambio de modalidad: anterior y nueva, quién la pidió y cuándo, decisión del comité, quién decidió y cuándo | RF12 | La modalidad nueva es distinta de la anterior; aprobada o rechazada solo con quién y cuándo decidió |
 | `seguimientos` | Seguimientos del director antes del informe final | RF20 | Observación obligatoria |
@@ -151,7 +152,9 @@ erDiagram
 | `actas` | Actas del comité por proyecto | RF16 | |
 | `sesiones_comite` | Calendario de sesiones del comité de cada periodo: fecha, hora y lugar | RF3, RF16 | Una sesión por día en cada periodo |
 | `sustentaciones` | Sustentación del proyecto (fase final): fecha y hora, lugar o medio, y quién la programó | RF39 | Una por proyecto (si se reprograma, se actualiza); lugar obligatorio |
-| `pqrs` | PQR en cualquier fase (por ejemplo, cambio de director o evaluador) con su respuesta | RNF1 | Estado Pendiente o Respondida |
+| `pqrs` | PQR en cualquier fase (petición, queja, reclamo, cambio de director o de evaluador) con su respuesta | RNF1 | Comentario obligatorio; estado Pendiente o Respondida; respondida solo con respuesta, quién y cuándo |
+| `avisos` | Avisos dentro del sistema (no hay correos): a quién, de qué proyecto, mensaje, enlace y si ya lo leyó. Las alertas de vencimiento llevan una clave | RF5, RNF21 | Mensaje obligatorio; **una sola alerta por clave y usuario** (no se repiten) |
+| `exoneraciones` | Solicitudes de exoneración por Saber TyT: estudiante, puntaje, certificado, estado, observación y quién la revisó | RNF14 | **Puntaje de 120 a 300**; aprobada o rechazada solo con observación, quién y cuándo |
 | `historial` | Movimientos de cada proyecto: quién, qué (tipo de acción y descripción) y cuándo | RF5, RF37, RNF12 | Acción Estado, Fase, Documento, Evaluación, Decisión, Modalidad u Otro |
 
 ### Reglas que controla la aplicación (no la base)
@@ -195,6 +198,10 @@ Las pruebas de punta a punta pasan con la versión 4 y la contraseña nueva (`12
 
 **Fases del sistema actual, sesiones y sustentaciones (2026-10-10):** la tabla `fases` pasó a 0–5 y la fase final (7 filas; el número de la fase es `orden`), y se agregaron `sesiones_comite` y `sustentaciones` (28 tablas). Pruebas: 72 de 72 de la base, 63 de 63 de los Sprints 2 y 3 y 127 de 127 del Sprint 4.
 
+**Versión 5 (2026-10-10):** catálogo de `carreras` (`usuarios.carrera` pasa a `carrera_id`), nivel "Universitario", `avisos`, `exoneraciones`, rol Codirector en `revisiones`, tipos de PQR y festivos de 2027 (31 tablas). Pruebas: 95 de 95 de la base, 63 de 63 de los Sprints 2 y 3, 127 de 127 del Sprint 4, 136 de 136 del Sprint 5 y 116 de 116 de `sprint5b.sh`. La base se reinició conservando los usuarios, el periodo 2026-2, sus sesiones y las ideas (las tomadas volvieron a "Aprobada"); se borraron los proyectos y los archivos subidos.
+
+**Columnas `TINYINT(1)`:** el driver de MySQL las entrega como verdadero o falso (`leido`, `exonerado`, `renuncia_exoneracion`, `interdisciplinario`, `oficial`, `activo`, `metodologia_aprobada`). En EL se comparan con `== true`, nunca con `== 1` (da error). Las expresiones de SQL que dan verdadero o falso, en cambio, llegan como número y se comparan con `== 1`.
+
 **Archivos que suben los usuarios:** se guardan en `WEB-INF/archivos` (no se abre desde el navegador ni se sube a Git) con un nombre que pone el sistema (por ejemplo `recibo-p12-1760000000000.pdf`); en `entregas` quedan el nombre original y el guardado. Se ven con `archivos/ver.jsp?id=`, que revisa que quien pide el archivo sea del comité o del proyecto. Para recibir archivos, `web.xml` le da `multipart-config` (hasta 15 MB) a la página que los guarda.
 
 **Cómo correr las pruebas** (MySQL y Tomcat encendidos; cada una sobre la base recién importada, y al final se vuelve a importar):
@@ -204,7 +211,8 @@ C:/xampp/mysql/bin/mysql.exe -u root < bd/sistemas_proyectos_grado.sql
 C:/xampp/mysql/bin/mysql.exe -u root --default-character-set=utf8mb4 < pruebas/base-de-datos.sql   # restricciones de la base
 bash pruebas/sprints2-3.sh   # login, usuarios y roles (importar la base antes)
 bash pruebas/sprint4.sh      # registro, habilitación, periodos, modalidades y banco de ideas (importar la base antes)
-bash pruebas/sprint5.sh      # revisión del pago, director y evaluador, paso a la fase 2 (importar la base antes)
+bash pruebas/sprint5.sh      # pago, integrantes, director y evaluador, fases 2 y 3 (importar la base antes)
+bash pruebas/sprint5b.sh     # carreras, código, avisos, plazos, codirectores, anexos, cambio de modalidad, PQR, auditoría y exoneración
 ```
 
 Importar la base borra los datos que haya. Para conservarlos, hacer antes una copia con `C:/xampp/mysql/bin/mysqldump.exe -u root --databases sistemas_proyectos_grado > copia.sql` (y de `WEB-INF/archivos`, porque `sprint4.sh` borra los recibos), y devolverla al final con `mysql -u root < copia.sql`.

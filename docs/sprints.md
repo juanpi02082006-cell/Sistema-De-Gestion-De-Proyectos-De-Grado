@@ -22,7 +22,7 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | 2 | Crear la base de datos del proyecto, hacer funcionar el login y gestionar usuarios y roles. | 2026-09-30 | 2026-09-30 | Hecho (falta la revisión del equipo) |
 | 3 | Incorporar la segunda entrevista: requerimientos, base de datos versión 2, login institucional y créditos del estudiante. | 2026-10-05 | 2026-10-05 | Hecho (falta la revisión del equipo) |
 | 4 | Registro del estudiante, habilitación, periodos, calendario y sesiones del comité, modalidades, banco de ideas, pago de la fase 1 y diseño nuevo. | 2026-10-08 | 2026-10-10 | Hecho (falta la revisión del equipo) |
-| 5 | Fases 2 y 3: propuesta (FDC-124) con versiones y la revisión del director. | 2026-10-10 | Por definir | En progreso (revisión del pago, asignación del director y fases 2 y 3 hechas; falta la evaluación) |
+| 5 | Fases 2 y 3: propuesta (FDC-124) con versiones y la revisión del director. | 2026-10-10 | Por definir | En progreso (fases 0 a 3 completas y lo transversal hecho; falta la evaluación de la fase 4) |
 | 6 | Fases 4, 5 y final: evaluación con las rejillas, FDC-125, plazos, prórrogas y sustentación. | Por definir | Por definir | Propuesto |
 | 7 | Buscador, informes de estado, PQR, historial y avisos. | Por definir | Por definir | Propuesto |
 
@@ -163,10 +163,21 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | Fase 2: el estudiante sube el FDC-124 con sus versiones y lo envía al director (`estudiante/propuesta-guardar.jsp`, `estudiante/propuesta-enviar.jsp`, `WEB-INF/jspf/propuesta-versiones.jspf`) | Hecho | RF26, RF30, RF43. Word de hasta 15 MB; cada archivo es una versión nueva. Al enviarla, el proyecto pasa a la fase 3. Si el director la devuelve, hay que subir otra versión antes de reenviar. Seminario no sube el F-DC-124. Los Word se descargan con su nombre original. |
 | Mis proyectos del director (`director/proyectos.jsp`, `director/proyecto.jsp`) | Hecho | RF18 (en parte), RF19. Los proyectos que dirige, las propuestas por revisar (también en su inicio), las versiones y la información de sus estudiantes. |
 | Diseño de "Datos del proyecto" y "Estudiantes" (`WEB-INF/jspf/datos-proyecto.jspf`, `WEB-INF/jspf/integrantes.jspf`) | Hecho | Pedido del equipo: primero "se ve muy simple" y después "muy genérico, hazlo más sencillo, sin tantas tarjetas". Quedó sin cajas: la descripción como texto, los datos en dos columnas (etiqueta gris y valor en negrilla) y cada estudiante con sus iniciales y su nombre, y debajo sus datos con el mismo estilo (correo, celular, nivel, carrera, plan y créditos). Lo usan las páginas del estudiante, del director y del comité; el estudiante no ve los datos académicos de sus compañeros. |
-| Pruebas (`pruebas/sprint5.sh`) | Hecho | 136/136. Siguen pasando: base 72/72, Sprints 2 y 3 63/63, Sprint 4 127/127. |
+| Pruebas (`pruebas/sprint5.sh`) | Hecho | 136/136. |
+| Base de datos versión 5 | Hecho | Catálogo de carreras (nivel "Universitario"), avisos, exoneraciones, rol Codirector, tipos de PQR y festivos de 2027; 31 tablas. La base se reinició desde la fase 0, conservando usuarios, periodo e ideas. |
+| Catálogo de carreras (`WEB-INF/jspf/selector-carrera.jspf`) | Hecho | RF24. El registro y la administración de usuarios usan la lista; el nivel sale de la carrera. |
+| Avisos y alertas (`WEB-INF/jspf/avisar.jspf`, `alertas.jspf`, `panel/avisos.jsp`) | Hecho | RF5, RNF21. Campana en la cabecera; avisos de cada movimiento; alertas del límite de pago, la semana 12 y el plazo del director. |
+| Historial y auditoría (`WEB-INF/jspf/historial-proyecto.jspf`, `admin/auditoria.jsp`) | Hecho | RNF12. Historial plegable en cada proyecto; auditoría con filtros. |
+| Plazos en días hábiles (`WEB-INF/jspf/plazo-habil.jspf`) | Hecho | RF21, RNF19. El director tiene 5 días hábiles (supuesto) para revisar la propuesta; se ve en su página y en la del comité, con la marca de vencido. |
+| Código del proyecto | Hecho | RF40. Al tomar la idea: 65 o 125, el periodo y un consecutivo (65-2026-2/1). |
+| Codirectores (`admin/proyecto-asignar.jsp`, `director/propuesta-observar.jsp`) | Hecho | RF13. Hasta 2 en los interdisciplinarios; comentan y decide el director. |
+| Cambio de modalidad (`estudiante/modalidad-solicitar.jsp`, `admin/modalidad-decidir.jsp`) | Hecho | RF12. En las fases 1 a 3, con motivo; el comité decide con observación. |
+| Anexos de la propuesta (`estudiante/anexo-guardar.jsp`, `anexo-quitar.jsp`) | Hecho | RF26, RF30. PDF opcionales en la fase 2. |
+| PQR (`panel/pqr.jsp`, `admin/pqrs.jsp`) | Hecho | RNF1. Botón en la cabecera; el comité responde y ve el reporte. |
+| Exoneración por Saber TyT (`estudiante/exoneracion-solicitar.jsp`, `exoneracion-renunciar.jsp`, `admin/exoneracion-revisar.jsp`) | Hecho | RNF14. Puntaje y certificado; el comité verifica; renuncia sin vuelta atrás; si todos quedan exonerados, el proyecto termina con concepto Aprobado. |
+| Pruebas de lo anterior (`pruebas/sprint5b.sh`) | Hecho | 116/116. Siguen pasando: base 95/95, Sprints 2 y 3 63/63, Sprint 4 127/127, Sprint 5 136/136. |
 | Integrantes (`estudiante/integrante-agregar.jsp`, `estudiante/integrante-quitar.jsp`) | Hecho | RF13, RF35, RF36. Cualquier integrante agrega a un compañero por correo (habilitado, del mismo nivel, sin otro proyecto, sin pasarse del máximo) o lo quita, en las fases 1 y 2. El comité marca el proyecto como interdisciplinario (hasta 4). Al enviar la propuesta se revisa todo el grupo. |
 | Pago por estudiante (`WEB-INF/jspf/estado-pago.jspf`) | Hecho | RF32. Cada estudiante sube su recibo y el comité revisa el de cada uno; el proyecto pasa a la fase 2 cuando todos están al día. |
-| Codirectores (RF13) | Pendiente | |
 | Fase 3: el director revisa, deja observaciones, pasa Turnitin, devuelve o envía al evaluador y al comité (`director/propuesta-revisar.jsp`) | Hecho | RF18, RF30, RF34. Devolver: vuelve a la fase 2. Aprobar: reporte de Turnitin en PDF y evaluador asignado; pasa a la fase 4. El comité tiene el filtro "sin evaluador". La firma se toma como la aprobación en el sistema (por confirmar). |
 | Evaluación con la rejilla del F-DC-124 y decisión del comité (RF14, RF22, RF23) | Pendiente | |
 

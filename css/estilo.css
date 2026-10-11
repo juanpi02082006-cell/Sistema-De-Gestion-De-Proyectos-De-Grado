@@ -1396,3 +1396,117 @@ a.app-limpiar {
     background-color: var(--verde-lima);
     border-radius: 50%;
 }
+
+/* Cabecera: botón de PQR y campana de avisos (RF5, RNF1) */
+a.app-cabecera-boton {
+    margin-left: auto;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--negro);
+    text-decoration: none;
+    border: 1px solid var(--gris-borde);
+    border-radius: 999px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+a.app-cabecera-boton:hover,
+a.app-cabecera-boton:focus-visible {
+    color: var(--negro);
+    background-color: var(--verde-lima-suave);
+    border-color: var(--campo-borde);
+}
+
+a.app-campana {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    color: var(--negro);
+    border: 1px solid var(--gris-borde);
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+a.app-campana:hover,
+a.app-campana:focus-visible {
+    color: var(--negro);
+    background-color: var(--verde-lima-suave);
+}
+
+.app-campana-numero {
+    position: absolute;
+    top: -0.3rem;
+    right: -0.3rem;
+    min-width: 1.25rem;
+    padding: 0 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+    line-height: 1.25rem;
+    text-align: center;
+    background-color: var(--verde-lima);
+    border-radius: 999px;
+}
+
+.app-campana + .app-usuario {
+    margin-left: 0.25rem;
+}
+
+/* Lista de avisos: los no leídos van en negrilla con una marca lima */
+.app-aviso-item {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid #EFEFE9;
+}
+
+.app-aviso-item:last-child {
+    border-bottom: 0;
+}
+
+.app-aviso-marca {
+    flex: 0 0 0.6rem;
+    height: 0.6rem;
+    margin-top: 0.45rem;
+    border-radius: 50%;
+    background-color: transparent;
+}
+
+.app-aviso-item.nuevo .app-aviso-marca {
+    background-color: var(--verde-lima);
+}
+
+.app-aviso-item.nuevo .app-aviso-texto {
+    font-weight: 700;
+}
+
+.app-aviso-texto a {
+    color: inherit;
+}
+
+/* Historial del proyecto (plegable) */
+.app-historial summary {
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.app-historial ol {
+    padding-left: 1.1rem;
+    margin: 1rem 0 0;
+}
+
+.app-historial li {
+    padding: 0.35rem 0;
+}
+
+@media (max-width: 575.98px) {
+    .app-cabecera-saludo {
+        display: none;
+    }
+
+    .app-usuario-datos {
+        display: none;
+    }
+}

@@ -1,7 +1,8 @@
 <%-- Crear (sin id) o editar (con ?id=) un usuario (RF7). Solo correos
      institucionales (RF1). El administrador registra a los docentes; de los
      estudiantes (que se registran solos, RF24) actualiza los datos académicos:
-     nivel, carrera, plan de estudios, % de créditos y Metodología (RF29).
+     carrera (del catálogo; el nivel sale de ella), plan de estudios, % de créditos y
+     Metodología (RF29).
      Si usuario-guardar.jsp encuentra un error, vuelve aquí con ?error=... y con
      los datos que se habían escrito. --%>
 <%@ include file="/WEB-INF/jspf/solo-admin.jspf" %>
@@ -11,7 +12,7 @@
 
 <c:if test="${editando}">
     <sql:query var="consultaUsuario">
-        SELECT id, nombre, tipo_documento_id, numero_documento, correo, celular, nivel_id, carrera,
+        SELECT id, nombre, tipo_documento_id, numero_documento, correo, celular, nivel_id, carrera_id,
                plan_estudios, porcentaje_creditos, metodologia_aprobada, activo
         FROM usuarios WHERE id = ?
         <sql:param value="${param.id}" />
@@ -29,7 +30,6 @@
 </c:if>
 
 <sql:query var="tiposDocumento">SELECT id, nombre FROM tipos_documentos ORDER BY id</sql:query>
-<sql:query var="niveles">SELECT id, nombre FROM niveles ORDER BY id</sql:query>
 <sql:query var="listaRoles">SELECT id, nombre FROM roles ORDER BY id</sql:query>
 
 <%-- Valores del formulario: los que se escribieron (si hubo error) o los guardados --%>
@@ -38,8 +38,7 @@
 <c:set var="vDocumento" value="${reintento ? param.numero_documento : u.numero_documento}" />
 <c:set var="vCorreo"    value="${reintento ? param.correo : u.correo}" />
 <c:set var="vCelular"   value="${reintento ? param.celular : u.celular}" />
-<c:set var="vNivel"     value="${reintento ? param.nivel : u.nivel_id}" />
-<c:set var="vCarrera"   value="${reintento ? param.carrera : u.carrera}" />
+<c:set var="vCarrera">${reintento ? param.carrera : u.carrera_id}</c:set>
 <c:set var="vCreditos"  value="${reintento ? param.porcentaje_creditos : u.porcentaje_creditos}" />
 <c:set var="vPlan"      value="${reintento ? param.plan_estudios : u.plan_estudios}" />
 <c:set var="vMetodologia" value="${reintento ? param.metodologia == 'on' : u.metodologia_aprobada == true}" />
@@ -143,20 +142,12 @@
     <div id="datosEstudiante" class="mt-4">
         <h2 class="app-tarjeta-titulo">Datos del estudiante</h2>
         <div class="row g-3">
-            <div class="col-md-5">
-                <label class="form-label" for="nivel">Nivel</label>
-                <select class="form-select" id="nivel" name="nivel">
-                    <option value="">Sin nivel</option>
-                    <c:forEach var="n" items="${niveles.rows}">
-                        <c:set var="idNivel">${n.id}</c:set>
-                        <c:set var="nivelElegido">${vNivel}</c:set>
-                        <option value="${n.id}" ${idNivel == nivelElegido ? 'selected' : ''}><c:out value="${n.nombre}" /></option>
-                    </c:forEach>
-                </select>
-            </div>
-            <div class="col-md-7">
+            <div class="col-12">
                 <label class="form-label" for="carrera">Carrera</label>
-                <input class="form-control" type="text" id="carrera" name="carrera" maxlength="150" value="${fn:escapeXml(vCarrera)}">
+                <c:set var="carreraElegida" value="${vCarrera}" />
+                <c:set var="carreraRequerida" value="false" />
+                <%@ include file="/WEB-INF/jspf/selector-carrera.jspf" %>
+                <div class="form-text">El nivel (tecnológico o universitario) sale de la carrera.</div>
             </div>
             <div class="col-md-5">
                 <label class="form-label" for="porcentaje_creditos">Créditos aprobados (%)</label>

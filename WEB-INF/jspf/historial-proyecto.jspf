@@ -1,0 +1,27 @@
+<%-- Historial de un proyecto en orden cronológico (RNF12): quién hizo cada movimiento,
+     qué y cuándo. Va plegado. Antes de incluirlo, definir idProyectoHistorial. Las
+     descripciones nunca dicen quién es el evaluador (RF27), así que también lo ve el
+     estudiante. --%>
+<sql:query var="historialProyecto">
+    SELECT h.fecha, h.accion, h.descripcion, u.nombre AS usuario
+    FROM historial h LEFT JOIN usuarios u ON u.id = h.usuario_id
+    WHERE h.proyecto_id = ?
+    ORDER BY h.fecha, h.id
+    <sql:param value="${idProyectoHistorial}" />
+</sql:query>
+<details class="app-tarjeta app-historial mt-4">
+    <summary>Historial del proyecto (<c:out value="${historialProyecto.rowCount}" />)</summary>
+    <c:choose>
+        <c:when test="${historialProyecto.rowCount == 0}"><p class="app-vacio">Todavía no hay movimientos.</p></c:when>
+        <c:otherwise>
+            <ol>
+                <c:forEach var="h" items="${historialProyecto.rows}">
+                    <li>
+                        <c:out value="${h.descripcion}" />
+                        <span class="app-lista-nota"><fmt:formatDate value="${h.fecha}" pattern="dd/MM/yyyy h:mm a" /> · <c:out value="${empty h.usuario ? 'Sistema' : h.usuario}" /> · <c:out value="${h.accion}" /></span>
+                    </li>
+                </c:forEach>
+            </ol>
+        </c:otherwise>
+    </c:choose>
+</details>

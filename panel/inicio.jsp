@@ -14,6 +14,11 @@
     <sql:query var="ideasPendientes">SELECT COUNT(*) AS total FROM ideas WHERE estado = 'Pendiente'</sql:query>
     <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
     <sql:query var="pagosPendientes">SELECT COUNT(*) AS total FROM proyectos p WHERE (${sqlEstadoPago}) = 'Por revisar'</sql:query>
+    <sql:query var="solicitudesPendientes">
+        SELECT (SELECT COUNT(*) FROM cambios_modalidad WHERE estado = 'Pendiente')
+             + (SELECT COUNT(*) FROM exoneraciones WHERE estado = 'Pendiente') AS total
+    </sql:query>
+    <sql:query var="pqrsPendientes">SELECT COUNT(*) AS total FROM pqrs WHERE estado = 'Pendiente'</sql:query>
 </c:if>
 <c:if test="${rol == 3 or rol == 4}">
     <sql:query var="misIdeas">
@@ -60,35 +65,49 @@
 
 <c:if test="${rol == 1}">
     <div class="row g-4">
-        <div class="col-md-6 col-xl-4">
+        <div class="col-md-6 col-xl-3">
             <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=pago">
                 <span class="app-acceso-numero"><c:out value="${pagosPendientes.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Pagos por revisar</span>
                 <span class="app-acceso-texto">Revisar los recibos y asignar director y evaluador a cada proyecto.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-4">
+        <div class="col-md-6 col-xl-3">
+            <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=modalidad">
+                <span class="app-acceso-numero"><c:out value="${solicitudesPendientes.rows[0].total}" /></span>
+                <span class="app-acceso-titulo">Solicitudes por decidir</span>
+                <span class="app-acceso-texto">Cambios de modalidad y exoneraciones por Saber TyT.</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <a class="app-acceso" href="${ctx}/admin/pqrs.jsp">
+                <span class="app-acceso-numero"><c:out value="${pqrsPendientes.rows[0].total}" /></span>
+                <span class="app-acceso-titulo">PQR pendientes</span>
+                <span class="app-acceso-texto">Peticiones, quejas y reclamos por responder.</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
             <a class="app-acceso" href="${ctx}/admin/usuarios.jsp">
                 <span class="app-acceso-numero"><c:out value="${totalUsuarios.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Usuarios</span>
                 <span class="app-acceso-texto">Registrar docentes y actualizar los datos de los estudiantes.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-4">
+        <div class="col-md-6 col-xl-3">
             <a class="app-acceso" href="${ctx}/admin/roles.jsp">
                 <span class="app-acceso-numero"><c:out value="${totalRoles.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Roles</span>
                 <span class="app-acceso-texto">Crear, ver, editar y eliminar los roles.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-4">
+        <div class="col-md-6 col-xl-3">
             <a class="app-acceso" href="${ctx}/admin/periodos.jsp">
                 <span class="app-acceso-numero"><c:out value="${totalPeriodos.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Periodos</span>
                 <span class="app-acceso-texto">Calendario de cada semestre: crear, activar y cerrar.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-4">
+        <div class="col-md-6 col-xl-3">
             <a class="app-acceso" href="${ctx}/ideas/banco.jsp">
                 <span class="app-acceso-numero"><c:out value="${ideasPendientes.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Ideas por revisar</span>

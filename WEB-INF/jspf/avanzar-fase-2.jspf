@@ -23,6 +23,10 @@
                 <sql:param value="${idProyecto}" />
                 <sql:param value="${sessionScope.usuario.id}" />
             </sql:update>
+            <c:set var="avisoProyecto" value="${idProyecto}" />
+            <c:set var="avisoMensaje" value="El proyecto pasó a la fase 2 (Propuesta I): ya pueden diligenciar el FDC-124 y enviarlo al director." />
+            <c:set var="avisoPara" value="estudiantes,director,codirectores" />
+            <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
         </c:if>
     </sql:transaction>
     <c:set var="avanzoFase2" value="${pasoFase2 == 1}" />

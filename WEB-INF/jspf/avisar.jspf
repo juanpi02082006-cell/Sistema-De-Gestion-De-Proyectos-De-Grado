@@ -1,0 +1,79 @@
+<%-- Deja un aviso dentro del sistema (RF5: no se envían correos) a la gente de un
+     proyecto. Antes de incluirlo, definir:
+       avisoProyecto  id del proyecto (vacío si el aviso no es de un proyecto)
+       avisoMensaje   el texto del aviso (máximo 255 caracteres). Nunca debe decirle al
+                      estudiante quién es su evaluador (RF27).
+       avisoPara      a quién, separado por comas: estudiantes, director, codirectores,
+                      evaluador, comite (por ejemplo "estudiantes,director"), o usuario
+       avisoUsuario   con "usuario": el id de la persona (avisos que no son de un
+                      proyecto, como la revisión de una idea o la respuesta de una PQR)
+       avisoEnlace    con "usuario": la página a la que lleva el aviso
+     Cada uno recibe el enlace a su propia página del proyecto. Quien hizo el movimiento
+     (el usuario de la sesión) no recibe aviso. --%>
+<c:set var="paraAviso" value=",${fn:replace(avisoPara, ' ', '')}," />
+<c:set var="textoAviso" value="${fn:substring(avisoMensaje, 0, 255)}" />
+<c:set var="idActorAviso" value="${empty sessionScope.usuario ? 0 : sessionScope.usuario.id}" />
+<c:if test="${fn:contains(paraAviso, ',estudiantes,')}">
+    <sql:update>
+        INSERT INTO avisos (usuario_id, proyecto_id, mensaje, enlace)
+        SELECT pe.estudiante_id, ?, ?, '/estudiante/proyecto.jsp'
+        FROM proyecto_estudiantes pe WHERE pe.proyecto_id = ? AND pe.vigente = 1 AND pe.estudiante_id <> ?
+        <sql:param value="${avisoProyecto}" />
+        <sql:param value="${textoAviso}" />
+        <sql:param value="${avisoProyecto}" />
+        <sql:param value="${idActorAviso}" />
+    </sql:update>
+</c:if>
+<c:if test="${fn:contains(paraAviso, ',director,')}">
+    <sql:update>
+        INSERT INTO avisos (usuario_id, proyecto_id, mensaje, enlace)
+        SELECT p.director_id, p.id, ?, CONCAT('/director/proyecto.jsp?id=', p.id)
+        FROM proyectos p WHERE p.id = ? AND p.director_id IS NOT NULL AND p.director_id <> ?
+        <sql:param value="${textoAviso}" />
+        <sql:param value="${avisoProyecto}" />
+        <sql:param value="${idActorAviso}" />
+    </sql:update>
+</c:if>
+<c:if test="${fn:contains(paraAviso, ',codirectores,')}">
+    <sql:update>
+        INSERT INTO avisos (usuario_id, proyecto_id, mensaje, enlace)
+        SELECT pc.docente_id, pc.proyecto_id, ?, CONCAT('/director/proyecto.jsp?id=', pc.proyecto_id)
+        FROM proyecto_codirectores pc WHERE pc.proyecto_id = ? AND pc.docente_id <> ?
+        <sql:param value="${textoAviso}" />
+        <sql:param value="${avisoProyecto}" />
+        <sql:param value="${idActorAviso}" />
+    </sql:update>
+</c:if>
+<c:if test="${fn:contains(paraAviso, ',evaluador,')}">
+    <sql:update>
+        INSERT INTO avisos (usuario_id, proyecto_id, mensaje, enlace)
+        SELECT p.evaluador_id, p.id, ?, '/panel/inicio.jsp'
+        FROM proyectos p WHERE p.id = ? AND p.evaluador_id IS NOT NULL AND p.evaluador_id <> ?
+        <sql:param value="${textoAviso}" />
+        <sql:param value="${avisoProyecto}" />
+        <sql:param value="${idActorAviso}" />
+    </sql:update>
+</c:if>
+<c:if test="${fn:contains(paraAviso, ',comite,')}">
+    <sql:update>
+        INSERT INTO avisos (usuario_id, proyecto_id, mensaje, enlace)
+        SELECT u.id, ?, ?, CONCAT('/admin/proyecto.jsp?id=', ?)
+        FROM usuarios u JOIN usuario_roles ur ON ur.usuario_id = u.id AND ur.rol_id = 1
+        WHERE u.activo = 1 AND u.id <> ?
+        <sql:param value="${avisoProyecto}" />
+        <sql:param value="${textoAviso}" />
+        <sql:param value="${avisoProyecto}" />
+        <sql:param value="${idActorAviso}" />
+    </sql:update>
+</c:if>
+<c:if test="${fn:contains(paraAviso, ',usuario,') and not empty avisoUsuario}">
+    <sql:update>
+        INSERT INTO avisos (usuario_id, proyecto_id, mensaje, enlace)
+        SELECT u.id, NULLIF(?, 0), ?, ? FROM usuarios u WHERE u.id = ? AND u.id <> ?
+        <sql:param value="${empty avisoProyecto ? 0 : avisoProyecto}" />
+        <sql:param value="${textoAviso}" />
+        <sql:param value="${avisoEnlace}" />
+        <sql:param value="${avisoUsuario}" />
+        <sql:param value="${idActorAviso}" />
+    </sql:update>
+</c:if>
