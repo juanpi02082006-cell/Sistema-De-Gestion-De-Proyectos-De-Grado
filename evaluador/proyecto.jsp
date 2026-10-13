@@ -39,6 +39,7 @@
 </c:if>
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
+<c:set var="estadoProyecto" value="${p.estado}" />
 <c:set var="cerrado" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}" />
 <c:set var="porEvaluar" value="${p.fase == 4 and p.ultima == 'Director:Aprobado' and not cerrado}" />
 <c:set var="informePorEvaluar" value="${p.fase == 5 and p.ultima_informe == 'Director:Aprobado' and not cerrado}" />

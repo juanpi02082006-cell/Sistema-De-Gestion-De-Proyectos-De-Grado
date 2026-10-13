@@ -49,7 +49,7 @@
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
 <c:set var="esSeminario" value="${p.modalidad_id == 5}" />
-<c:set var="estadoSeminario" value="${p.estado}" />
+<c:set var="estadoProyecto" value="${p.estado}" />
 
 <sql:query var="reportesTurnitin">
     SELECT id, nombre_archivo, subido_en FROM entregas WHERE proyecto_id = ? AND tipo = 'Reporte Turnitin' ORDER BY id DESC

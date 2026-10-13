@@ -1277,6 +1277,11 @@ a.app-limpiar {
     border-color: var(--verde-lima);
 }
 
+.app-fase.cancelada {
+    background-color: #E9E9E4;
+    border-color: #CFCFC8;
+}
+
 .app-fase.actual {
     background-color: var(--verde-lima-suave);
     border-color: var(--verde-lima);

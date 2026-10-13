@@ -29,7 +29,7 @@
          que tiene guardada (si no, el menú lateral sale sin estilo). -->
     <context-param>
         <param-name>versionEstilos</param-name>
-        <param-value>2026-10-11c</param-value>
+        <param-value>2026-10-12a</param-value>
     </context-param>
 
     <!-- Los formularios llegan en UTF-8 (tildes y eñes) -->

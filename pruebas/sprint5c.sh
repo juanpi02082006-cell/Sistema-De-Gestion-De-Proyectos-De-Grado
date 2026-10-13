@@ -357,6 +357,7 @@ decidir $PB no-aprobar "21" "$HOY" "La propuesta no es viable"
 [ "$($MYSQL -e "SELECT estado FROM proyectos WHERE id=$PB")" = "Cancelado" ] && [ -z "$(proyectoDe beto@correo.uts.edu.co)" ] \
   && [ "$($MYSQL -e "SELECT estado FROM ideas WHERE titulo='Idea Mono'")" = "Aprobada" ]
 revisar "No aprobada: proyecto cancelado, estudiante libre e idea de vuelta en el banco" $?
+pedir admin GET "/admin/proyecto.jsp?id=$PB"; contiene "El proyecto se canceló en esta fase" && ! contiene "(fase actual)"; revisar "En las tarjetas de las fases se ve dónde se canceló" $?
 [ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=$(id beto@correo.uts.edu.co) AND mensaje LIKE '%comit_ no aprob_%'")" = "1" ]; revisar "El estudiante recibe el aviso" $?
 pedir eva GET /evaluador/proyectos.jsp; contiene "Cancelado" && sinError; revisar "El evaluador ve el proyecto cancelado" $?
 

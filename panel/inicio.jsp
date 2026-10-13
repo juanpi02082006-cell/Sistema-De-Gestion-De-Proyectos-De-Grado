@@ -198,7 +198,7 @@
             </div>
             <c:set var="faseActual" value="${pv.fase}" />
             <c:set var="esSeminario" value="${pv.modalidad_id == 5}" />
-            <c:set var="estadoSeminario" value="${pv.estado}" />
+            <c:set var="estadoProyecto" value="${pv.estado}" />
             <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
         </c:when>
         <c:otherwise>

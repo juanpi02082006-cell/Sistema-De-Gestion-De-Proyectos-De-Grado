@@ -83,7 +83,7 @@
     <c:set var="pagoListo" value="${p.estado_pago == 'No aplica' or p.estado_pago == 'Aprobado'}" />
     <c:set var="terminado" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}" />
     <c:set var="esSeminario" value="${p.modalidad_id == 5}" />
-    <c:set var="estadoSeminario" value="${p.estado}" />
+    <c:set var="estadoProyecto" value="${p.estado}" />
     <%-- En Seminario los integrantes se cierran cuando el comité valida la inscripción --%>
     <c:set var="integrantesAbiertos" value="${(p.fase == 1 or p.fase == 2) and not terminado and not (esSeminario and p.estado != 'Pendiente')}" />
     <c:if test="${esSeminario}">

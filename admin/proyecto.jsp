@@ -43,7 +43,7 @@
 <c:set var="p" value="${consulta.rows[0]}" />
 <c:set var="faseActual" value="${p.fase}" />
 <c:set var="esSeminario" value="${p.modalidad_id == 5}" />
-<c:set var="estadoSeminario" value="${p.estado}" />
+<c:set var="estadoProyecto" value="${p.estado}" />
 
 <%-- Recibos de los estudiantes vigentes (cada uno sube el suyo), agrupados por estudiante
      y del más reciente al más antiguo, con la revisión del comité si la tienen --%>

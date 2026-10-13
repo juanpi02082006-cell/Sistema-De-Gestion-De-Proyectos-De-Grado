@@ -256,6 +256,8 @@ pedir admin POST /admin/exoneracion-revisar.jsp --data-urlencode "id=$XB2" --dat
 revisar "Queda Finalizado, exonerado y con su puntaje" $?
 [ "$($MYSQL -e "SELECT COUNT(*) FROM historial WHERE proyecto_id=$PB AND descripcion LIKE '%concepto Aprobado%'")" = "1" ]; revisar "El historial dice que terminó con concepto Aprobado" $?
 pedir beto GET /estudiante/proyecto.jsp; contiene "terminó con concepto Aprobado" && contiene "5.0 y 100 % de beca" && ! contiene "pago-guardar.jsp"; revisar "El estudiante ve que terminó, con su estímulo, sin formularios" $?
+contiene "No aplica: exonerado por Saber TyT" && contiene "el informe final quedó exonerado" && ! contiene "(fase actual)"
+revisar "En las tarjetas de las fases, las que siguen dicen que no aplican por la exoneración" $?
 subir beto; [[ "$DESTINO" == *"error=proyecto-cerrado"* ]]; revisar "En un proyecto terminado no se sube nada" $?
 pedir beto POST /estudiante/exoneracion-renunciar.jsp; [[ "$DESTINO" == *"error=proyecto-cerrado"* ]]; revisar "Ni se renuncia" $?
 pedir admin POST /admin/proyecto-asignar.jsp --data-urlencode "id=$PB" --data-urlencode "director=3"; [[ "$DESTINO" == *"error=proyecto-cerrado"* ]]; revisar "Ni el comité lo modifica" $?
