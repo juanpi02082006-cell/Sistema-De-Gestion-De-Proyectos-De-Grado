@@ -2,7 +2,8 @@
      Antes de incluirlo, definir p (la fila del proyecto). Usa las columnas que tenga:
      descripcion, codigo, estado, modalidad, nivel, periodo, fecha_inicio,
      fecha_limite_propuestas y director; las que falten no se muestran. El director solo
-     sale si se define datosConDirector = true (sale "Por asignar" si no tiene).
+     sale si se define datosConDirector = true (sale "Por asignar" si no tiene). Con
+     datosOcultarLimite = true no sale el límite de la propuesta (ya aprobada o terminado).
      datosTitulo cambia el título de la tarjeta (por defecto "Datos del proyecto"). --%>
 <h2 class="app-tarjeta-titulo"><c:out value="${empty datosTitulo ? 'Datos del proyecto' : datosTitulo}" /></h2>
 <c:if test="${not empty p.descripcion}"><p class="app-texto-proyecto"><c:out value="${p.descripcion}" /></p></c:if>
@@ -14,5 +15,5 @@
     <c:if test="${not empty p.periodo}"><div><dt>Periodo</dt><dd><c:out value="${p.periodo}" /></dd></div></c:if>
     <c:if test="${datosConDirector}"><div><dt>Director</dt><dd><c:out value="${empty p.director ? 'Por asignar' : p.director}" /></dd></div></c:if>
     <c:if test="${not empty p.fecha_inicio}"><div><dt>Inicio</dt><dd><fmt:formatDate value="${p.fecha_inicio}" pattern="dd/MM/yyyy" /></dd></div></c:if>
-    <c:if test="${not empty p.fecha_limite_propuestas}"><div><dt>Límite de la propuesta</dt><dd><fmt:formatDate value="${p.fecha_limite_propuestas}" pattern="dd/MM/yyyy" /></dd></div></c:if>
+    <c:if test="${not empty p.fecha_limite_propuestas and not datosOcultarLimite}"><div><dt>Límite de la propuesta</dt><dd><fmt:formatDate value="${p.fecha_limite_propuestas}" pattern="dd/MM/yyyy" /></dd></div></c:if>
 </dl>

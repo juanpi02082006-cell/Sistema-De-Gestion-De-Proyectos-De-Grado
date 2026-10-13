@@ -252,7 +252,7 @@ pedir ana POST /estudiante/informe-enviar.jsp
 [ "$($MYSQL -e "SELECT COUNT(*) FROM avisos WHERE usuario_id=3 AND mensaje LIKE '%informe final%'")" -ge "1" ]; revisar "El director recibe el aviso" $?
 pedir ana POST /estudiante/informe-guardar.jsp -F "informe=@$T/informe.docx"; [[ "$DESTINO" == *"error=informe-no-aplica"* ]]; revisar "En la fase 5 ya no sube versiones" $?
 pedir dir GET "/director/proyecto.jsp?id=$PA"; contiene "del informe final para revisarla" && contiene "Resultados listos" && sinError; revisar "El director ve el informe y los seguimientos" $?
-pedir ana GET /estudiante/proyecto.jsp; contiene "La exoneración se pide antes de entregar el informe final" && sinError; revisar "Con el informe entregado ya no se pide la exoneración" $?
+pedir ana GET /estudiante/proyecto.jsp; ! contiene "exoneracion-solicitar.jsp" && sinError; revisar "Con el informe entregado ya no se pide la exoneración" $?
 pedir ana GET /estudiante/proyecto.jsp; grep -q "Evaluador de Prueba" "$T/cuerpo.html"; [ $? -ne 0 ]; revisar "El historial del estudiante no nombra al evaluador (RF27)" $?
 pedir admin GET "/admin/proyecto.jsp?id=$PA"; contiene "Informe final (FDC-125)" && contiene "Resultados listos" && sinError; revisar "El comité ve el informe y los seguimientos" $?
 

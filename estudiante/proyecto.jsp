@@ -86,6 +86,11 @@
     <c:set var="estadoProyecto" value="${p.estado}" />
     <%-- En Seminario los integrantes se cierran cuando el comité valida la inscripción --%>
     <c:set var="integrantesAbiertos" value="${(p.fase == 1 or p.fase == 2) and not terminado and not (esSeminario and p.estado != 'Pendiente')}" />
+    <%-- Solo se muestran las tarjetas que le sirven al estudiante en su fase: el pago, mientras
+         tenga que subirlo, corregirlo o esperar la revisión (aprobado, su estado queda en
+         "Integrantes"); el cambio de modalidad, en las fases 1 a 3 --%>
+    <c:set var="mostrarPago" value="${integrantesAbiertos and not pagoCubierto and p.mi_pago != 'Aprobado'}" />
+    <c:set var="mostrarModalidad" value="${not terminado and p.fase >= 1 and p.fase <= 3 and not (esSeminario and p.estado != 'Pendiente')}" />
     <c:if test="${esSeminario}">
         <%-- Mis documentos de inscripción al seminario (el último de cada tipo) --%>
         <sql:query var="misDocumentos">
@@ -123,6 +128,14 @@
         <sql:param value="${p.id}" />
         <sql:param value="${idEstudiante}" />
     </sql:query>
+    <%-- La exoneración se muestra cuando se puede pedir (fase 4 con la propuesta aprobada) o
+         cuando ya hay algo que contar (pendiente, exonerado o renuncia); si el proyecto
+         terminó, el resultado ya sale arriba --%>
+    <c:set var="ex" value="${miExoneracion.rowCount > 0 ? miExoneracion.rows[0] : null}" />
+    <c:set var="mostrarExoneracion" value="${p.mi_nivel == 1 and not terminado and (p.exonerado == true or p.renuncia_exoneracion == true
+                                            or (not empty ex and ex.estado == 'Pendiente') or (p.fase == 4 and not empty p.fecha_aprobacion_124))}" />
+    <%-- En un proyecto terminado o con la propuesta aprobada, el límite de la propuesta ya no importa --%>
+    <c:set var="datosOcultarLimite" value="${terminado or not empty p.fecha_aprobacion_124}" />
     <c:set var="faseActual" value="${p.fase}" />
 </c:if>
 
@@ -201,13 +214,17 @@
             </div>
         </c:if>
 
-        <c:if test="${p.fase == 1 and not terminado and not esSeminario}">
-            <div class="app-tarjeta mb-4">
+        <c:set var="mostrarRequisitosFase2" value="${p.fase == 1 and not terminado and not esSeminario}" />
+        <c:if test="${mostrarRequisitosFase2 or mostrarPago}">
+        <div class="row g-4 mb-4">
+        <c:if test="${mostrarRequisitosFase2}">
+            <div class="col-lg">
+            <div class="app-tarjeta h-100">
                 <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>
                 <ul class="app-lista">
                     <li>
                         <span><span class="app-lista-dato">${p.integrantes > 1 ? 'El comité aprueba el pago de todos los integrantes' : 'El comité aprueba tu pago'}</span>
-                            <span class="app-lista-nota">${pagoCubierto ? 'El tuyo lo cubre tu matrícula.' : (p.mi_pago == 'Aprobado' ? 'El tuyo ya está aprobado.' : (p.mi_pago == 'Por revisar' ? 'Tu recibo está en revisión.' : (p.mi_pago == 'Devuelto' ? 'El comité devolvió tu recibo: revisa la observación y súbelo otra vez.' : 'Sube tu recibo de pago.')))}${p.integrantes > 1 and miPagoListo and not pagoListo ? ' Falta el de algún compañero.' : ''}</span></span>
+                            <span class="app-lista-nota">${pagoCubierto ? 'El tuyo lo cubre la matrícula del Seminario de Grado.' : (p.mi_pago == 'Aprobado' ? 'El comité aprobó tu pago.' : (p.mi_pago == 'Por revisar' ? 'Tu recibo está en revisión.' : (p.mi_pago == 'Devuelto' ? 'El comité devolvió tu recibo: revisa la observación y súbelo otra vez.' : 'Sube tu recibo de pago.')))}${p.integrantes > 1 and miPagoListo and not pagoListo ? ' Falta el de algún compañero.' : ''}</span></span>
                         <span class="app-requisito ${pagoListo ? 'cumple' : ''}">${pagoListo ? 'Listo' : 'Pendiente'}</span>
                     </li>
                     <li>
@@ -216,6 +233,61 @@
                     </li>
                 </ul>
             </div>
+            </div>
+        </c:if>
+        <c:if test="${mostrarPago}">
+            <div class="col-lg">
+                <div class="app-tarjeta h-100 app-formulario">
+                    <h2 class="app-tarjeta-titulo">Pago de la modalidad</h2>
+                    <c:choose>
+                        <c:when test="${pagoCubierto}">
+                            <p>Tu plan de estudios es posterior al decreto 1330: el pago lo cubre la matrícula del Seminario de Grado. No necesitas subir un recibo.</p>
+                        </c:when>
+                        <c:otherwise>
+                            <p class="text-secondary">
+                                Sube el recibo de pago con la marca "pagado", en PDF y de hasta 15 MB. El pago solo vale para el periodo <c:out value="${p.periodo}" />.
+                                <c:if test="${not empty p.fecha_limite_pago}">Límite: <fmt:formatDate value="${p.fecha_limite_pago}" pattern="dd/MM/yyyy" />.</c:if>
+                            </p>
+                            <c:forEach var="r" items="${recibos.rows}" varStatus="s">
+                                <div class="app-archivo">
+                                    <span>
+                                        <span class="app-lista-dato"><c:out value="${r.nombre_archivo}" /></span>
+                                        <span class="app-lista-nota">Subido el <fmt:formatDate value="${r.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
+                                    </span>
+                                    <span class="app-acciones">
+                                        <span class="app-estado ${r.decision == 'Aprobado' ? 'activo' : 'inactivo'}">${empty r.decision ? (s.first ? 'En revisión' : 'Reemplazado') : r.decision}</span>
+                                        <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${r.id}" target="_blank" rel="noopener">Ver</a>
+                                    </span>
+                                </div>
+                                <c:if test="${not empty r.decision}">
+                                    <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${r.observacion}" /></p>
+                                </c:if>
+                            </c:forEach>
+                            <c:choose>
+                                <c:when test="${p.mi_pago == 'Aprobado'}">
+                                    <p class="app-total">El comité aprobó tu pago.</p>
+                                </c:when>
+                                <c:when test="${not integrantesAbiertos}">
+                                    <p class="app-total">El pago se sube en la fase 1.</p>
+                                </c:when>
+                                <c:when test="${p.pago_a_tiempo != 1}">
+                                    <div class="alert alert-warning app-aviso mb-0" role="status">Ya pasó la fecha límite de pago de este periodo.</div>
+                                </c:when>
+                                <c:otherwise>
+                                    <form method="post" action="${ctx}/estudiante/pago-guardar.jsp" enctype="multipart/form-data">
+                                        <label class="form-label" for="recibo">${recibos.rowCount == 0 ? 'Recibo de pago (PDF) *' : 'Volver a subir el recibo (PDF)'}</label>
+                                        <input class="form-control" type="file" id="recibo" name="recibo" accept="application/pdf,.pdf" required>
+                                        <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Subir recibo</button>
+                                    </form>
+                                </c:otherwise>
+                            </c:choose>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+            </div>
+
+        </c:if>
+        </div>
         </c:if>
 
         <%-- Propuesta (FDC-124): desde la fase 2. Seminario no usa el F-DC-124 (RF17). --%>
@@ -245,7 +317,7 @@
                                 <p class="text-secondary">Enviaste la versión <c:out value="${p.version_propuesta}" /> a tu director. Está en revisión<c:if test="${not empty p.limite_director}">: tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para revisarla</c:if>.</p>
                             </c:when>
                             <c:when test="${not empty p.fecha_aprobacion_124}">
-                                <p class="text-secondary">El comité aprobó tu propuesta: la versión oficial es la <c:out value="${p.version_propuesta}" />.</p>
+                                <p class="text-secondary">El comité aprobó tu propuesta<c:if test="${not empty p.version_propuesta}">: la versión oficial es la <c:out value="${p.version_propuesta}" /></c:if>.</p>
                             </c:when>
                             <c:when test="${p.fase == 4 and p.ultima == 'Director:Aprobado'}">
                                 <p class="text-secondary">Tu director aprobó la versión <c:out value="${p.version_propuesta}" />, la pasó por Turnitin y la envió al evaluador y al comité. El evaluador la está evaluando.</p>
@@ -295,7 +367,8 @@
         </c:if>
 
         <%-- Informe final (FDC-125): desde que el comité aprueba el FDC-124 (RF20, RF31) --%>
-        <c:if test="${not empty p.fecha_aprobacion_124 and not esSeminario}">
+        <%-- Si el proyecto terminó sin informe (todos exonerados), la tarjeta no aplica --%>
+        <c:if test="${not empty p.fecha_aprobacion_124 and not esSeminario and not (terminado and empty p.version_informe)}">
             <div class="app-tarjeta mb-4 app-formulario">
                 <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
                 <dl class="app-pares">
@@ -339,6 +412,7 @@
                         <div class="app-resultado cumple mt-3"><h2>El comité aprobó tu informe final</h2><p>Tu proyecto está en la fase final: con tu director y tu evaluador programan la sustentación.</p></div>
                     </c:when>
                 </c:choose>
+                <c:set var="informeOcultarVacios" value="${p.fase == 4 and not terminado}" />
                 <c:set var="idProyectoInforme" value="${p.id}" />
                 <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
                 <c:set var="idProyectoEvaluacion" value="${p.id}" />
@@ -369,8 +443,8 @@
                     <sql:param value="${p.id}" />
                 </sql:query>
                 <c:if test="${p.plan_anterior == 1 and (misProrrogas.rowCount > 0 or (p.fase == 4 and not terminado))}">
-                    <h3 class="h6 fw-bold mt-4 mb-2">Prórrogas <span class="text-secondary fw-normal">· <c:out value="${p.prorrogas_aprobadas}" /> de 3</span></h3>
                     <c:if test="${misProrrogas.rowCount > 0}">
+                        <h3 class="h6 fw-bold mt-4 mb-2">Prórrogas <span class="text-secondary fw-normal">· <c:out value="${p.prorrogas_aprobadas}" /> de 3</span></h3>
                         <ul class="app-lista">
                             <c:forEach var="pr" items="${misProrrogas.rows}">
                                 <li>
@@ -382,7 +456,10 @@
                         </ul>
                     </c:if>
                     <c:if test="${p.fase == 4 and not terminado and p.informe_vencido != 1 and p.prorrogas_aprobadas < 3 and p.prorrogas_pendientes == 0}">
-                        <p class="text-secondary mt-2">
+                        <%-- Plegado: solo lo abre quien lo necesita --%>
+                        <details class="app-historial mt-4">
+                        <summary>¿No alcanzas a entregar el informe? Pide una prórroga <span class="text-secondary fw-normal">· <c:out value="${p.prorrogas_aprobadas}" /> de 3 usadas</span></summary>
+                        <p class="text-secondary mt-3">
                             Si no alcanzas a entregar el informe, pide una prórroga de 180 días antes del <fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /> (mejor unos 8 días antes).
                             Adjunta el recibo del nuevo pago del derecho pecuniario<c:if test="${p.modalidad_id == 1 or p.modalidad_id == 2}"> o el aval de la Dirección de Investigaciones y Extensión</c:if>. Si se vence el plazo sin prórroga, se cancela la modalidad.
                         </p>
@@ -399,6 +476,7 @@
                             </div>
                             <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Pedir la prórroga</button>
                         </form>
+                        </details>
                     </c:if>
                 </c:if>
             </div>
@@ -410,7 +488,11 @@
                     <c:set var="datosTitulo" value="${p.titulo}" />
                     <c:set var="datosConDirector" value="true" />
                     <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
-                    <h3 class="h6 fw-bold mt-4 mb-3">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> (hasta <c:out value="${p.maximo}" /> en esta modalidad)</span></h3>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="app-tarjeta h-100">
+                    <h2 class="app-tarjeta-titulo">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> (hasta <c:out value="${p.maximo}" /> en esta modalidad)</span></h2>
                     <c:set var="idProyectoIntegrantes" value="${p.id}" />
                     <c:set var="integrantesDetalle" value="false" />
                     <c:set var="integrantesQuitar" value="${integrantesAbiertos}" />
@@ -433,64 +515,21 @@
                     </c:choose>
                 </div>
             </div>
-
-            <div class="col-lg-6">
-                <div class="app-tarjeta h-100 app-formulario">
-                    <h2 class="app-tarjeta-titulo">Pago de la modalidad (fase 1)</h2>
-                    <c:choose>
-                        <c:when test="${pagoCubierto}">
-                            <p>Tu plan de estudios es posterior al decreto 1330: el pago lo cubre la matrícula del Seminario de Grado. No necesitas subir un recibo.</p>
-                        </c:when>
-                        <c:otherwise>
-                            <p class="text-secondary">
-                                Sube el recibo de pago con la marca "pagado", en PDF y de hasta 15 MB. El pago solo vale para el periodo <c:out value="${p.periodo}" />.
-                                <c:if test="${not empty p.fecha_limite_pago}">Límite: <fmt:formatDate value="${p.fecha_limite_pago}" pattern="dd/MM/yyyy" />.</c:if>
-                            </p>
-                            <c:forEach var="r" items="${recibos.rows}" varStatus="s">
-                                <div class="app-archivo">
-                                    <span>
-                                        <span class="app-lista-dato"><c:out value="${r.nombre_archivo}" /></span>
-                                        <span class="app-lista-nota">Subido el <fmt:formatDate value="${r.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
-                                    </span>
-                                    <span class="app-acciones">
-                                        <span class="app-estado ${r.decision == 'Aprobado' ? 'activo' : 'inactivo'}">${empty r.decision ? (s.first ? 'En revisión' : 'Reemplazado') : r.decision}</span>
-                                        <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${r.id}" target="_blank" rel="noopener">Ver</a>
-                                    </span>
-                                </div>
-                                <c:if test="${not empty r.decision}">
-                                    <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${r.observacion}" /></p>
-                                </c:if>
-                            </c:forEach>
-                            <c:choose>
-                                <c:when test="${p.mi_pago == 'Aprobado'}">
-                                    <p class="app-total">El comité aprobó tu pago.</p>
-                                </c:when>
-                                <c:when test="${not integrantesAbiertos}">
-                                    <p class="app-total">El pago se sube en la fase 1.</p>
-                                </c:when>
-                                <c:when test="${p.pago_a_tiempo != 1}">
-                                    <div class="alert alert-warning app-aviso mb-0" role="status">Ya pasó la fecha límite de pago de este periodo.</div>
-                                </c:when>
-                                <c:otherwise>
-                                    <form method="post" action="${ctx}/estudiante/pago-guardar.jsp" enctype="multipart/form-data">
-                                        <label class="form-label" for="recibo">${recibos.rowCount == 0 ? 'Recibo de pago (PDF) *' : 'Volver a subir el recibo (PDF)'}</label>
-                                        <input class="form-control" type="file" id="recibo" name="recibo" accept="application/pdf,.pdf" required>
-                                        <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Subir recibo</button>
-                                    </form>
-                                </c:otherwise>
-                            </c:choose>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
-            </div>
         </div>
 
+        <%-- Trámites que no son del día a día: solo cuando se pueden usar --%>
+        <c:if test="${mostrarModalidad or mostrarExoneracion}">
         <div class="row g-4 mt-0">
+
+
             <%-- Cambio de modalidad (RF12): antes de que se apruebe el FDC-124 --%>
-            <div class="col-lg-6">
-                <div class="app-tarjeta h-100 app-formulario">
-                    <h2 class="app-tarjeta-titulo">Cambio de modalidad</h2>
-                    <c:set var="hayCambioPendiente" value="${ultimoCambio.rowCount > 0 and ultimoCambio.rows[0].estado == 'Pendiente'}" />
+            <%-- Es un trámite poco usado: va plegado y se abre solo si hay una solicitud pendiente --%>
+            <c:if test="${mostrarModalidad}">
+            <div class="col-lg">
+                <c:set var="hayCambioPendiente" value="${ultimoCambio.rowCount > 0 and ultimoCambio.rows[0].estado == 'Pendiente'}" />
+                <details class="app-tarjeta app-historial app-formulario h-100" ${hayCambioPendiente ? 'open' : ''}>
+                    <summary>Cambio de modalidad<span class="text-secondary fw-normal">${hayCambioPendiente ? ' · solicitud pendiente' : ' · si necesitas otra modalidad'}</span></summary>
+                    <div class="mt-3"></div>
                     <c:if test="${ultimoCambio.rowCount > 0}">
                         <c:set var="uc" value="${ultimoCambio.rows[0]}" />
                         <p class="app-observacion mt-0 mb-3">
@@ -521,21 +560,21 @@
                             </form>
                         </c:otherwise>
                     </c:choose>
-                </div>
+                </details>
             </div>
+            </c:if>
 
             <%-- Exoneración por Saber TyT (RNF14): solo nivel tecnológico --%>
-            <c:if test="${p.mi_nivel == 1}">
-                <div class="col-lg-6">
+            <c:if test="${mostrarExoneracion}">
+                <div class="col-lg">
                     <div class="app-tarjeta h-100 app-formulario">
                         <h2 class="app-tarjeta-titulo">Exoneración por Saber TyT</h2>
-                        <c:set var="ex" value="${miExoneracion.rowCount > 0 ? miExoneracion.rows[0] : null}" />
                         <c:choose>
                             <c:when test="${p.renuncia_exoneracion == true}">
                                 <p class="mb-0">Renunciaste a la exoneración y sigues con el proyecto. La renuncia no tiene vuelta atrás.</p>
                             </c:when>
                             <c:when test="${p.exonerado == true}">
-                                <p>Estás exonerado del informe final con <strong><c:out value="${ex.estimulo}" /></strong> (<c:out value="${ex.puntaje}" /> puntos). Tus compañeros siguen con el proyecto.</p>
+                                <p>Estás exonerado del informe final con <strong><c:out value="${ex.estimulo}" /></strong> (<c:out value="${ex.puntaje}" /> puntos).${p.integrantes > 1 ? ' Tus compañeros siguen con el proyecto.' : ''}</p>
                                 <c:if test="${not terminado}">
                                     <form method="post" action="${ctx}/estudiante/exoneracion-renunciar.jsp"
                                           onsubmit="return confirm('¿Renunciar a la exoneración? Seguirás con el proyecto y no podrás volver a pedirla.');">
@@ -576,6 +615,7 @@
                 </div>
             </c:if>
         </div>
+        </c:if>
 
         <c:set var="idProyectoHistorial" value="${p.id}" />
         <%@ include file="/WEB-INF/jspf/historial-proyecto.jspf" %>

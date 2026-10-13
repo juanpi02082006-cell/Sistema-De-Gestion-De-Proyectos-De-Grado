@@ -3,7 +3,8 @@
      versiones del FDC-125 (RF31, RF43), de la más nueva a la más antigua, con las
      observaciones enviadas sobre cada una (de quien revisa solo se muestra el rol,
      RF27). Antes de incluirlo, definir idProyectoInforme. Deja seguimientosInforme y
-     versionesInforme (las consultas). --%>
+     versionesInforme (las consultas). Con informeOcultarVacios = true no salen las
+     secciones vacías (la página ya muestra lo que falta en sus requisitos). --%>
 <sql:query var="seguimientosInforme">
     SELECT s.fecha, s.observacion, u.nombre AS director
     FROM seguimientos s JOIN usuarios u ON u.id = s.director_id
@@ -18,6 +19,7 @@
     WHERE e.proyecto_id = ? AND e.tipo = 'FDC-125' ORDER BY e.version DESC, r.id
     <sql:param value="${idProyectoInforme}" />
 </sql:query>
+<c:if test="${seguimientosInforme.rowCount > 0 or not informeOcultarVacios}">
 <h3 class="h6 fw-bold mt-4 mb-2">Seguimientos del director <span class="text-secondary fw-normal">· <c:out value="${seguimientosInforme.rowCount}" /> (mínimo 2 antes de entregar el informe)</span></h3>
 <c:choose>
     <c:when test="${seguimientosInforme.rowCount == 0}"><p class="app-vacio mt-0">Todavía no hay seguimientos.</p></c:when>
@@ -30,6 +32,8 @@
         </ul>
     </c:otherwise>
 </c:choose>
+</c:if>
+<c:if test="${versionesInforme.rowCount > 0 or not informeOcultarVacios}">
 <h3 class="h6 fw-bold mt-4 mb-2">Versiones del informe final (FDC-125)</h3>
 <c:choose>
     <c:when test="${versionesInforme.rowCount == 0}"><p class="app-vacio mt-0">Todavía no hay versiones del FDC-125.</p></c:when>
@@ -56,3 +60,4 @@
         </c:forEach>
     </c:otherwise>
 </c:choose>
+</c:if>

@@ -234,7 +234,7 @@ exonerar() { pedir "$1" POST /estudiante/exoneracion-solicitar.jsp -F "puntaje=$
 exonerar uri 180 "$T/certificado.pdf"; [[ "$DESTINO" == *"error=exoneracion-solo-tecnologia"* ]]; revisar "Nivel universitario: no aplica (Saber Pro va aparte)" $?
 pedir uri GET /estudiante/proyecto.jsp; ! contiene "Exoneración por Saber TyT"; revisar "Al universitario no le sale la sección" $?
 exonerar beto 160 "$T/certificado.pdf"; [[ "$DESTINO" == *"error=exoneracion-sin-propuesta"* ]]; revisar "Sin la propuesta aprobada (antes de la fase 4) no se pide (decisión del 2026-10-11)" $?
-pedir beto GET /estudiante/proyecto.jsp; contiene "cuando el comité apruebe tu propuesta" && ! contiene "exoneracion-solicitar.jsp"; revisar "Antes de la fase 4 solo ve cuándo podrá pedirla" $?
+pedir beto GET /estudiante/proyecto.jsp; ! contiene "exoneracion-solicitar.jsp" && ! contiene "Exoneración por Saber TyT"; revisar "Antes de la fase 4 no le sale la exoneración (aparece cuando se puede pedir)" $?
 # Se simula que el comité ya aprobó la propuesta de los dos proyectos (fase 4)
 $MYSQL -e "UPDATE proyectos SET fase_id=(SELECT id FROM fases WHERE orden=4), fecha_aprobacion_124=CURDATE(), fecha_limite=CURDATE() + INTERVAL 180 DAY WHERE id IN ($PB, $PD)"
 exonerar beto 110 "$T/certificado.pdf"; [[ "$DESTINO" == *"error=puntaje-invalido"* ]]; revisar "Puntaje menor de 120: rechazado" $?
