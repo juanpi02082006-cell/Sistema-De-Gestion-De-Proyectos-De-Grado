@@ -292,8 +292,10 @@
 
         <%-- Propuesta (FDC-124): desde la fase 2. Seminario no usa el F-DC-124 (RF17). --%>
         <c:if test="${p.fase >= 2}">
-            <div class="app-tarjeta mb-4 app-formulario">
-                <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
+            <%-- Mientras se trabaja va abierta; aprobada por el comité, queda plegada para consultar --%>
+            <details class="app-tarjeta app-historial mb-4 app-formulario" ${empty p.fecha_aprobacion_124 ? 'open' : ''}>
+                <summary>Propuesta (FDC-124)<c:if test="${not empty p.fecha_aprobacion_124}"><span class="text-secondary fw-normal"> · aprobada el <fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></span></c:if></summary>
+                <div class="mt-3"></div>
                 <c:choose>
                     <c:when test="${p.modalidad_id == 5}">
                         <p class="mb-0">La modalidad Seminario no usa el F-DC-124. El siguiente paso de tu seminario lo define el comité.</p>
@@ -363,7 +365,7 @@
                         </c:if>
                     </c:otherwise>
                 </c:choose>
-            </div>
+            </details>
         </c:if>
 
         <%-- Informe final (FDC-125): desde que el comité aprueba el FDC-124 (RF20, RF31) --%>

@@ -1519,6 +1519,17 @@ a.app-campana:focus-visible {
     flex: 1 1 100%;
 }
 
+.app-rejilla-observacion summary {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: var(--gris-texto);
+    cursor: pointer;
+}
+
+.app-rejilla-observacion[open] summary {
+    color: #111111;
+}
+
 .app-rejilla .app-casilla span {
     padding: 0.35rem 1rem;
 }

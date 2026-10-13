@@ -1,0 +1,54 @@
+<%-- Campos del formulario del comité para asignar director, evaluador y codirectores
+     (RF11, RF13; un docente nunca evalúa el proyecto que dirige). Va dentro de un
+     <form> que envía a admin/proyecto-asignar.jsp. Antes de incluirlo, definir p,
+     directores, evaluadores, idDirector, idEvaluador, idCodirector1 e idCodirector2. --%>
+<input type="hidden" name="id" value="${p.id}">
+<p class="text-secondary">Los asigna el comité. Un docente nunca evalúa el proyecto que dirige. El estudiante ve a su director, pero no a su evaluador.</p>
+<div class="row g-3">
+    <div class="col-12">
+        <label class="form-label" for="director">Director *</label>
+        <select class="form-select" id="director" name="director" required>
+            <option value="">Escoge el director</option>
+            <c:forEach var="d" items="${directores.rows}">
+                <c:set var="idOpcion">${d.id}</c:set>
+                <option value="${d.id}" ${idOpcion == idDirector ? 'selected' : ''}><c:out value="${d.nombre}" /></option>
+            </c:forEach>
+        </select>
+        <c:if test="${directores.rowCount == 0}"><div class="form-text">No hay docentes activos con el rol Director. Asígnalo en Usuarios.</div></c:if>
+    </div>
+    <div class="col-12">
+        <label class="form-label" for="evaluador">Evaluador</label>
+        <select class="form-select" id="evaluador" name="evaluador">
+            <option value="">Sin asignar todavía</option>
+            <c:forEach var="e" items="${evaluadores.rows}">
+                <c:set var="idOpcion">${e.id}</c:set>
+                <option value="${e.id}" ${idOpcion == idEvaluador ? 'selected' : ''}><c:out value="${e.nombre}" /></option>
+            </c:forEach>
+        </select>
+        <div class="form-text">Se puede asignar después: la propuesta le llega cuando el director la envía (fase 3).</div>
+    </div>
+    <%-- RF13: solo Proyecto de investigación (1) y Desarrollo tecnológico (2) --%>
+    <c:if test="${p.modalidad_id == 1 or p.modalidad_id == 2}">
+        <div class="col-12">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="interdisciplinario" name="interdisciplinario" ${p.interdisciplinario == true ? 'checked' : ''}>
+                <label class="form-check-label" for="interdisciplinario">Proyecto interdisciplinario (hasta 4 estudiantes y 2 codirectores)</label>
+            </div>
+        </div>
+        <c:forEach var="numero" begin="1" end="2">
+            <c:set var="idCodirectorElegido" value="${numero == 1 ? idCodirector1 : idCodirector2}" />
+            <div class="col-md-6">
+                <label class="form-label" for="codirector${numero}">Codirector ${numero}</label>
+                <select class="form-select" id="codirector${numero}" name="codirector${numero}">
+                    <option value="">Sin codirector</option>
+                    <c:forEach var="d" items="${directores.rows}">
+                        <c:set var="idOpcion">${d.id}</c:set>
+                        <option value="${d.id}" ${idOpcion == idCodirectorElegido ? 'selected' : ''}><c:out value="${d.nombre}" /></option>
+                    </c:forEach>
+                </select>
+            </div>
+        </c:forEach>
+        <div class="col-12"><div class="form-text mt-0">Los codirectores solo se guardan si el proyecto es interdisciplinario. Ven el proyecto y dejan observaciones; decide el director.</div></div>
+    </c:if>
+</div>
+<button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Guardar</button>

@@ -13,7 +13,7 @@
 
 <sql:query var="consulta">
     SELECT p.id, p.codigo, p.titulo, p.descripcion, p.estado, p.director_id, p.evaluador_id, p.fecha_inicio, p.modalidad_id,
-           p.interdisciplinario, p.nota_final, ${sqlDocumentosFaltantes} AS documentos_faltantes,
+           p.interdisciplinario, p.nota_final, d.nombre AS director, ev.nombre AS evaluador, ${sqlDocumentosFaltantes} AS documentos_faltantes,
            f.orden AS fase, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
            pr.nombre AS periodo, pr.fecha_limite_pago, pr.fecha_limite_propuestas, ${sqlEstadoPago} AS estado_pago,
            (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
@@ -32,6 +32,8 @@
     JOIN niveles n ON n.id = p.nivel_id
     LEFT JOIN fases f ON f.id = p.fase_id
     LEFT JOIN periodos pr ON pr.id = p.periodo_id
+    LEFT JOIN usuarios d ON d.id = p.director_id
+    LEFT JOIN usuarios ev ON ev.id = p.evaluador_id
     WHERE p.id = ?
     <sql:param value="${empty param.id ? 0 : param.id}" />
 </sql:query>
@@ -77,6 +79,10 @@
 <c:set var="idCodirector2">${codirectoresActuales.rowCount > 1 ? codirectoresActuales.rows[1].docente_id : ''}</c:set>
 <c:set var="idDirector">${p.director_id}</c:set>
 <c:set var="idEvaluador">${p.evaluador_id}</c:set>
+<%-- Lo que el comité tiene que hacer en este proyecto va arriba; lo demás, abajo plegado --%>
+<c:set var="cerrado" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}" />
+<c:set var="hayRecibosPorRevisar" value="${p.estado_pago == 'Por revisar' and (p.fase == 1 or p.fase == 2) and not cerrado}" />
+<c:set var="faltaAsignar" value="${not cerrado and (empty p.director_id or (empty p.evaluador_id and not esSeminario and p.fase >= 2))}" />
 
 <%@ include file="/WEB-INF/jspf/cabecera.jspf" %>
 
@@ -143,8 +149,11 @@
 </c:if>
 
 <c:if test="${prorrogas.rowCount > 0}">
-    <div class="app-tarjeta mb-4">
-        <h2 class="app-tarjeta-titulo">Prórrogas del informe final</h2>
+    <c:set var="prorrogaPorDecidir" value="false" />
+    <c:forEach var="pr" items="${prorrogas.rows}"><c:if test="${pr.estado == 'Pendiente'}"><c:set var="prorrogaPorDecidir" value="${not cerrado}" /></c:if></c:forEach>
+    <details class="app-tarjeta app-historial mb-4" ${prorrogaPorDecidir ? 'open' : ''}>
+        <summary>Prórrogas del informe final<span class="text-secondary fw-normal"> · ${prorrogaPorDecidir ? 'hay una por decidir' : prorrogas.rowCount}${prorrogaPorDecidir ? '' : (prorrogas.rowCount == 1 ? ' solicitud' : ' solicitudes')}</span></summary>
+        <div class="mt-3"></div>
         <c:forEach var="pr" items="${prorrogas.rows}">
             <div class="app-archivo">
                 <span>
@@ -170,12 +179,15 @@
                 </c:when>
             </c:choose>
         </c:forEach>
-    </div>
+    </details>
 </c:if>
 
 <c:if test="${exoneraciones.rowCount > 0}">
-    <div class="app-tarjeta mb-4">
-        <h2 class="app-tarjeta-titulo">Exoneraciones por Saber TyT</h2>
+    <c:set var="exoneracionPorDecidir" value="false" />
+    <c:forEach var="xo" items="${exoneraciones.rows}"><c:if test="${xo.estado == 'Pendiente'}"><c:set var="exoneracionPorDecidir" value="${p.estado != 'Finalizado'}" /></c:if></c:forEach>
+    <details class="app-tarjeta app-historial mb-4" ${exoneracionPorDecidir ? 'open' : ''}>
+        <summary>Exoneraciones por Saber TyT<span class="text-secondary fw-normal"> · ${exoneracionPorDecidir ? 'hay una por verificar' : exoneraciones.rowCount}${exoneracionPorDecidir ? '' : (exoneraciones.rowCount == 1 ? ' solicitud' : ' solicitudes')}</span></summary>
+        <div class="mt-3"></div>
         <c:forEach var="xo" items="${exoneraciones.rows}">
             <div class="app-archivo">
                 <span>
@@ -201,7 +213,7 @@
                 </c:when>
             </c:choose>
         </c:forEach>
-    </div>
+    </details>
 </c:if>
 
 <c:if test="${p.fase == 3 and not empty p.limite_director and p.estado != 'Cancelado'}">
@@ -264,9 +276,16 @@
     </div>
 </c:if>
 
-<c:if test="${p.fase == 1 and not esSeminario and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
+<c:set var="mostrarRequisitosFase2" value="${p.fase == 1 and not esSeminario and not cerrado}" />
+<%-- Lo que el comité tiene que hacer: a la izquierda los requisitos y los pagos por
+     revisar; a la derecha la asignación pendiente --%>
+<c:if test="${mostrarRequisitosFase2 or hayRecibosPorRevisar or faltaAsignar}">
+<div class="row g-4 mb-4">
+<c:if test="${mostrarRequisitosFase2 or hayRecibosPorRevisar}">
+    <div class="col-lg">
+<c:if test="${mostrarRequisitosFase2}">
     <c:set var="pagoListo" value="${p.estado_pago == 'Aprobado' or p.estado_pago == 'No aplica'}" />
-    <div class="app-tarjeta mb-4">
+    <div class="app-tarjeta">
         <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>
         <ul class="app-lista">
             <li>
@@ -280,10 +299,30 @@
         </ul>
     </div>
 </c:if>
+<c:if test="${hayRecibosPorRevisar}">
+    <div class="app-tarjeta ${mostrarRequisitosFase2 ? 'mt-4' : ''}">
+        <h2 class="app-tarjeta-titulo">Pagos por revisar</h2>
+        <%@ include file="/WEB-INF/jspf/recibos-comite.jspf" %>
+    </div>
+</c:if>
+    </div>
+</c:if>
+<c:if test="${faltaAsignar}">
+    <div class="col-lg">
+        <form class="app-tarjeta app-formulario h-100" method="post" action="${ctx}/admin/proyecto-asignar.jsp">
+            <h2 class="app-tarjeta-titulo">${empty p.director_id ? 'Asignar el director' : 'Asignar el evaluador'}</h2>
+            <%@ include file="/WEB-INF/jspf/asignacion-comite.jspf" %>
+        </form>
+    </div>
+</c:if>
+</div>
+</c:if>
 
 <c:if test="${p.fase >= 2 and p.modalidad_id != 5}">
-    <div class="app-tarjeta mb-4">
-        <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
+    <%-- Mientras se revisa va abierta; aprobada, queda plegada para consultar --%>
+    <details class="app-tarjeta app-historial mb-4" ${empty p.fecha_aprobacion_124 ? 'open' : ''}>
+        <summary>Propuesta (FDC-124)<c:if test="${not empty p.fecha_aprobacion_124}"><span class="text-secondary fw-normal"> · aprobada el <fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></span></c:if></summary>
+        <div class="mt-3"></div>
         <c:set var="idProyectoPropuesta" value="${p.id}" />
         <%@ include file="/WEB-INF/jspf/propuesta-versiones.jspf" %>
         <sql:query var="reportesTurnitin">
@@ -306,7 +345,7 @@
         <c:set var="evaluacionConEvaluador" value="true" />
         <c:set var="evaluacionInforme" value="false" />
         <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
-    </div>
+    </details>
 
     <%-- Fase 4: decisión final del comité sobre la propuesta, con su acta (RF14) --%>
     <c:if test="${p.fase == 4 and fn:startsWith(p.ultima, 'Evaluador:') and p.ultima != 'Evaluador:Devuelto' and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
@@ -410,6 +449,8 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="app-tarjeta h-100">
+            <c:set var="datosConDirector" value="true" />
+            <c:set var="datosOcultarLimite" value="${cerrado or not empty p.fecha_aprobacion_124}" />
             <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
         </div>
     </div>
@@ -422,109 +463,37 @@
             <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
         </div>
     </div>
-
-    <div class="col-lg-6">
-        <div class="app-tarjeta h-100">
-            <h2 class="app-tarjeta-titulo">Pagos de la modalidad</h2>
-            <c:choose>
-                <c:when test="${p.estado_pago == 'No aplica'}">
-                    <p class="mb-0">Planes posteriores al decreto 1330: el pago lo cubre la matrícula del Seminario de Grado. No hay recibos que revisar.</p>
-                </c:when>
-                <c:when test="${recibos.rowCount == 0}">
-                    <p class="app-vacio mt-0">Ningún estudiante ha subido su recibo.<c:if test="${not empty p.fecha_limite_pago}"> Tienen plazo hasta el <fmt:formatDate value="${p.fecha_limite_pago}" pattern="dd/MM/yyyy" />.</c:if></p>
-                </c:when>
-                <c:otherwise>
-                    <p class="text-secondary">Cada estudiante sube su propio recibo; el estado de cada uno sale en "Estudiantes".</p>
-                    <c:set var="estudianteAnterior" value="" />
-                    <c:forEach var="r" items="${recibos.rows}">
-                        <c:set var="idSubio">${r.subido_por}</c:set>
-                        <c:set var="esUltimo" value="${idSubio != estudianteAnterior}" />
-                        <c:if test="${esUltimo}"><h3 class="h6 fw-bold mt-3 mb-2"><c:out value="${r.estudiante}" /></h3></c:if>
-                        <div class="app-archivo">
-                            <span>
-                                <span class="app-lista-dato"><c:out value="${r.nombre_archivo}" /></span>
-                                <span class="app-lista-nota">Subido el <fmt:formatDate value="${r.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
-                            </span>
-                            <span class="app-acciones">
-                                <span class="app-estado ${r.decision == 'Aprobado' ? 'activo' : 'inactivo'}">${empty r.decision ? (esUltimo ? 'Por revisar' : 'Reemplazado') : r.decision}</span>
-                                <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${r.id}" target="_blank" rel="noopener">Ver</a>
-                            </span>
-                        </div>
-                        <c:if test="${not empty r.decision}">
-                            <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${r.observacion}" />
-                                <span class="app-lista-nota"><c:out value="${r.revisor}" />, <fmt:formatDate value="${r.revisado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
-                        </c:if>
-                        <c:if test="${esUltimo and empty r.decision and (p.fase == 1 or p.fase == 2)}">
-                            <form class="app-revision mb-3" method="post" action="${ctx}/admin/pago-revisar.jsp">
-                                <input type="hidden" name="id" value="${r.id}">
-                                <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre el recibo de ${fn:escapeXml(r.estudiante)}" required></textarea>
-                                <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar pago</button>
-                                <button type="submit" name="decision" value="devolver" class="btn btn-sm btn-outline-dark rounded-pill">Devolver al estudiante</button>
-                            </form>
-                        </c:if>
-                        <c:set var="estudianteAnterior" value="${idSubio}" />
-                    </c:forEach>
-                </c:otherwise>
-            </c:choose>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <form class="app-tarjeta app-formulario h-100" method="post" action="${ctx}/admin/proyecto-asignar.jsp">
-            <input type="hidden" name="id" value="${p.id}">
-            <h2 class="app-tarjeta-titulo">Director y evaluador</h2>
-            <p class="text-secondary">Los asigna el comité. Un docente nunca evalúa el proyecto que dirige. El estudiante ve a su director, pero no a su evaluador.</p>
-            <div class="row g-3">
-                <div class="col-12">
-                    <label class="form-label" for="director">Director *</label>
-                    <select class="form-select" id="director" name="director" required>
-                        <option value="">Escoge el director</option>
-                        <c:forEach var="d" items="${directores.rows}">
-                            <c:set var="idOpcion">${d.id}</c:set>
-                            <option value="${d.id}" ${idOpcion == idDirector ? 'selected' : ''}><c:out value="${d.nombre}" /></option>
-                        </c:forEach>
-                    </select>
-                    <c:if test="${directores.rowCount == 0}"><div class="form-text">No hay docentes activos con el rol Director. Asígnalo en Usuarios.</div></c:if>
-                </div>
-                <div class="col-12">
-                    <label class="form-label" for="evaluador">Evaluador</label>
-                    <select class="form-select" id="evaluador" name="evaluador">
-                        <option value="">Sin asignar todavía</option>
-                        <c:forEach var="e" items="${evaluadores.rows}">
-                            <c:set var="idOpcion">${e.id}</c:set>
-                            <option value="${e.id}" ${idOpcion == idEvaluador ? 'selected' : ''}><c:out value="${e.nombre}" /></option>
-                        </c:forEach>
-                    </select>
-                    <div class="form-text">Se puede asignar después: la propuesta le llega cuando el director la envía (fase 3).</div>
-                </div>
-                <%-- RF13: solo Proyecto de investigación (1) y Desarrollo tecnológico (2) --%>
-                <c:if test="${p.modalidad_id == 1 or p.modalidad_id == 2}">
-                    <div class="col-12">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" role="switch" id="interdisciplinario" name="interdisciplinario" ${p.interdisciplinario == true ? 'checked' : ''}>
-                            <label class="form-check-label" for="interdisciplinario">Proyecto interdisciplinario (hasta 4 estudiantes y 2 codirectores)</label>
-                        </div>
-                    </div>
-                    <c:forEach var="numero" begin="1" end="2">
-                        <c:set var="idCodirectorElegido" value="${numero == 1 ? idCodirector1 : idCodirector2}" />
-                        <div class="col-md-6">
-                            <label class="form-label" for="codirector${numero}">Codirector ${numero}</label>
-                            <select class="form-select" id="codirector${numero}" name="codirector${numero}">
-                                <option value="">Sin codirector</option>
-                                <c:forEach var="d" items="${directores.rows}">
-                                    <c:set var="idOpcion">${d.id}</c:set>
-                                    <option value="${d.id}" ${idOpcion == idCodirectorElegido ? 'selected' : ''}><c:out value="${d.nombre}" /></option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                    </c:forEach>
-                    <div class="col-12"><div class="form-text mt-0">Los codirectores solo se guardan si el proyecto es interdisciplinario. Ven el proyecto y dejan observaciones; decide el director.</div></div>
-                </c:if>
-            </div>
-            <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Guardar</button>
-        </form>
-    </div>
 </div>
+
+<c:set var="mostrarRecibosAbajo" value="${not hayRecibosPorRevisar and recibos.rowCount > 0}" />
+<c:set var="mostrarAsignacionAbajo" value="${not faltaAsignar and not cerrado}" />
+<c:if test="${mostrarRecibosAbajo or mostrarAsignacionAbajo}">
+<div class="row g-4 mt-0">
+    <c:if test="${mostrarRecibosAbajo}">
+        <div class="col-lg">
+            <details class="app-tarjeta app-historial h-100">
+                <summary>Recibos de pago<span class="text-secondary fw-normal"> · <c:out value="${p.estado_pago}" /></span></summary>
+                <div class="mt-3"></div>
+                <%@ include file="/WEB-INF/jspf/recibos-comite.jspf" %>
+            </details>
+        </div>
+    </c:if>
+    <c:if test="${mostrarAsignacionAbajo}">
+        <div class="col-lg">
+            <details class="app-tarjeta app-historial app-formulario h-100">
+                <summary>Director y evaluador<span class="text-secondary fw-normal"> · cambiar la asignación</span></summary>
+                <dl class="app-pares mt-3">
+                    <div><dt>Director</dt><dd><c:out value="${empty p.director ? 'Por asignar' : p.director}" /></dd></div>
+                    <div><dt>Evaluador</dt><dd><c:out value="${empty p.evaluador ? 'Por asignar' : p.evaluador}" /></dd></div>
+                </dl>
+                <form class="mt-3" method="post" action="${ctx}/admin/proyecto-asignar.jsp">
+                    <%@ include file="/WEB-INF/jspf/asignacion-comite.jspf" %>
+                </form>
+            </details>
+        </div>
+    </c:if>
+</div>
+</c:if>
 
 <c:set var="idProyectoHistorial" value="${p.id}" />
 <%@ include file="/WEB-INF/jspf/historial-proyecto.jspf" %>

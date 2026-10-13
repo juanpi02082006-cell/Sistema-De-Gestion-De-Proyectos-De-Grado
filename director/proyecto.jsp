@@ -102,8 +102,10 @@
 </c:if>
 
 <c:if test="${p.modalidad_id != 5 and p.fase >= 2}">
-    <div class="app-tarjeta mb-4">
-        <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
+    <%-- Mientras se revisa va abierta; aprobada por el comité, queda plegada para consultar --%>
+    <details class="app-tarjeta app-historial mb-4" ${empty p.fecha_aprobacion_124 ? 'open' : ''}>
+        <summary>Propuesta (FDC-124)<c:if test="${not empty p.fecha_aprobacion_124}"><span class="text-secondary fw-normal"> · aprobada el <fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></span></c:if></summary>
+        <div class="mt-3"></div>
         <c:choose>
             <c:when test="${p.fase == 2}"><p class="text-secondary">El estudiante está diligenciando la propuesta; te llega cuando te la envíe.</p></c:when>
             <c:when test="${p.fase == 3}">
@@ -138,7 +140,7 @@
         <c:set var="evaluacionConEvaluador" value="false" />
         <c:set var="evaluacionInforme" value="false" />
         <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
-    </div>
+    </details>
 
     <%-- Con el FDC-124 aprobado: plazos, seguimientos del director (RF20) e informe final --%>
     <c:if test="${not empty p.fecha_aprobacion_124}">
@@ -249,6 +251,7 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="app-tarjeta h-100">
+            <c:set var="datosOcultarLimite" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado' or not empty p.fecha_aprobacion_124}" />
             <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
         </div>
     </div>

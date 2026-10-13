@@ -92,8 +92,10 @@
     </c:if>
 </c:if>
 
-<div class="app-tarjeta mb-4">
-    <h2 class="app-tarjeta-titulo">Propuesta (FDC-124)</h2>
+<%-- Mientras se evalúa va abierta; aprobada por el comité, queda plegada para consultar --%>
+<details class="app-tarjeta app-historial mb-4" ${empty p.fecha_aprobacion_124 ? 'open' : ''}>
+    <summary>Propuesta (FDC-124)<c:if test="${not empty p.fecha_aprobacion_124}"><span class="text-secondary fw-normal"> · aprobada el <fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></span></c:if></summary>
+    <div class="mt-3"></div>
     <c:choose>
         <c:when test="${porEvaluar}">
             <p class="text-secondary">El director aprobó la versión <c:out value="${p.version}" /> y te la envió.
@@ -125,7 +127,7 @@
         <c:set var="evaluacionInforme" value="false" />
         <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
     </c:if>
-</div>
+</details>
 
 <c:if test="${porEvaluar}">
     <c:set var="rejillaEntrega" value="${p.entrega_id}" />
@@ -147,6 +149,7 @@
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="app-tarjeta h-100">
+            <c:set var="datosOcultarLimite" value="${cerrado or not empty p.fecha_aprobacion_124}" />
             <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
         </div>
     </div>

@@ -52,8 +52,12 @@
                 <label class="app-casilla"><input type="radio" name="r${ind.id}" value="no" ${ind.cumple == 'No' ? 'checked' : ''}><span>No</span></label>
                 <c:if test="${rejillaInforme}"><label class="app-casilla"><input type="radio" name="r${ind.id}" value="na" ${ind.cumple == 'N/A' ? 'checked' : ''}><span>N/A</span></label></c:if>
             </span>
-            <input class="form-control form-control-sm app-rejilla-observacion" type="text" name="o${ind.id}" maxlength="500"
-                   value="${fn:escapeXml(ind.observacion)}" placeholder="Observación (opcional)" aria-label="Observación del indicador">
+            <%-- La observación es opcional: va plegada (abierta si ya tiene texto) para que la rejilla no sea tan larga --%>
+            <details class="app-rejilla-observacion" ${empty ind.observacion ? '' : 'open'}>
+                <summary>Agregar observación</summary>
+                <input class="form-control form-control-sm mt-2" type="text" name="o${ind.id}" maxlength="500"
+                       value="${fn:escapeXml(ind.observacion)}" placeholder="Observación (opcional)" aria-label="Observación del indicador">
+            </details>
         </li>
         <c:set var="criterioAnterior" value="${ind.criterio}" />
     </c:forEach>
