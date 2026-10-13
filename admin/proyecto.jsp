@@ -4,7 +4,9 @@
      que dirige). Cuando el pago está aprobado (o no aplica) y tiene director, el
      proyecto pasa a la fase 2 (avanzar-fase-2.jspf). En la fase 4 el comité ve la
      evaluación y da la decisión final sobre la propuesta con su acta (RF14,
-     propuesta-decidir.jsp); aprobada, ve los seguimientos y el informe final. --%>
+     propuesta-decidir.jsp); aprobada, ve los seguimientos y el informe final. En la
+     fase final ve la sustentación y, cuando ya pasó su fecha, registra la aprobación
+     final con su acta: el proyecto queda "Finalizado" (RF39, proyecto-finalizar.jsp). --%>
 <%@ include file="/WEB-INF/jspf/solo-admin.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
@@ -231,6 +233,42 @@
             <c:otherwise>El evaluador tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para evaluar la propuesta (3 días hábiles).</c:otherwise>
         </c:choose>
     </div>
+</c:if>
+
+<%-- Fase final (RF39): la sustentación, que programan estudiantes, director y evaluador,
+     y, después de su fecha y hora, la aprobación final del comité con su acta --%>
+<c:if test="${p.fase == 6 and not esSeminario}">
+    <c:set var="idProyectoSustentacion" value="${p.id}" />
+    <c:set var="sustentacionProgramar" value="false" />
+    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
+    <c:if test="${p.estado != 'Finalizado' and p.estado != 'Cancelado' and sustentacion.ya_paso == 1}">
+        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/admin/proyecto-finalizar.jsp">
+            <input type="hidden" name="id" value="${p.id}">
+            <h2 class="app-tarjeta-titulo">Aprobación final del comité</h2>
+            <p class="text-secondary">
+                Ya pasó la fecha de la sustentación. Si se hizo y el proyecto cumple las condiciones académicas y documentales, registra la aprobación final con su acta:
+                el proyecto queda "Finalizado" y los estudiantes pueden radicar los papeles de grado. Si no se hizo, los estudiantes, el director o el evaluador la reprograman.
+            </p>
+            <div class="row g-3">
+                <div class="col-sm-4">
+                    <label class="form-label" for="actaAprobacionFinal">Número del acta *</label>
+                    <input class="form-control" type="number" id="actaAprobacionFinal" name="acta" min="1" step="1" required>
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label" for="fechaActaFinal">Fecha del acta *</label>
+                    <input class="form-control" type="date" id="fechaActaFinal" name="fecha_acta" required
+                           value="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />"
+                           min="<fmt:formatDate value='${sustentacion.fecha}' pattern='yyyy-MM-dd' />" max="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />">
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="observacionFinal">Observación del comité *</label>
+                    <textarea class="form-control" id="observacionFinal" name="observacion" required></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3"
+                    onclick="return confirm('¿Registrar la aprobación final? El proyecto queda finalizado y ya no se modifica.');">Registrar la aprobación final</button>
+        </form>
+    </c:if>
 </c:if>
 
 <%-- Seminario (RF17): inscripción (documentos y validación) y nota final --%>

@@ -2,7 +2,8 @@
      (RF11, RF23). La propuesta le llega en la fase 4, cuando el director la aprueba y
      se la envía; tiene 3 días hábiles para evaluarla con la rejilla del F-DC-124 (RF21).
      El informe final le llega en la fase 5 y tiene 5 días hábiles (rejilla del F-DC-129).
-     Primero va lo que tiene por evaluar. --%>
+     En la fase final sale la fecha de la sustentación (RF39). Primero va lo que tiene
+     por evaluar. --%>
 <%@ include file="/WEB-INF/jspf/solo-evaluador.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Mis evaluaciones" />
@@ -19,7 +20,9 @@
                (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125'
                 ORDER BY e.version DESC LIMIT 1) AS limite_informe,
                (SELECT e.fecha_limite_revision < CURDATE() FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125'
-                ORDER BY e.version DESC LIMIT 1) AS informe_vencido
+                ORDER BY e.version DESC LIMIT 1) AS informe_vencido,
+               (SELECT DATE(s.fecha_hora) FROM sustentaciones s WHERE s.proyecto_id = p.id) AS sustentacion,
+               (SELECT TIME(s.fecha_hora) FROM sustentaciones s WHERE s.proyecto_id = p.id) AS sustentacion_hora
         FROM proyectos p
         JOIN modalidades m ON m.id = p.modalidad_id
         JOIN niveles n ON n.id = p.nivel_id
@@ -81,7 +84,10 @@
                                             <span class="app-estado activo">Informe final por evaluar</span>
                                             <span class="app-lista-nota">${p.informe_vencido == 1 ? 'Plazo vencido el ' : 'Hasta el '}<fmt:formatDate value="${p.limite_informe}" pattern="dd/MM/yyyy" /></span>
                                         </c:when>
-                                        <c:when test="${p.fase == 6}">Informe final aprobado por el comité</c:when>
+                                        <c:when test="${p.fase == 6}">
+                                            Informe final aprobado por el comité
+                                            <span class="app-lista-nota"><c:choose><c:when test="${empty p.sustentacion}">Sustentación por programar</c:when><c:otherwise>Sustentación: <fmt:formatDate value="${p.sustentacion}" pattern="dd/MM/yyyy" /> <fmt:formatDate value="${p.sustentacion_hora}" pattern="h:mm a" /></c:otherwise></c:choose></span>
+                                        </c:when>
                                         <c:when test="${p.fase == 5 and fn:startsWith(p.ultima_informe, 'Evaluador:')}">Informe evaluado · esperando al comité</c:when>
                                         <c:when test="${not empty p.fecha_aprobacion_124}">Propuesta aprobada por el comité</c:when>
                                         <c:when test="${p.ultima == 'Evaluador:Devuelto'}">Devuelta al director</c:when>

@@ -1,6 +1,6 @@
 # Sprints del proyecto
 
-Última actualización: 2026-10-10
+Última actualización: 2026-10-13
 
 Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (objetivo específico 2 de la presentación).
 
@@ -22,7 +22,7 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | 2 | Crear la base de datos del proyecto, hacer funcionar el login y gestionar usuarios y roles. | 2026-09-30 | 2026-09-30 | Hecho (falta la revisión del equipo) |
 | 3 | Incorporar la segunda entrevista: requerimientos, base de datos versión 2, login institucional y créditos del estudiante. | 2026-10-05 | 2026-10-05 | Hecho (falta la revisión del equipo) |
 | 4 | Registro del estudiante, habilitación, periodos, calendario y sesiones del comité, modalidades, banco de ideas, pago de la fase 1 y diseño nuevo. | 2026-10-08 | 2026-10-10 | Hecho (falta la revisión del equipo) |
-| 5 | Fases 2 y 3: propuesta (FDC-124) con versiones y la revisión del director. | 2026-10-10 | Por definir | En progreso (fases 0 a 3 completas y lo transversal hecho; falta la evaluación de la fase 4) |
+| 5 | Fases 2 y 3: propuesta (FDC-124) con versiones y la revisión del director. | 2026-10-10 | Por definir | En progreso (fases 0 a 5, fase final y lo transversal hechos; falta la revisión del equipo) |
 | 6 | Fases 4, 5 y final: evaluación con las rejillas, FDC-125, plazos, prórrogas y sustentación. | Por definir | Por definir | Propuesto |
 | 7 | Buscador, informes de estado, PQR, historial y avisos. | Por definir | Por definir | Propuesto |
 
@@ -152,7 +152,7 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 - **Objetivo:** que el comité revise el pago y asigne el director y el evaluador, y que el proyecto avance por las fases 2 a 5: propuesta (FDC-124) e informe final (FDC-125), cada uno revisado por el director, evaluado con su rejilla y decidido por el comité.
 - **Inicio:** 2026-10-10
 - **Cierre:** por definir
-- **Requerimientos:** hechos hasta ahora: RF9, RF11, RF14, RF18–RF23, RF30–RF32 y RF43, y parte de RF26 y RF37. Lo demás está en la [propuesta](#propuesta-para-los-siguientes-sprints).
+- **Requerimientos:** hechos hasta ahora: RF9, RF11, RF14, RF18–RF23, RF30–RF32, RF37–RF39 y RF43, y parte de RF26. Lo demás está en la [propuesta](#propuesta-para-los-siguientes-sprints).
 
 | Tarea | Estado | Notas |
 | --- | --- | --- |
@@ -190,10 +190,11 @@ Plan de trabajo y seguimiento de *Sistemas de Información Proyectos de Grado* (
 | Fase 5: decisión del comité sobre el informe (`admin/informe-decidir.jsp`) | Hecho | RF14, RF22. Aprobado: versión oficial y fase final. Aplazado o no aprobado: vuelve a la fase 4 para corrección (el aplazado, dentro del plazo del evaluador). Devuelto: al director. Cada acta queda ligada a su decisión (`actas.revision_id`). |
 | Pruebas de la fase 5 (en `pruebas/sprint5c.sh`) | Hecho | `sprint5c.sh` 125/125 (fases 4 y 5); base 97/97; las demás siguen pasando. |
 | Orden de las páginas del proyecto (estudiante, comité, director y evaluador) | Hecho | Pedido del equipo: más ordenado y fácil de usar, sin cambiar el diseño. Comité: arriba los requisitos y los pagos por revisar a la izquierda y la asignación pendiente a la derecha; abajo, plegados, los recibos y el cambio de director y evaluador; prórrogas y exoneraciones plegadas salvo que haya una por decidir. En todos los roles, la propuesta aprobada queda plegada. Evaluador: la observación de cada indicador va plegada. Estudiante: Arriba lo que hay que hacer (en la fase 1, requisitos y pago lado a lado); el pago solo mientras hay algo que hacer con él; "Datos del proyecto" e "Integrantes" lado a lado; cambio de modalidad (fases 1 a 3) y prórroga plegados; exoneración solo cuando aplica; sin secciones vacías repetidas ni tarjetas de un proyecto terminado. |
-| Fase final: programar la sustentación y dejar el proyecto "Finalizado" (RF39) | Pendiente | |
+| Fase final: programar la sustentación y dejar el proyecto "Finalizado" (`WEB-INF/jspf/sustentacion.jspf`, `panel/sustentacion-programar.jsp`, `admin/proyecto-finalizar.jsp`) | Hecho | RF39, RF5, RF27, RF34. Cualquiera de los estudiantes, el director o el evaluador registra la fecha, la hora y el lugar o enlace de la sustentación, y la puede reprogramar; los codirectores y el comité la ven. Avisos a los demás; el estudiante no ve el nombre del evaluador. Pasada la fecha, el comité registra la aprobación final con acta y observación: el proyecto queda "Finalizado". Filtro "Fase final" y contador "Aprobaciones finales" en el inicio del comité. Quién registra la sustentación y el acta están **por confirmar** (decisión del 2026-10-13). |
 | Prórrogas del informe final (`estudiante/prorroga-solicitar.jsp`, `admin/prorroga-decidir.jsp`) | Hecho | RF38. Antes del vencimiento, con motivo y soporte en PDF; el comité la aprueba (+180 días, hasta 3) o la rechaza. Sin prórrogas en los planes nuevos. Filtro "Prórrogas por decidir". |
 | Cancelación por el plazo del informe vencido (`WEB-INF/jspf/cierres.jspf`) | Hecho | RF38, RNF21. Fase 4, fecha límite pasada y sin prórroga pendiente: se cancela la modalidad y la idea vuelve al banco. |
 | Pruebas de las prórrogas (en `pruebas/sprint5c.sh`) | Hecho | `sprint5c.sh` 147/147; base 102/102; las demás siguen pasando. |
+| Pruebas de la fase final (`pruebas/sprint5d.sh`) | Hecho | 76/76; base 103/103; las demás siguen pasando (63, 127, 136, 156 y 149). |
 
 ## Propuesta para los siguientes sprints
 

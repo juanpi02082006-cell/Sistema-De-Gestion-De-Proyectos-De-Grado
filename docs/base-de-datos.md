@@ -1,6 +1,6 @@
 # Base de datos
 
-Última actualización: 2026-10-11 (versión 5: carreras, avisos, exoneraciones, codirectores, PQR, Seminario y fases 4 y 5)
+Última actualización: 2026-10-13 (versión 5: carreras, avisos, exoneraciones, codirectores, PQR, Seminario, fases 4 y 5 y fase final)
 
 - **Base:** `sistemas_proyectos_grado` (MySQL; en local, MariaDB 10.4 de XAMPP), con 31 tablas.
 - **Script:** [`bd/sistemas_proyectos_grado.sql`](../bd/sistemas_proyectos_grado.sql). Crea la base, las tablas, los catálogos y los usuarios de prueba.
@@ -149,9 +149,9 @@ erDiagram
 | `cambios_modalidad` | Solicitudes de cambio de modalidad: anterior y nueva, quién la pidió y cuándo, decisión del comité, quién decidió y cuándo | RF12 | La modalidad nueva es distinta de la anterior; aprobada o rechazada solo con quién y cuándo decidió |
 | `seguimientos` | Seguimientos del director antes del informe final | RF20 | Observación obligatoria |
 | `prorrogas` | Solicitudes de prórroga: motivo, soporte en PDF (recibo del nuevo pago o aval de la Dirección de Investigaciones), nueva fecha límite, estado y decisión del comité; el número (1, 2 o 3) solo se asigna al aprobarla | RF38 | **Máximo 3 aprobadas por proyecto** (F-DC-124); solo las aprobadas tienen número; decidida solo con observación, quién y cuándo |
-| `actas` | Actas del comité por proyecto: número, fecha, descripción y la decisión del comité que respalda (`revision_id`) | RF14, RF16 | La decisión debe existir |
+| `actas` | Actas del comité por proyecto: número, fecha, descripción y la decisión del comité que respalda (`revision_id`; vacío en el acta de la aprobación final del proyecto, que no respalda la revisión de un documento) | RF14, RF16, RF39 | La decisión debe existir |
 | `sesiones_comite` | Calendario de sesiones del comité de cada periodo: fecha, hora y lugar | RF3, RF16 | Una sesión por día en cada periodo |
-| `sustentaciones` | Sustentación del proyecto (fase final): fecha y hora, lugar o medio, y quién la programó | RF39 | Una por proyecto (si se reprograma, se actualiza); lugar obligatorio |
+| `sustentaciones` | Sustentación del proyecto (fase final): fecha y hora, lugar o medio, y quién la programó o la reprogramó por última vez y cuándo | RF39 | Una por proyecto (si se reprograma, se actualiza); lugar obligatorio |
 | `pqrs` | PQR en cualquier fase (petición, queja, reclamo, cambio de director o de evaluador) con su respuesta | RNF1 | Comentario obligatorio; estado Pendiente o Respondida; respondida solo con respuesta, quién y cuándo |
 | `avisos` | Avisos dentro del sistema (no hay correos): a quién, de qué proyecto, mensaje, enlace y si ya lo leyó. Las alertas de vencimiento llevan una clave | RF5, RNF21 | Mensaje obligatorio; **una sola alerta por clave y usuario** (no se repiten) |
 | `exoneraciones` | Solicitudes de exoneración por Saber TyT: estudiante, puntaje, certificado, estado, observación y quién la revisó | RNF14 | **Puntaje de 120 a 300**; aprobada o rechazada solo con observación, quién y cuándo |
@@ -179,6 +179,7 @@ erDiagram
 - Avisos de vencimiento y de cada movimiento (RF5): se muestran **dentro del sistema**, sin correo (decisión del profesor), con la tabla `avisos`.
 - Semana 12 vencida (RF30, RNF21): `WEB-INF/jspf/cierres.jspf`, incluido en la cabecera, cancela por extemporaneidad los proyectos sin el FDC-124 aprobado (`fecha_aprobacion_124` vacía) cuando pasa `periodos.fecha_limite_propuestas`, si algún integrante es de un plan anterior y no es Seminario: estado Cancelado, estudiantes sin vigencia, la idea vuelve a "Aprobada", avisos e historial.
 - Seminario (RF17): cada estudiante sube su recibo, el F-AM-04 y su documento de identidad; el comité valida la inscripción (proyecto "En curso") y el director registra `proyectos.nota_final`: con 3.0 o más queda "Finalizado"; con menos, "Cancelado".
+- Fase final (RF39): la sustentación la programan los estudiantes vigentes, el director o el evaluador, con fecha y hora futuras y lugar (hasta 150 caracteres); se reprograma hasta la aprobación final. El comité registra la aprobación final solo cuando ya pasaron la fecha y la hora de la sustentación, con observación y acta (fila en `actas` con `revision_id` vacío; fecha no futura ni anterior a la sustentación): el proyecto queda "Finalizado" en la fase final y los estudiantes siguen vigentes en él.
 
 ## Pruebas hechas
 
@@ -213,6 +214,10 @@ Las pruebas de punta a punta pasan con la versión 4 y la contraseña nueva (`12
 
 **Prórrogas (2026-10-11):** `prorrogas` pasa a guardar la solicitud y la decisión del comité (`estado`, `entrega_id` del soporte, `solicitada_por`, `observacion`, `decidida_por`, `decidida_en`); `numero` admite NULL y solo lo tienen las aprobadas. `entregas.tipo` suma "Soporte de prórroga". Pruebas: 102 de 102 de la base y 147 de 147 de `sprint5c.sh`; las demás siguen pasando.
 
+**Fase final (2026-10-13):** sin tablas ni columnas nuevas. La sustentación va en `sustentaciones` (una por proyecto: al reprogramarla se actualizan la fecha, el lugar, `programada_por` y `programada_en`) y la aprobación final del comité en `actas`, con `revision_id` vacío; el proyecto pasa a "Finalizado". Pruebas: 103 de 103 de la base (una nueva: el acta de la aprobación final, sin decisión ligada) y 76 de 76 de `sprint5d.sh`; las demás siguen pasando.
+
+**Columnas `DATETIME`:** el driver (mysql-connector-j 9) las entrega como `LocalDateTime`, y `fmt:formatDate` no lo formatea (da error). En las consultas se piden la fecha y la hora por separado con `DATE()` y `TIME()`, que llegan como fecha y hora de Java. Hoy la única columna `DATETIME` es `sustentaciones.fecha_hora`. Para validar una fecha escrita por el usuario se usa `CAST(? AS DATETIME) IS NOT NULL`: en MariaDB, `CAST('2027-02-30 10:00' AS DATETIME)` da vacío, pero comparado con `NOW()` da verdadero.
+
 **Columnas `TINYINT(1)`:** el driver de MySQL las entrega como verdadero o falso (`leido`, `exonerado`, `renuncia_exoneracion`, `interdisciplinario`, `oficial`, `activo`, `metodologia_aprobada`). En EL se comparan con `== true`, nunca con `== 1` (da error). Las expresiones de SQL que dan verdadero o falso, en cambio, llegan como número y se comparan con `== 1`.
 
 **Archivos que suben los usuarios:** se guardan en `WEB-INF/archivos` (no se abre desde el navegador ni se sube a Git) con un nombre que pone el sistema (por ejemplo `recibo-p12-1760000000000.pdf`); en `entregas` quedan el nombre original y el guardado. Se ven con `archivos/ver.jsp?id=`, que revisa que quien pide el archivo sea del comité o del proyecto. Para recibir archivos, `web.xml` le da `multipart-config` (hasta 15 MB) a la página que los guarda.
@@ -227,6 +232,7 @@ bash pruebas/sprint4.sh      # registro, habilitación, periodos, modalidades y 
 bash pruebas/sprint5.sh      # pago, integrantes, director y evaluador, fases 2 y 3 (importar la base antes)
 bash pruebas/sprint5b.sh     # carreras, código, avisos, plazos, codirectores, anexos, cambio de modalidad, PQR, auditoría, exoneración, Seminario y semana 12
 bash pruebas/sprint5c.sh     # fases 4 y 5: rejillas del evaluador, decisiones del comité, seguimientos e informe final
+bash pruebas/sprint5d.sh     # fase final: sustentación (programar y reprogramar) y aprobación final del comité
 ```
 
 Importar la base borra los datos que haya. Para conservarlos, hacer antes una copia con `C:/xampp/mysql/bin/mysqldump.exe -u root --databases sistemas_proyectos_grado > copia.sql` (y de `WEB-INF/archivos`, porque `sprint4.sh` borra los recibos), y devolverla al final con `mysql -u root < copia.sql`.

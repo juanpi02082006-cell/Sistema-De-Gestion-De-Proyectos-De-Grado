@@ -1,6 +1,7 @@
 <%-- Mis proyectos (director): los proyectos que dirige o codirige, con su fase y la
      última versión de la propuesta (RF18, RF19). Los que están en la fase 3 (propuesta)
-     o en la 5 sin revisar (informe final) son los que el estudiante ya le envió. --%>
+     o en la 5 sin revisar (informe final) son los que el estudiante ya le envió. En la
+     fase final sale la fecha de la sustentación o que falta programarla (RF39). --%>
 <%@ include file="/WEB-INF/jspf/solo-director.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Mis proyectos" />
@@ -14,7 +15,9 @@
            (SELECT GROUP_CONCAT(u.nombre ORDER BY u.nombre SEPARATOR ', ')
             FROM proyecto_estudiantes pe JOIN usuarios u ON u.id = pe.estudiante_id
             WHERE pe.proyecto_id = p.id AND pe.vigente = 1) AS estudiantes,
-           (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version_propuesta
+           (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124') AS version_propuesta,
+           (SELECT DATE(s.fecha_hora) FROM sustentaciones s WHERE s.proyecto_id = p.id) AS sustentacion,
+           (SELECT TIME(s.fecha_hora) FROM sustentaciones s WHERE s.proyecto_id = p.id) AS sustentacion_hora
     FROM proyectos p
     JOIN modalidades m ON m.id = p.modalidad_id
     JOIN niveles n ON n.id = p.nivel_id
@@ -56,6 +59,7 @@
                     <tbody>
                         <c:forEach var="p" items="${proyectos.rows}">
                             <c:set var="informePorRevisar" value="${p.fase == 5 and (empty p.ultima_informe or p.ultima_informe == 'Comité:Devuelto')}" />
+                            <c:set var="sustentacionPorProgramar" value="${p.fase == 6 and empty p.sustentacion and p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
                             <tr>
                                 <td>
                                     <span class="fw-semibold"><c:out value="${p.titulo}" /></span>
@@ -70,13 +74,16 @@
                                     <c:choose>
                                         <c:when test="${p.fase == 3}"><span class="app-estado activo">Por revisar · v<c:out value="${p.version_propuesta}" /></span></c:when>
                                         <c:when test="${informePorRevisar}"><span class="app-estado activo">Informe por revisar · v<c:out value="${p.version_informe}" /></span></c:when>
+                                        <c:when test="${p.fase == 6 and (p.estado == 'Finalizado' or p.estado == 'Cancelado')}"><span class="app-estado inactivo"><c:out value="${p.estado}" /></span></c:when>
+                                        <c:when test="${p.fase == 6 and empty p.sustentacion}"><span class="app-estado activo">Sustentación por programar</span></c:when>
+                                        <c:when test="${p.fase == 6}">Sustentación · <fmt:formatDate value="${p.sustentacion}" pattern="dd/MM/yyyy" /> <fmt:formatDate value="${p.sustentacion_hora}" pattern="h:mm a" /></c:when>
                                         <c:when test="${p.fase >= 4 and not empty p.version_informe}">Informe · versión <c:out value="${p.version_informe}" /></c:when>
                                         <c:when test="${not empty p.version_propuesta}">Versión <c:out value="${p.version_propuesta}" /></c:when>
                                         <c:otherwise><span class="app-lista-nota d-inline">Sin versiones</span></c:otherwise>
                                     </c:choose>
                                 </td>
                                 <td class="text-end app-acciones">
-                                    <a class="btn btn-sm ${p.fase == 3 or informePorRevisar ? 'btn-primary' : 'btn-outline-dark'} rounded-pill" href="${ctx}/director/proyecto.jsp?id=${p.id}">${p.fase == 3 or informePorRevisar ? 'Revisar' : 'Ver'}</a>
+                                    <a class="btn btn-sm ${p.fase == 3 or informePorRevisar or sustentacionPorProgramar ? 'btn-primary' : 'btn-outline-dark'} rounded-pill" href="${ctx}/director/proyecto.jsp?id=${p.id}">${p.fase == 3 or informePorRevisar ? 'Revisar' : (sustentacionPorProgramar ? 'Programar' : 'Ver')}</a>
                                 </td>
                             </tr>
                         </c:forEach>

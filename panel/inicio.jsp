@@ -30,6 +30,13 @@
         ) t WHERE (fase = 4 AND ultima LIKE 'Evaluador:%' AND ultima <> 'Evaluador:Devuelto')
                OR (fase = 5 AND ultima_informe LIKE 'Evaluador:%')
     </sql:query>
+    <%-- Fase final con la sustentación ya hecha: falta la aprobación final del comité (RF39) --%>
+    <sql:query var="aprobacionesFinales">
+        SELECT COUNT(*) AS total FROM proyectos p
+        JOIN fases f ON f.id = p.fase_id
+        JOIN sustentaciones s ON s.proyecto_id = p.id
+        WHERE f.orden = 6 AND p.estado NOT IN ('Finalizado', 'Cancelado') AND s.fecha_hora <= NOW()
+    </sql:query>
 </c:if>
 <c:if test="${rol == 4}">
     <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
@@ -90,57 +97,65 @@
 </section>
 
 <c:if test="${rol == 1}">
+    <c:set var="columnaComite" value="col-md-6 col-xl-4" />
     <div class="row g-4">
-        <div class="col-md-6 col-xl-3">
+        <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=pago">
                 <span class="app-acceso-numero"><c:out value="${pagosPendientes.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Pagos por revisar</span>
                 <span class="app-acceso-texto">Revisar los recibos y asignar director y evaluador a cada proyecto.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=modalidad">
                 <span class="app-acceso-numero"><c:out value="${solicitudesPendientes.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Solicitudes por decidir</span>
                 <span class="app-acceso-texto">Cambios de modalidad, exoneraciones por Saber TyT y prórrogas.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=propuestas">
                 <span class="app-acceso-numero"><c:out value="${propuestasPorDecidir.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Propuestas e informes por decidir</span>
                 <span class="app-acceso-texto">Ya tienen el concepto del evaluador: falta la decisión del comité.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="${columnaComite}">
+            <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=sustentacion">
+                <span class="app-acceso-numero"><c:out value="${aprobacionesFinales.rows[0].total}" /></span>
+                <span class="app-acceso-titulo">Aprobaciones finales</span>
+                <span class="app-acceso-texto">Proyectos que ya sustentaron: falta registrar la aprobación final.</span>
+            </a>
+        </div>
+        <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/admin/pqrs.jsp">
                 <span class="app-acceso-numero"><c:out value="${pqrsPendientes.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">PQR pendientes</span>
                 <span class="app-acceso-texto">Peticiones, quejas y reclamos por responder.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/admin/usuarios.jsp">
                 <span class="app-acceso-numero"><c:out value="${totalUsuarios.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Usuarios</span>
                 <span class="app-acceso-texto">Registrar docentes y actualizar los datos de los estudiantes.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/admin/roles.jsp">
                 <span class="app-acceso-numero"><c:out value="${totalRoles.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Roles</span>
                 <span class="app-acceso-texto">Crear, ver, editar y eliminar los roles.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/admin/periodos.jsp">
                 <span class="app-acceso-numero"><c:out value="${totalPeriodos.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Periodos</span>
                 <span class="app-acceso-texto">Calendario de cada semestre: crear, activar y cerrar.</span>
             </a>
         </div>
-        <div class="col-md-6 col-xl-3">
+        <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/ideas/banco.jsp">
                 <span class="app-acceso-numero"><c:out value="${ideasPendientes.rows[0].total}" /></span>
                 <span class="app-acceso-titulo">Ideas por revisar</span>
@@ -194,7 +209,7 @@
             <c:set var="pv" value="${proyectoVigente.rows[0]}" />
             <div class="app-resultado cumple">
                 <h2>Tu proyecto: <c:out value="${pv.titulo}" /></h2>
-                <p><c:choose><c:when test="${pv.modalidad_id == 5}">Seminario · ${pv.estado == 'Pendiente' ? 'Inscripción' : (pv.estado == 'En curso' ? 'En curso' : pv.estado)}</c:when><c:otherwise>Fase <c:out value="${pv.fase}" />: <c:out value="${pv.nombre_fase}" /> · Estado: <c:out value="${pv.estado}" /></c:otherwise></c:choose> · <a href="${ctx}/estudiante/proyecto.jsp">Ver mi proyecto</a></p>
+                <p><c:choose><c:when test="${pv.modalidad_id == 5}">Seminario · ${pv.estado == 'Pendiente' ? 'Inscripción' : (pv.estado == 'En curso' ? 'En curso' : pv.estado)}</c:when><c:otherwise>${pv.fase == 6 ? 'Fase final' : 'Fase '}<c:if test="${pv.fase != 6}"><c:out value="${pv.fase}" /></c:if>: <c:out value="${pv.nombre_fase}" /> · Estado: <c:out value="${pv.estado}" /></c:otherwise></c:choose> · <a href="${ctx}/estudiante/proyecto.jsp">Ver mi proyecto</a></p>
             </div>
             <c:set var="faseActual" value="${pv.fase}" />
             <c:set var="esSeminario" value="${pv.modalidad_id == 5}" />

@@ -3,8 +3,9 @@
      con un reloj de arena y las que faltan en blanco. Antes de incluirlo, definir
      faseActual (el número de la fase, fases.orden) y estadoProyecto (proyectos.estado).
      Si el proyecto terminó antes de la fase final (todos los integrantes exonerados por
-     Saber TyT, RNF14), su fase queda completa y las que siguen dicen que no aplican; si se
-     canceló, la fase en que quedó lo dice. En Seminario (esSeminario = true), que no usa
+     Saber TyT, RNF14), su fase queda completa y las que siguen dicen que no aplican; si
+     terminó en la fase final (aprobación final del comité, RF39), todas quedan completas;
+     si se canceló, la fase en que quedó lo dice. En Seminario (esSeminario = true), que no usa
      el F-DC-124 ni las fases de la propuesta, muestra sus tres pasos según el estado del
      proyecto: inscripción, seminario en curso y nota final. --%>
 <c:choose>
@@ -50,6 +51,7 @@
                 <c:choose>
                     <c:when test="${proyectoTerminado and f.orden == faseActual and faseActual < 6}">Propuesta aprobada; el informe final quedó exonerado por Saber TyT</c:when>
                     <c:when test="${proyectoTerminado and f.orden > faseActual}">No aplica: exonerado por Saber TyT</c:when>
+                    <c:when test="${proyectoTerminado and f.orden == 6}">Sustentación hecha y aprobación final del comité: proyecto finalizado</c:when>
                     <c:when test="${estadoFase == 'cancelada'}">El proyecto se canceló en esta fase</c:when>
                     <c:otherwise><c:out value="${f.descripcion}" /></c:otherwise>
                 </c:choose>

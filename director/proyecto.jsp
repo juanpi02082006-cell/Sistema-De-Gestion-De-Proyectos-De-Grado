@@ -4,7 +4,9 @@
      Turnitin y la envía al evaluador y al comité (propuesta-revisar.jsp). Aquí solo se
      dice si ya hay evaluador, no quién es. En la fase 4 ve el concepto del evaluador y
      la decisión del comité; con el FDC-124 aprobado registra los seguimientos (RF20,
-     seguimiento-registrar.jsp) y ve las versiones del informe final. --%>
+     seguimiento-registrar.jsp) y ve las versiones del informe final. En la fase final
+     programa la sustentación con los estudiantes y el evaluador (RF39, sustentacion.jspf);
+     los codirectores la ven, pero no la programan. --%>
 <%@ include file="/WEB-INF/jspf/solo-director.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Proyecto" />
@@ -67,6 +69,13 @@
 <%@ include file="/WEB-INF/jspf/mensajes.jspf" %>
 
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
+
+<%-- Fase final (RF39): la sustentación; la programa el director, no los codirectores --%>
+<c:if test="${p.fase == 6 and not esSeminario}">
+    <c:set var="idProyectoSustentacion" value="${p.id}" />
+    <c:set var="sustentacionProgramar" value="${p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
+    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
+</c:if>
 
 <%-- Seminario (RF17): el docente del seminario (el director) registra la nota final --%>
 <c:if test="${esSeminario}">
@@ -161,7 +170,7 @@
                 </c:when>
                 <c:when test="${p.fase == 5 and p.ultima_informe == 'Director:Aprobado'}"><p class="text-secondary mt-3 mb-0">Aprobaste el informe y lo enviaste al evaluador y al comité. El evaluador lo está evaluando.</p></c:when>
                 <c:when test="${p.fase == 5}"><p class="text-secondary mt-3 mb-0">El evaluador dio su concepto sobre el informe: falta la decisión del comité.</p></c:when>
-                <c:when test="${p.fase == 6}"><p class="text-secondary mt-3 mb-0">El comité aprobó el informe final: el proyecto está en la fase final (sustentación).</p></c:when>
+                <c:when test="${p.fase == 6}"><p class="text-secondary mt-3 mb-0">${p.estado == 'Finalizado' ? 'El comité aprobó el informe final y, después de la sustentación, registró la aprobación final del proyecto.' : 'El comité aprobó el informe final: el proyecto está en la fase final (sustentación).'}</p></c:when>
             </c:choose>
             <c:set var="idProyectoInforme" value="${p.id}" />
             <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
