@@ -133,6 +133,8 @@ CALL prueba('PQR de petición', "INSERT INTO pqrs (id, usuario_id, tipo, comenta
 CALL prueba('PQR respondida sin respuesta', "UPDATE pqrs SET estado = 'Respondida', respondida_por = 1, respondida_en = NOW() WHERE id = 1", 1);
 -- Fases 4 y 5 (2026-10-11): acta ligada a la decisión del comité y plazo de corrección del informe
 CALL prueba('v5: Acta ligada a una decisión que no existe', "INSERT INTO actas (proyecto_id, revision_id, numero, fecha, descripcion) VALUES (1, 99999, 1, CURDATE(), 'x')", 1);
+-- Fase final (2026-10-13): el acta de la aprobación final no respalda la revisión de un documento
+CALL prueba('Acta de la aprobación final, sin decisión ligada', "INSERT INTO actas (proyecto_id, revision_id, numero, fecha, descripcion) VALUES (1, NULL, 3, CURDATE(), 'Aprobación final del trabajo de grado')", 0);
 CALL prueba('v5: Prórroga pendiente con número', "INSERT INTO prorrogas (proyecto_id, numero, fecha_solicitud, nueva_fecha_limite) VALUES (2, 1, CURDATE(), CURDATE() + INTERVAL 180 DAY)", 1);
 CALL prueba('v5: Prórroga aprobada sin número', "INSERT INTO prorrogas (proyecto_id, fecha_solicitud, nueva_fecha_limite, estado, observacion, decidida_por, decidida_en) VALUES (2, CURDATE(), CURDATE() + INTERVAL 180 DAY, 'Aprobada', 'Ok', 1, NOW())", 1);
 CALL prueba('v5: Prórroga rechazada sin observación', "INSERT INTO prorrogas (proyecto_id, fecha_solicitud, nueva_fecha_limite, estado, decidida_por, decidida_en) VALUES (2, CURDATE(), CURDATE() + INTERVAL 180 DAY, 'Rechazada', 1, NOW())", 1);

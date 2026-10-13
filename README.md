@@ -14,6 +14,13 @@ Sprints 2, 3 y 4 hechos:
 - pago de la fase 1 (recibo en PDF) y seguimiento del proyecto por fases;
 - calendario de sesiones del comité.
 
+Sprint 5 en progreso, con todas las fases del proyecto:
+- pago de cada estudiante, integrantes, director, evaluador y codirectores;
+- propuesta (FDC-124) con versiones, revisión del director con Turnitin, evaluación con la rejilla del F-DC-124 y decisión del comité con acta;
+- informe final (FDC-125) con los seguimientos del director, evaluación con la rejilla del F-DC-129 y decisión del comité;
+- fase final: estudiantes, director y evaluador programan la sustentación, y después el comité registra la aprobación final (el proyecto queda "Finalizado");
+- prórrogas, cancelaciones automáticas, exoneración por Saber TyT, Seminario, avisos, PQR y auditoría.
+
 El plan de trabajo está en [docs/sprints.md](docs/sprints.md) y los requerimientos en [docs/requerimientos.md](docs/requerimientos.md).
 
 ## Tecnologías
@@ -73,7 +80,10 @@ bash pruebas/sprint4.sh
 bash pruebas/sprint5.sh
 bash pruebas/sprint5b.sh
 bash pruebas/sprint5c.sh
+bash pruebas/sprint5d.sh
 ```
+
+`bash pruebas/correr-pruebas.sh <carpeta-respaldo>` corre todas: respalda la base y los archivos subidos, importa la base antes de cada suite y al final lo devuelve todo.
 
 ## Estructura del proyecto
 
@@ -81,10 +91,12 @@ bash pruebas/sprint5c.sh
 .
 ├── index.jsp, registro.jsp   # inicio de sesión y registro del estudiante
 ├── acceso/                   # validar, registrar, elegir rol, salir
-├── panel/                    # inicio, calendario y modalidades (todos los roles)
-├── admin/                    # usuarios, roles, periodos y modalidades (administrador)
+├── panel/                    # inicio, calendario, modalidades, avisos, PQR y sustentación (todos los roles)
+├── admin/                    # usuarios, roles, periodos, modalidades, proyectos, PQR y auditoría (administrador, que es el comité)
+├── director/                 # proyectos que dirige: revisión de la propuesta y del informe, seguimientos
+├── evaluador/                # evaluaciones con las rejillas del F-DC-124 y del F-DC-129
 ├── ideas/                    # banco de ideas
-├── estudiante/               # habilitación, mi proyecto y pago
+├── estudiante/               # habilitación, mi proyecto, pago, propuesta e informe final
 ├── archivos/                 # ver un archivo subido (revisa los permisos)
 ├── css/, img/                # estilo (verde lima y negro) y logo
 ├── WEB-INF/                  # web.xml, fragmentos .jspf, librerías y archivos subidos (archivos/, fuera de Git)

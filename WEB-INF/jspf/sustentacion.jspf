@@ -1,0 +1,91 @@
+<%-- Tarjeta "Sustentación" de la fase final (RF39): la fecha y la hora, el lugar o el
+     enlace de la reunión y quién la programó; cuando el proyecto terminó, la aprobación
+     final del comité con su acta. Estudiantes, director y evaluador programan la
+     sustentación (Anexo H): con sustentacionProgramar = true sale el formulario para
+     programarla o reprogramarla (panel/sustentacion-programar.jsp). Antes de incluirlo,
+     definir idProyectoSustentacion y sustentacionProgramar. Del evaluador, solo el
+     comité (y él mismo) ve el nombre; a los demás les sale "El evaluador" (RF27). Deja
+     sustentacion, la fila con fecha y hora (vacías si todavía no está programada) y
+     ya_paso (1 si ya pasó su fecha y hora). La fecha y la hora van por separado (DATE y
+     TIME): el driver entrega un DATETIME como LocalDateTime, que fmt:formatDate no
+     sabe formatear. --%>
+<sql:query var="consultaSustentacion">
+    SELECT DATE(s.fecha_hora) AS fecha, TIME(s.fecha_hora) AS hora, s.lugar, s.programada_en,
+           u.nombre AS programada_por, p.estado AS estado_proyecto,
+           (s.programada_por = p.evaluador_id) AS la_programo_evaluador,
+           (s.fecha_hora <= NOW()) AS ya_paso,
+           DATE_FORMAT(NOW(), '%Y-%m-%dT%H:%i') AS ahora,
+           CASE WHEN s.fecha_hora > NOW() THEN DATE_FORMAT(s.fecha_hora, '%Y-%m-%dT%H:%i') END AS fecha_formulario
+    FROM proyectos p
+    LEFT JOIN sustentaciones s ON s.proyecto_id = p.id
+    LEFT JOIN usuarios u ON u.id = s.programada_por
+    WHERE p.id = ?
+    <sql:param value="${idProyectoSustentacion}" />
+</sql:query>
+<c:set var="sustentacion" value="${consultaSustentacion.rows[0]}" />
+<c:set var="verNombreEvaluador" value="${sessionScope.rolActivo.id == 1 or sessionScope.rolActivo.id == 4}" />
+<c:set var="sustentacionAbierta" value="${sustentacion.estado_proyecto != 'Finalizado' and sustentacion.estado_proyecto != 'Cancelado'}" />
+<c:if test="${not sustentacionAbierta}">
+    <%-- La aprobación final es el acta del comité que no respalda la revisión de un documento --%>
+    <sql:query var="consultaActaFinal">
+        SELECT numero, fecha, descripcion FROM actas WHERE proyecto_id = ? AND revision_id IS NULL ORDER BY id DESC LIMIT 1
+        <sql:param value="${idProyectoSustentacion}" />
+    </sql:query>
+</c:if>
+<div class="app-tarjeta mb-4 app-formulario">
+    <h2 class="app-tarjeta-titulo">Sustentación</h2>
+    <c:choose>
+        <c:when test="${empty sustentacion.fecha}">
+            <p class="text-secondary">
+                <c:choose>
+                    <c:when test="${sustentacionProgramar}">Estudiantes, director y evaluador programan la sustentación. Cuando acuerden la fecha, cualquiera de ustedes la registra aquí con el lugar o el enlace de la reunión; a los demás les llega un aviso.</c:when>
+                    <c:otherwise>Estudiantes, director y evaluador todavía no programan la sustentación.</c:otherwise>
+                </c:choose>
+            </p>
+        </c:when>
+        <c:otherwise>
+            <dl class="app-pares">
+                <div><dt>Fecha</dt><dd><fmt:formatDate value="${sustentacion.fecha}" pattern="EEEE d 'de' MMMM 'de' yyyy" /></dd></div>
+                <div><dt>Hora</dt><dd><fmt:formatDate value="${sustentacion.hora}" pattern="h:mm a" /></dd></div>
+                <div><dt>Lugar o enlace</dt><dd><c:out value="${sustentacion.lugar}" /></dd></div>
+                <div><dt>Programada por</dt><dd><c:out value="${sustentacion.la_programo_evaluador == 1 and not verNombreEvaluador ? 'El evaluador' : sustentacion.programada_por}" />
+                    <span class="app-lista-nota"><fmt:formatDate value="${sustentacion.programada_en}" pattern="dd/MM/yyyy h:mm a" /></span></dd></div>
+            </dl>
+            <c:if test="${sustentacion.ya_paso == 1 and sustentacionAbierta}">
+                <p class="app-total">Ya pasó la fecha de la sustentación: falta la aprobación final del comité.${sustentacionProgramar ? ' Si no se hizo, reprográmenla.' : ''}</p>
+            </c:if>
+        </c:otherwise>
+    </c:choose>
+
+    <c:if test="${not sustentacionAbierta and consultaActaFinal.rowCount > 0}">
+        <c:set var="actaFinal" value="${consultaActaFinal.rows[0]}" />
+        <h3 class="h6 fw-bold mt-4 mb-2">Aprobación final del comité</h3>
+        <dl class="app-pares">
+            <div><dt>Acta</dt><dd>N.º <c:out value="${actaFinal.numero}" /> del <fmt:formatDate value="${actaFinal.fecha}" pattern="dd/MM/yyyy" /></dd></div>
+            <div><dt>Estado del proyecto</dt><dd><c:out value="${sustentacion.estado_proyecto}" /></dd></div>
+        </dl>
+        <p class="app-observacion mt-3"><c:out value="${actaFinal.descripcion}" /></p>
+    </c:if>
+
+    <c:if test="${sustentacionProgramar and sustentacionAbierta}">
+        <%-- Ya programada, el formulario va plegado: solo lo abre quien tiene que cambiar algo --%>
+        <c:if test="${not empty sustentacion.fecha}"><details class="app-historial mt-3"><summary>¿Cambió la fecha o el lugar? Reprograma la sustentación</summary></c:if>
+        <form class="mt-3" method="post" action="${ctx}/panel/sustentacion-programar.jsp">
+            <input type="hidden" name="id" value="${idProyectoSustentacion}">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label" for="fechaSustentacion">Fecha y hora *</label>
+                    <input class="form-control" type="datetime-local" id="fechaSustentacion" name="fecha_hora" required
+                           min="${sustentacion.ahora}" value="${sustentacion.fecha_formulario}">
+                </div>
+                <div class="col-md-7">
+                    <label class="form-label" for="lugarSustentacion">Lugar o enlace de la reunión *</label>
+                    <input class="form-control" type="text" id="lugarSustentacion" name="lugar" maxlength="150" required
+                           placeholder="Salón o enlace de la reunión" value="${fn:escapeXml(sustentacion.lugar)}">
+                </div>
+            </div>
+            <button type="submit" class="btn ${empty sustentacion.fecha ? 'btn-primary app-boton' : 'btn-outline-dark'} rounded-pill mt-3">${empty sustentacion.fecha ? 'Programar la sustentación' : 'Reprogramar'}</button>
+        </form>
+        <c:if test="${not empty sustentacion.fecha}"></details></c:if>
+    </c:if>
+</div>

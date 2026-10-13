@@ -69,6 +69,9 @@
             <c:when test="${param.ok == 'prorroga-rechazada'}">La solicitud de prórroga quedó rechazada.</c:when>
             <c:when test="${param.ok == 'informe-enviado'}">Enviaste el informe final a tu director: el proyecto pasó a la fase 5 (Informe II).</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
+            <c:when test="${param.ok == 'sustentacion-programada'}">La sustentación quedó programada. A los demás les llegó un aviso con la fecha y el lugar.</c:when>
+            <c:when test="${param.ok == 'sustentacion-reprogramada'}">La sustentación quedó reprogramada. A los demás les llegó un aviso con la fecha y el lugar nuevos.</c:when>
+            <c:when test="${param.ok == 'proyecto-finalizado'}">Quedó registrada la aprobación final: el proyecto está finalizado y los estudiantes ya pueden radicar los papeles de grado.</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
             <c:when test="${param.ok == 'sesion-eliminada'}">La sesión se quitó del calendario.</c:when>
             <c:otherwise>Listo.</c:otherwise>
@@ -168,6 +171,11 @@
             <c:when test="${param.error == 'prorroga-ya-decidida'}">Esa solicitud de prórroga ya fue decidida.</c:when>
             <c:when test="${param.error == 'motivo-prorroga-requerido'}">Escribe el motivo de la prórroga.</c:when>
             <c:when test="${param.error == 'proyecto-cerrado'}">El proyecto está finalizado o cancelado: ya no se modifica.</c:when>
+            <c:when test="${param.error == 'sustentacion-no-aplica'}">La sustentación se programa en la fase final, después de que el comité aprueba el informe final.</c:when>
+            <c:when test="${param.error == 'sustentacion-fecha-invalida'}">Escribe una fecha y una hora válidas para la sustentación, después de este momento.</c:when>
+            <c:when test="${param.error == 'sustentacion-lugar-invalido'}">Escribe el lugar o el enlace de la reunión de la sustentación (hasta 150 caracteres).</c:when>
+            <c:when test="${param.error == 'finalizar-no-disponible'}">El proyecto todavía no se puede finalizar: debe estar en la fase final, con la sustentación programada y ya pasada su fecha y hora.</c:when>
+            <c:when test="${param.error == 'acta-antes-de-sustentacion'}">La fecha del acta no puede ser anterior a la sustentación.</c:when>
             <c:when test="${param.error == 'sesion-duplicada'}">Ya hay una sesión del comité ese día en este periodo.</c:when>
             <c:when test="${param.error == 'sesion-invalida'}">Revisa la fecha y la hora de la sesión.</c:when>
             <c:otherwise>Ocurrió un error. Inténtalo de nuevo.</c:otherwise>

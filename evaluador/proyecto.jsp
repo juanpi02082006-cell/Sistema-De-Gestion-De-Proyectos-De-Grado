@@ -6,7 +6,9 @@
      Fase 5: cuando el director le envía el informe final, lo evalúa con la rejilla del
      F-DC-129, con N/A (5 días hábiles); si lo aplaza, indica el plazo para las
      correcciones (RF22). En los dos casos puede guardar en borrador; al enviar da su
-     concepto y pasa al comité (rejilla-formulario.jspf, evaluacion-guardar.jsp). --%>
+     concepto y pasa al comité (rejilla-formulario.jspf, evaluacion-guardar.jsp).
+     Fase final: programa la sustentación con los estudiantes y el director (RF39,
+     sustentacion.jspf). --%>
 <%@ include file="/WEB-INF/jspf/solo-evaluador.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Evaluar" />
@@ -62,6 +64,13 @@
 
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
+<%-- Fase final (RF39): la sustentación, que el evaluador también programa --%>
+<c:if test="${p.fase == 6 and p.modalidad_id != 5}">
+    <c:set var="idProyectoSustentacion" value="${p.id}" />
+    <c:set var="sustentacionProgramar" value="${not cerrado}" />
+    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
+</c:if>
+
 <%-- Informe final (fase 5 en adelante) --%>
 <c:if test="${not empty p.informe_id and p.fase >= 5}">
     <div class="app-tarjeta mb-4">
@@ -72,7 +81,7 @@
                     <c:if test="${not empty p.limite_informe}">Tienes hasta el <fmt:formatDate value="${p.limite_informe}" pattern="dd/MM/yyyy" /> (5 días hábiles).</c:if></p>
                 <c:if test="${p.informe_vencido == 1}"><div class="alert alert-warning app-aviso" role="status">Se venció el plazo para evaluar este informe. No hay aprobación automática: evalúalo cuanto antes.</div></c:if>
             </c:when>
-            <c:when test="${p.fase == 6}"><p class="text-secondary">El comité aprobó el informe final: el proyecto está en la fase final (sustentación).</p></c:when>
+            <c:when test="${p.fase == 6}"><p class="text-secondary">${p.estado == 'Finalizado' ? 'El comité aprobó el informe final y, después de la sustentación, registró la aprobación final del proyecto.' : 'El comité aprobó el informe final: el proyecto está en la fase final (sustentación).'}</p></c:when>
             <c:when test="${fn:startsWith(p.ultima_informe, 'Evaluador:')}"><p class="text-secondary">Enviaste tu evaluación. La decisión final es del comité.</p></c:when>
             <c:otherwise><p class="text-secondary">El director está revisando el informe; te llega cuando lo apruebe.</p></c:otherwise>
         </c:choose>

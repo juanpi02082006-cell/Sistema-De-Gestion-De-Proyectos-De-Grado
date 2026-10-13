@@ -8,7 +8,9 @@
      no ve a su evaluador (RF27), pero sí su concepto y sus observaciones (RF23). En la
      fase 4, con el FDC-124 aprobado por el comité, sube el informe final (FDC-125) por
      versiones y lo envía a su director desde el día 90 hasta el 180 (RF31), con al
-     menos 2 seguimientos del director (RF20). --%>
+     menos 2 seguimientos del director (RF20). En la fase final programa la sustentación
+     con su director y el evaluador (sustentacion.jspf); después de la sustentación, el
+     comité registra la aprobación final y el proyecto queda "Finalizado" (RF39). --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
@@ -165,9 +167,25 @@
         </c:if>
         <c:if test="${not esSeminario and p.estado == 'Finalizado'}">
             <div class="app-resultado cumple">
-                <h2>Tu proyecto terminó con concepto Aprobado</h2>
-                <p>Todos los integrantes quedaron exonerados por Saber TyT: se exime el informe final.<c:if test="${miExoneracion.rowCount > 0 and miExoneracion.rows[0].estado == 'Aprobada'}"> Tu estímulo: <c:out value="${miExoneracion.rows[0].estimulo}" />.</c:if></p>
+                <c:choose>
+                    <%-- Fase final: el comité registró la aprobación final después de la sustentación (RF39) --%>
+                    <c:when test="${p.fase == 6}">
+                        <h2>Tu trabajo de grado quedó finalizado</h2>
+                        <p>El comité registró la aprobación final después de la sustentación: ya puedes radicar los papeles de grado.</p>
+                    </c:when>
+                    <c:otherwise>
+                        <h2>Tu proyecto terminó con concepto Aprobado</h2>
+                        <p>Todos los integrantes quedaron exonerados por Saber TyT: se exime el informe final.<c:if test="${miExoneracion.rowCount > 0 and miExoneracion.rows[0].estado == 'Aprobada'}"> Tu estímulo: <c:out value="${miExoneracion.rows[0].estimulo}" />.</c:if></p>
+                    </c:otherwise>
+                </c:choose>
             </div>
+        </c:if>
+
+        <%-- Fase final (RF39): la sustentación, que programan estudiantes, director y evaluador --%>
+        <c:if test="${p.fase == 6 and not esSeminario}">
+            <c:set var="idProyectoSustentacion" value="${p.id}" />
+            <c:set var="sustentacionProgramar" value="${not terminado}" />
+            <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
         </c:if>
 
         <%-- Seminario (RF17): inscripción y seminario en curso --%>
@@ -411,7 +429,7 @@
                         <p class="text-secondary mt-3">Enviaste la versión <c:out value="${p.version_informe}" /> del informe final a tu director (fase 5, Informe II). Está en revisión.</p>
                     </c:when>
                     <c:when test="${p.fase == 6}">
-                        <div class="app-resultado cumple mt-3"><h2>El comité aprobó tu informe final</h2><p>Tu proyecto está en la fase final: con tu director y tu evaluador programan la sustentación.</p></div>
+                        <p class="text-secondary mt-3">El comité aprobó tu informe final<c:if test="${not empty p.version_informe}">: la versión oficial es la <c:out value="${p.version_informe}" /></c:if>.${terminado ? '' : ' La sustentación se programa arriba.'}</p>
                     </c:when>
                 </c:choose>
                 <c:set var="informeOcultarVacios" value="${p.fase == 4 and not terminado}" />
