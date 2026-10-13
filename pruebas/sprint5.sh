@@ -202,7 +202,7 @@ IC=$($MYSQL -e "SELECT id FROM ideas WHERE titulo='Idea C'")
 pedir admin POST /ideas/idea-revisar.jsp --data-urlencode "id=$IC" --data-urlencode "decision=aprobar" --data-urlencode "observacion=Ok"
 pedir gema POST /ideas/idea-tomar.jsp --data-urlencode "id=$IC"
 PG=$($MYSQL -e "SELECT id FROM proyectos WHERE titulo='Idea C'")
-pedir gema GET /estudiante/proyecto.jsp; contiene "Agregar un compañero" && contiene "1 de 3"; revisar "En la fase 1 puede agregar compañeros (1 de 3 en Desarrollo tecnológico)" $?
+pedir gema GET /estudiante/proyecto.jsp; contiene "Agregar un compañero" && contiene "(hasta 3 en esta modalidad)"; revisar "En la fase 1 puede agregar compañeros (hasta 3 en Desarrollo tecnológico)" $?
 agregar gema nadie@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrante-no-existe"* ]]; revisar "Un correo sin cuenta: rechazado" $?
 agregar gema ana@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrante-con-proyecto"* ]]; revisar "Un estudiante con otro proyecto: rechazado (RF35)" $?
 agregar gema gema@correo.uts.edu.co; [[ "$DESTINO" == *"error=integrante-con-proyecto"* ]]; revisar "No se agrega a sí misma" $?

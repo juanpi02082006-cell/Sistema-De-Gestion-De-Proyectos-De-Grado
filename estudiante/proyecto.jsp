@@ -410,7 +410,7 @@
                     <c:set var="datosTitulo" value="${p.titulo}" />
                     <c:set var="datosConDirector" value="true" />
                     <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
-                    <h3 class="h6 fw-bold mt-4 mb-3">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> de <c:out value="${p.maximo}" /></span></h3>
+                    <h3 class="h6 fw-bold mt-4 mb-3">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> (hasta <c:out value="${p.maximo}" /> en esta modalidad)</span></h3>
                     <c:set var="idProyectoIntegrantes" value="${p.id}" />
                     <c:set var="integrantesDetalle" value="false" />
                     <c:set var="integrantesQuitar" value="${integrantesAbiertos}" />

@@ -264,7 +264,7 @@
     </div>
 </c:if>
 
-<c:if test="${p.fase == 1 and not esSeminario}">
+<c:if test="${p.fase == 1 and not esSeminario and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
     <c:set var="pagoListo" value="${p.estado_pago == 'Aprobado' or p.estado_pago == 'No aplica'}" />
     <div class="app-tarjeta mb-4">
         <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>

@@ -1387,16 +1387,12 @@ a.app-limpiar {
     font-weight: 800;
 }
 
+/* Foto de perfil de cada estudiante */
 .app-iniciales {
-    display: inline-flex;
     flex: 0 0 auto;
-    align-items: center;
-    justify-content: center;
     width: 2.5rem;
     height: 2.5rem;
-    font-size: 0.9rem;
-    font-weight: 800;
-    background-color: var(--verde-lima);
+    object-fit: cover;
     border-radius: 50%;
 }
 
