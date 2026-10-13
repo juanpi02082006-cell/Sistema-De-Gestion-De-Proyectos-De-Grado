@@ -269,7 +269,7 @@ pedir dani GET "/archivos/ver.jsp?id=$IDREC"
 pedir anon GET "/archivos/ver.jsp?id=$IDREC"
 [[ "$DESTINO" == *"aviso=sesion"* ]]; revisar "Sin sesión no se ve" $?
 CODIGO=$(curl -s -o /dev/null -w "%{http_code}" "$B/WEB-INF/archivos/$RUTA"); [ "$CODIGO" = 404 ]; revisar "WEB-INF/archivos no se abre desde el navegador" $?
-pedir caro GET /estudiante/proyecto.jsp; contiene "lo cubre la matr"; revisar "Plan nuevo: no necesita recibo" $?
+pedir caro GET /estudiante/proyecto.jsp; contiene "lo cubre la matr" && contiene ">No aplica<" && ! contiene "El comité aprueba tu pago"; revisar "Plan nuevo: no necesita recibo (el requisito dice que no aplica)" $?
 pedir caro POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf"
 [[ "$DESTINO" == *"error=pago-no-aplica"* ]]; revisar "Plan nuevo: no sube recibo" $?
 $MYSQL -e "UPDATE periodos SET fecha_limite_pago='$AYER' WHERE id=$P1"

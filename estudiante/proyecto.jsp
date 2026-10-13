@@ -241,9 +241,19 @@
                 <h2 class="app-tarjeta-titulo">Para pasar a la fase 2</h2>
                 <ul class="app-lista">
                     <li>
-                        <span><span class="app-lista-dato">${p.integrantes > 1 ? 'El comité aprueba el pago de todos los integrantes' : 'El comité aprueba tu pago'}</span>
-                            <span class="app-lista-nota">${pagoCubierto ? 'El tuyo lo cubre la matrícula del Seminario de Grado.' : (p.mi_pago == 'Aprobado' ? 'El comité aprobó tu pago.' : (p.mi_pago == 'Por revisar' ? 'Tu recibo está en revisión.' : (p.mi_pago == 'Devuelto' ? 'El comité devolvió tu recibo: revisa la observación y súbelo otra vez.' : 'Sube tu recibo de pago.')))}${p.integrantes > 1 and miPagoListo and not pagoListo ? ' Falta el de algún compañero.' : ''}</span></span>
-                        <span class="app-requisito ${pagoListo ? 'cumple' : ''}">${pagoListo ? 'Listo' : 'Pendiente'}</span>
+                        <c:choose>
+                            <%-- Planes nuevos (RF32): a nadie del grupo le toca pagar, así que el comité no revisa recibos --%>
+                            <c:when test="${p.estado_pago == 'No aplica'}">
+                                <span><span class="app-lista-dato">Pago de la modalidad</span>
+                                    <span class="app-lista-nota">${p.integrantes > 1 ? 'Sus planes de estudios son posteriores' : 'Tu plan de estudios es posterior'} al decreto 1330: el pago lo cubre la matrícula del Seminario de Grado. No hay que subir recibo.</span></span>
+                                <span class="app-requisito cumple">No aplica</span>
+                            </c:when>
+                            <c:otherwise>
+                                <span><span class="app-lista-dato">${p.integrantes > 1 ? 'El comité aprueba el pago de todos los integrantes' : 'El comité aprueba tu pago'}</span>
+                                    <span class="app-lista-nota">${pagoCubierto ? 'El tuyo lo cubre la matrícula del Seminario de Grado.' : (p.mi_pago == 'Aprobado' ? 'El comité aprobó tu pago.' : (p.mi_pago == 'Por revisar' ? 'Tu recibo está en revisión.' : (p.mi_pago == 'Devuelto' ? 'El comité devolvió tu recibo: revisa la observación y súbelo otra vez.' : 'Sube tu recibo de pago.')))}${p.integrantes > 1 and miPagoListo and not pagoListo ? ' Falta el de algún compañero.' : ''}</span></span>
+                                <span class="app-requisito ${pagoListo ? 'cumple' : ''}">${pagoListo ? 'Listo' : 'Pendiente'}</span>
+                            </c:otherwise>
+                        </c:choose>
                     </li>
                     <li>
                         <span><span class="app-lista-dato">El comité te asigna un director</span></span>
