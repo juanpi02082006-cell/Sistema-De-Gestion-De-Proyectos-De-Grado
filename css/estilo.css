@@ -711,14 +711,12 @@ a.app-lateral-marca:hover {
     margin-left: auto;
 }
 
+/* Foto de perfil del usuario en la cabecera */
 .app-avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    flex-shrink: 0;
     width: 2.6rem;
     height: 2.6rem;
-    font-weight: 800;
-    background-color: var(--verde-lima);
+    object-fit: cover;
     border-radius: 50%;
 }
 

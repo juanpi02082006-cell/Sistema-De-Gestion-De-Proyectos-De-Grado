@@ -97,7 +97,7 @@
                 <c:if test="${totalAvisos > 0}"><span class="app-campana-numero"><c:out value="${totalAvisos > 99 ? '99+' : totalAvisos}" /></span></c:if>
             </a>
             <div class="app-usuario">
-                <span class="app-avatar" aria-hidden="true"><c:out value="${fn:toUpperCase(fn:substring(sessionScope.usuario.nombre, 0, 1))}" /></span>
+                <img class="app-avatar" src="${ctx}/img/perfil.png" alt="" width="42" height="42">
                 <span class="app-usuario-datos">
                     <strong><c:out value="${sessionScope.usuario.nombre}" /></strong>
                     <span><c:out value="${sessionScope.rolActivo.nombre}" /></span>
