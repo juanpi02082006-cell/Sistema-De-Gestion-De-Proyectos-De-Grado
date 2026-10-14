@@ -219,6 +219,10 @@ pedir ana GET /panel/pqr.jsp; contiene "Lo revisamos en la proxima sesion"; revi
 [ "$(avisos $ANA '%respondi_ tu PQR%')" = "1" ]; revisar "Y recibe el aviso" $?
 pedir admin GET "/admin/pqrs.jsp?estado=Todas&tipo=Queja"; contiene "No hay PQR con ese filtro"; revisar "Filtros por estado y tipo" $?
 pedir ana GET /admin/pqrs.jsp; [[ "$DESTINO" == *"error=denegado"* ]]; revisar "Un estudiante no entra a las PQR del comité" $?
+pedir admin GET /panel/inicio.jsp; ! contiene 'panel/pqr.jsp'; revisar "El comité no tiene el botón de enviar PQR (las responde)" $?
+pedir admin GET /panel/pqr.jsp; [[ "$DESTINO" == *"/admin/pqrs.jsp" ]]; revisar "Si abre la página de enviar, va a la de responder" $?
+pedir admin POST /panel/pqr-guardar.jsp --data-urlencode "tipo=Queja" --data-urlencode "comentario=x"
+[[ "$DESTINO" == *"error=denegado"* ]] && [ "$($MYSQL -e "SELECT COUNT(*) FROM pqrs WHERE usuario_id=1")" = "0" ]; revisar "El comité no puede enviar una PQR" $?
 
 echo "== Auditoría e historial (RNF12)"
 pedir admin GET "/admin/auditoria.jsp?proyecto=65-2026-2/1"; contiene "Idea A" && ! contiene "Idea B" && sinError; revisar "Filtro por proyecto (código)" $?

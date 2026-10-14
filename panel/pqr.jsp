@@ -1,7 +1,11 @@
 <%-- PQR (RNF1): cualquier usuario, en cualquier fase, escribe una petición, queja o
      reclamo (por ejemplo, para pedir cambio de director o de evaluador) y ve las suyas
-     con la respuesta del comité. Se liga al proyecto vigente del estudiante si lo tiene. --%>
+     con la respuesta del comité. Se liga al proyecto vigente del estudiante si lo tiene.
+     El administrador no envía PQR: es el comité que las responde (admin/pqrs.jsp). --%>
 <%@ include file="/WEB-INF/jspf/sesion.jspf" %>
+<c:if test="${sessionScope.rolActivo.id == 1}">
+    <c:redirect url="/admin/pqrs.jsp" />
+</c:if>
 <c:set var="titulo" value="PQR" />
 <c:set var="seccion" value="pqr" />
 

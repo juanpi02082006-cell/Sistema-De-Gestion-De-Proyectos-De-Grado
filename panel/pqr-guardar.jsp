@@ -1,6 +1,12 @@
 <%-- Guarda una PQR (RNF1), por POST, y avisa al comité (RF5). Si el usuario es
-     estudiante con un proyecto vigente, queda ligada a ese proyecto. --%>
+     estudiante con un proyecto vigente, queda ligada a ese proyecto. El administrador
+     (el comité) no envía PQR: las responde. --%>
 <%@ include file="/WEB-INF/jspf/sesion.jspf" %>
+<c:if test="${sessionScope.rolActivo.id == 1}">
+    <c:redirect url="/admin/pqrs.jsp">
+        <c:param name="error" value="denegado" />
+    </c:redirect>
+</c:if>
 <c:if test="${pageContext.request.method != 'POST'}">
     <c:redirect url="/panel/pqr.jsp" />
 </c:if>
