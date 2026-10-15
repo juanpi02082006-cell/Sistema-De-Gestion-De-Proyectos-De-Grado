@@ -650,7 +650,7 @@ INSERT INTO niveles (id, nombre) VALUES
 -- Carreras de la UTS, tal como las entregó el equipo (2026-10-10). "Negocios
 -- Internacionales" es universitaria y se ofrece en Bucaramanga y en el Campus Virtual
 -- (confirmado por el equipo). SNIES 119351 (entregado el 2026-10-11) en la de
--- Bucaramanga; el de la oferta del Campus Virtual está por confirmar.
+-- Bucaramanga; la oferta del Campus Virtual se deja sin SNIES (decisión del 2026-10-14).
 INSERT INTO carreras (id, nombre, nivel_id, snies, campus, metodologia) VALUES
     (1, 'Tecnología en Desarrollo de Sistemas Informáticos', 1, '101597', 'Bucaramanga', 'Presencial'),
     (2, 'Tecnología en Entrenamiento Deportivo', 1, '17664', 'Bucaramanga', 'Presencial'),
