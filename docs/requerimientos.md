@@ -85,7 +85,7 @@ Lista oficial del proyecto. Cada requerimiento **fusiona** lo que quedó escrito
 | RF8 | Administrador | El administrador gestiona los roles (CRUD). | 3 | 2 | Hecho |
 | RF9 | Administrador | Gestión de proyectos (CRUD); el comité registra la modalidad de cada estudiante. | 4 · Reg. 17 | 5 | En progreso (lista de proyectos con su fase, pago y director, y la página de cada proyecto) |
 | RF10 | Administrador | Banco de ideas: los docentes registran las ideas y el estudiante puede formular su propia propuesta; el comité aprueba ambas. | 5 · A-20, A-21, A-30 · Reg. 27 · decisión del equipo | 4 | Hecho |
-| RF11 | Administrador | Asignar a cada proyecto director y evaluador (el comité lo formaliza). Un docente nunca evalúa el proyecto que dirige. | 6, 22 · A-17 · PPT · Reg. 18, 20, 26 · decisión | 2, 5 | En progreso (el comité asigna director y evaluador; la base y la página impiden director = evaluador; faltan los codirectores) |
+| RF11 | Administrador | Asignar a cada proyecto director y evaluador (el comité lo formaliza). Un docente nunca evalúa el proyecto que dirige. | 6, 22 · A-17 · PPT · Reg. 18, 20, 26 · decisión | 2, 5 | Hecho (el comité asigna director, evaluador y codirectores; la base y la página impiden director = evaluador y que el evaluador sea codirector) |
 | RF12 | Administrador | Cambio de modalidad sin perder el proceso, solo antes de aprobar el FDC-124: el estudiante lo solicita y el comité lo aprueba o lo rechaza. Queda registro de la modalidad anterior y la nueva, quién lo pidió, quién decidió y cuándo. | 51 · A-31 · Otro equipo RF-82–85 | 5 | Hecho (el estudiante pide el cambio en las fases 1 a 3 y el comité lo aprueba o lo rechaza, con registro) |
 | RF13 | Administrador | Proyectos interdisciplinarios (investigación o desarrollo tecnológico): director de la disciplina principal, hasta 2 codirectores y máximo 4 estudiantes. | Reg. 22 · decisión del equipo | 5 | Hecho (interdisciplinario con hasta 4 estudiantes y 2 codirectores, que comentan; decide el director) |
 | RF14 | Administrador | Aprobación en orden: director (firma) → evaluador (concepto) → comité (decisión final; devuelve el proyecto si falta algo). La decisión del comité queda con su acta. | 17, 19, 20 · A-14 · Reg. 20, 26, 28, 31 · Otro equipo RF-70, RF-71 | 5 | Hecho (propuesta e informe final: director → evaluador → comité, con la decisión y su acta) |
@@ -127,12 +127,12 @@ Lista oficial del proyecto. Cada requerimiento **fusiona** lo que quedó escrito
 | RNF2 | Todos | Las páginas cargan en menos de 3 s con 100 usuarios conectados a la vez. | Lista RNF-01 |  | Pendiente |
 | RNF3 | Todos | Las búsquedas con filtros responden en menos de 2 s con 5.000 proyectos. | Lista RNF-02 |  | Pendiente |
 | RNF4 | Todos | Las contraseñas se guardan con hash (SHA-256), nunca en texto plano. | Lista RNF-04 (adaptado: bcrypt → SHA-256) | 2 | Hecho |
-| RNF5 | Todos | Control de acceso por rol en el servidor: cada página revisa la sesión y el rol con fragmentos `.jspf`. | Lista RNF-05 (adaptado: javax.servlet.Filter → `.jspf`) | 2 | En progreso (páginas del administrador) |
+| RNF5 | Todos | Control de acceso por rol en el servidor: cada página revisa la sesión y el rol con fragmentos `.jspf`. | Lista RNF-05 (adaptado: javax.servlet.Filter → `.jspf`) | 2, 5 | Hecho (cada página de admin/, director/, evaluador/ y estudiante/ exige su rol con solo-*.jspf; las de panel/ e ideas/, la sesión; revisado el 2026-10-14) |
 | RNF6 | Todos | La sesión expira a los 30 minutos de inactividad. | Lista RNF-07 | 2 | Hecho |
 | RNF7 | Todos | Cumplir la Ley 1581 de 2012 (protección de datos personales). | Lista RNF-09 |  | Pendiente |
 | RNF8 | Todos | Disponibilidad del 99 % en horario académico. | Lista RNF-11 |  | Pendiente |
-| RNF9 | Todos | Diseño responsivo con Bootstrap. | Lista RNF-15 | 1, 2 | En progreso (pantallas hechas) |
-| RNF10 | Todos | Mensajes de error claros y en español. | Lista RNF-17 | 2, 3 | En progreso (pantallas hechas) |
+| RNF9 | Todos | Diseño responsivo con Bootstrap. | Lista RNF-15 | 1, 2, 5 | Hecho (todas las pantallas; revisado en celular, 390 px de ancho) |
+| RNF10 | Todos | Mensajes de error claros y en español. | Lista RNF-17 | 2, 3, 5 | Hecho (cada código ?ok= y ?error= tiene su mensaje en español; revisado el 2026-10-14) |
 | RNF11 | Todos | Compatible con Chrome, Edge y Firefox (sus 2 últimas versiones). | Lista RNF-18 |  | Pendiente |
 | RNF12 | Administrador | Auditoría de cada cambio de estado: quién, qué y cuándo. Se consulta con filtros por usuario, proyecto, tipo de acción y fechas, y el historial de cada proyecto se ve en orden cronológico. | Lista RNF-10 · Otro equipo RF-10, RF-39 | 5 | Hecho (historial de cada proyecto y auditoría con filtros por usuario, proyecto, acción y fechas) |
 | RNF13 | Administrador | Copia de seguridad diaria, guardada por 30 días. | Lista RNF-12 |  | Pendiente |
@@ -140,14 +140,14 @@ Lista oficial del proyecto. Cada requerimiento **fusiona** lo que quedó escrito
 | RNF15 | Estudiante, Director | El estudiante y el director pueden subir archivos de hasta 15 MB. | Lista RNF-03 · decisión del equipo | 4, 5 | Hecho |
 | RNF16 | Estudiante, Director | El servidor valida el tipo (.docx, .pdf) y el tamaño de los archivos que suben el estudiante y el director. | Lista RNF-08 | 4, 5 | Hecho (PDF y Word, según el documento) |
 | RNF17 | Estudiante | Un estudiante nuevo sube su propuesta en máximo 5 clics. | Lista RNF-16 |  | Pendiente |
-| RNF18 | Sistema | Todas las consultas son parametrizadas con `<sql:param>` (por dentro usa PreparedStatement). | Lista RNF-06 (adaptado) | 2, 3 | En progreso (se cumple en lo hecho) |
+| RNF18 | Sistema | Todas las consultas son parametrizadas con `<sql:param>` (por dentro usa PreparedStatement). | Lista RNF-06 (adaptado) | 2, 3, 5 | Hecho (ninguna consulta mete datos del usuario en el texto SQL; revisado el 2026-10-14) |
 | RNF19 | Sistema | Los plazos los calcula el servidor en la zona America/Bogota; los días hábiles excluyen fines de semana y festivos de Colombia (tabla de festivos). | Lista RNF-13 | 5 | Hecho (festivos de 2026 y 2027; hay que agregar los de cada año) |
 | RNF20 | Sistema | Soporta 3 veces más usuarios sin cambiar el diseño. | Lista RNF-25 |  | Pendiente |
 | RNF21 | Sistema | Las tareas automáticas (alertas, cierres y rechazo por tiempo) se revisan cada vez que alguien usa el sistema. | Lista RNF-27 (adaptado: proceso programado → al usar el sistema) | 5 | Hecho (las alertas se revisan cada vez que alguien abre una página) |
 | RNF22 | Equipo de desarrollo | Funciona en Tomcat 11 (Jakarta) y MySQL. | 52 · Lista RNF-22 (adaptado: Tomcat 9 → Tomcat 11) | 2 | Hecho |
-| RNF23 | Equipo de desarrollo | Arquitectura JSP + JSTL (tema del parcial): las páginas acceden a los datos con las etiquetas `sql` de JSTL. | Lista RNF-19 (adaptado: Servlet + DAO → JSP + JSTL) | 2 | En progreso |
-| RNF24 | Equipo de desarrollo | Fragmentos `.jspf` para los elementos repetidos. | Lista RNF-20 | 2 | En progreso (cabecera, pie, sesión y mensajes) |
-| RNF25 | Equipo de desarrollo | Código documentado y versionado con Git. | Lista RNF-21 |  | Pendiente |
+| RNF23 | Equipo de desarrollo | Arquitectura JSP + JSTL (tema del parcial): las páginas acceden a los datos con las etiquetas `sql` de JSTL. | Lista RNF-19 (adaptado: Servlet + DAO → JSP + JSTL) | 2, 5 | Hecho (sin scriptlets ni archivos .java; revisado el 2026-10-14) |
+| RNF24 | Equipo de desarrollo | Fragmentos `.jspf` para los elementos repetidos. | Lista RNF-20 | 2, 5 | Hecho (cabecera, pie, sesión, mensajes, fases, avisos, rejillas, sustentación y los demás de WEB-INF/jspf) |
+| RNF25 | Equipo de desarrollo | Código documentado y versionado con Git. | Lista RNF-21 | 2, 5 | Hecho (comentario de cabecera en cada página, README y docs/; repositorio en GitHub) |
 | RNF26 | Equipo de desarrollo | UTF-8 en todo el sistema (utf8mb4 en la base). | Lista RNF-23 | 2 | Hecho (web.xml y base) |
 
 ## Tecnología y entorno
