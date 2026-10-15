@@ -69,8 +69,8 @@
             <c:when test="${param.ok == 'prorroga-rechazada'}">La solicitud de prórroga quedó rechazada.</c:when>
             <c:when test="${param.ok == 'informe-enviado'}">Enviaste el informe final a tu director: el proyecto pasó a la fase 5 (Informe II).</c:when>
             <c:when test="${param.ok == 'asignacion-fase-2'}">El director quedó asignado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
-            <c:when test="${param.ok == 'sustentacion-programada'}">La sustentación quedó programada. A los demás les llegó un aviso con la fecha y el lugar.</c:when>
-            <c:when test="${param.ok == 'sustentacion-reprogramada'}">La sustentación quedó reprogramada. A los demás les llegó un aviso con la fecha y el lugar nuevos.</c:when>
+            <c:when test="${param.ok == 'sustentacion-programada'}">La sustentación quedó programada. A los estudiantes, al director y al evaluador les llegó un aviso con la fecha y el lugar.</c:when>
+            <c:when test="${param.ok == 'sustentacion-reprogramada'}">La sustentación quedó reprogramada. A los estudiantes, al director y al evaluador les llegó un aviso con la fecha y el lugar nuevos.</c:when>
             <c:when test="${param.ok == 'proyecto-finalizado'}">Quedó registrada la aprobación final: el proyecto está finalizado y los estudiantes ya pueden radicar los papeles de grado.</c:when>
             <c:when test="${param.ok == 'sesion-creada'}">La sesión del comité quedó en el calendario.</c:when>
             <c:when test="${param.ok == 'sesion-eliminada'}">La sesión se quitó del calendario.</c:when>

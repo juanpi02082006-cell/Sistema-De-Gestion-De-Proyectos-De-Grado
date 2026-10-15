@@ -504,9 +504,9 @@ CREATE TABLE sesiones_comite (
     CONSTRAINT fk_sesiones_comite_periodo FOREIGN KEY (periodo_id) REFERENCES periodos (id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- Sustentación del proyecto (fase final, RF39): estudiantes, director y evaluador
--- la programan y el sistema guarda la fecha y el lugar (decisión del 2026-10-10).
--- Una por proyecto: si se reprograma, se actualiza.
+-- Sustentación del proyecto (fase final, RF39): la programa el comité (reglamento, art.
+-- 26, literal m; decisión del 2026-10-14) y el sistema guarda la fecha y el lugar
+-- (decisión del 2026-10-10). Una por proyecto: si se reprograma, se actualiza.
 CREATE TABLE sustentaciones (
     id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
     proyecto_id    INT UNSIGNED NOT NULL,
@@ -739,7 +739,7 @@ INSERT INTO fases (id, orden, nombre, descripcion, formato) VALUES
     (4, 3, 'Propuesta II',          'El director revisa la propuesta y la pasa por Turnitin; la envía al evaluador y al comité', 'FDC-124'),
     (5, 4, 'Informe I',             'El evaluador analiza la propuesta; con el FDC-124 aprobado, el estudiante envía el informe al director', 'FDC-125'),
     (6, 5, 'Informe II',            'El director envía el informe al evaluador y al comité', 'FDC-125'),
-    (7, 6, 'Sustentación',          'Estudiantes, director y evaluador programan la sustentación', NULL);
+    (7, 6, 'Sustentación',          'El comité programa la sustentación y registra la aprobación final', NULL);
 
 -- Rejilla del F-DC-124 versión 2.0 (septiembre de 2023), "Propuesta de trabajo de
 -- grado: Investigación, Desarrollo Tecnológico, Monografía y Emprendimiento" (RF23).

@@ -5,8 +5,7 @@
      dice si ya hay evaluador, no quién es. En la fase 4 ve el concepto del evaluador y
      la decisión del comité; con el FDC-124 aprobado registra los seguimientos (RF20,
      seguimiento-registrar.jsp) y ve las versiones del informe final. En la fase final
-     programa la sustentación con los estudiantes y el evaluador (RF39, sustentacion.jspf);
-     los codirectores la ven, pero no la programan. --%>
+     ve la sustentación que programa el comité (RF39, sustentacion.jspf). --%>
 <%@ include file="/WEB-INF/jspf/solo-director.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Proyecto" />
@@ -70,10 +69,10 @@
 
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
-<%-- Fase final (RF39): la sustentación; la programa el director, no los codirectores --%>
+<%-- Fase final (RF39): la sustentación, que programa el comité --%>
 <c:if test="${p.fase == 6 and not esSeminario}">
     <c:set var="idProyectoSustentacion" value="${p.id}" />
-    <c:set var="sustentacionProgramar" value="${p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
+    <c:set var="sustentacionProgramar" value="false" />
     <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
 </c:if>
 

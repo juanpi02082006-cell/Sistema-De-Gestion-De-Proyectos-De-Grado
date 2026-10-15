@@ -7,8 +7,8 @@
      F-DC-129, con N/A (5 días hábiles); si lo aplaza, indica el plazo para las
      correcciones (RF22). En los dos casos puede guardar en borrador; al enviar da su
      concepto y pasa al comité (rejilla-formulario.jspf, evaluacion-guardar.jsp).
-     Fase final: programa la sustentación con los estudiantes y el director (RF39,
-     sustentacion.jspf). --%>
+     Fase final: ve la sustentación que programa el comité y la atiende (RF39, reglamento
+     art. 21; sustentacion.jspf). --%>
 <%@ include file="/WEB-INF/jspf/solo-evaluador.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
 <c:set var="titulo" value="Evaluar" />
@@ -64,10 +64,10 @@
 
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
-<%-- Fase final (RF39): la sustentación, que el evaluador también programa --%>
+<%-- Fase final (RF39): la sustentación, que programa el comité; el evaluador la atiende --%>
 <c:if test="${p.fase == 6 and p.modalidad_id != 5}">
     <c:set var="idProyectoSustentacion" value="${p.id}" />
-    <c:set var="sustentacionProgramar" value="${not cerrado}" />
+    <c:set var="sustentacionProgramar" value="false" />
     <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
 </c:if>
 

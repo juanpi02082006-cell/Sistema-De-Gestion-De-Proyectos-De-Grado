@@ -3,7 +3,7 @@
      concepto con la rejilla del F-DC-129; el comité decide sea cual sea ese concepto.
      Siempre con observación y con el número y la fecha del acta.
        aprobar     la versión queda como la oficial (RF43) y el proyecto pasa a la fase
-                   final, donde se programa la sustentación (RF39).
+                   final, donde el comité programa la sustentación (RF39).
        aplazar     el proyecto vuelve a la fase 4: el estudiante hace las correcciones
                    dentro del plazo que indicó el evaluador y lo envía otra vez (RF22).
        no-aprobar  también vuelve a la fase 4 para corrección (por ejemplo, parafraseo si
@@ -74,7 +74,7 @@
     <%@ include file="/WEB-INF/jspf/plazo-habil.jspf" %>
 </c:if>
 <c:choose>
-    <c:when test="${decision == 'aprobar'}"><c:set var="textoDecision">El comité aprobó la versión ${p.version} del informe final (acta ${numeroActa}). El proyecto pasó a la fase final: programen la sustentación.</c:set></c:when>
+    <c:when test="${decision == 'aprobar'}"><c:set var="textoDecision">El comité aprobó la versión ${p.version} del informe final (acta ${numeroActa}). El proyecto pasó a la fase final: el comité programará la sustentación.</c:set></c:when>
     <c:when test="${decision == 'aplazar'}"><c:set var="textoDecision">El comité aplazó el informe final (versión ${p.version}, acta ${numeroActa}): hay que corregirlo${empty plazoTexto ? '' : ' a más tardar el '}${plazoTexto} y enviarlo otra vez. El proyecto volvió a la fase 4.</c:set></c:when>
     <c:when test="${decision == 'no-aprobar'}"><c:set var="textoDecision">El comité no aprobó el informe final (versión ${p.version}, acta ${numeroActa}): vuelve para corrección, antes del ${limiteTexto}. El proyecto volvió a la fase 4.</c:set></c:when>
     <c:otherwise><c:set var="textoDecision">El comité devolvió la versión ${p.version} del informe final al director (acta ${numeroActa}) porque le falta algo.</c:set></c:otherwise>

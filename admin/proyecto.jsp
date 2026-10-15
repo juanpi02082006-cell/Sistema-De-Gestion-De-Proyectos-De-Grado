@@ -5,8 +5,9 @@
      proyecto pasa a la fase 2 (avanzar-fase-2.jspf). En la fase 4 el comité ve la
      evaluación y da la decisión final sobre la propuesta con su acta (RF14,
      propuesta-decidir.jsp); aprobada, ve los seguimientos y el informe final. En la
-     fase final ve la sustentación y, cuando ya pasó su fecha, registra la aprobación
-     final con su acta: el proyecto queda "Finalizado" (RF39, proyecto-finalizar.jsp). --%>
+     fase final programa la sustentación (RF39, sustentacion-programar.jsp) y, cuando ya
+     pasó su fecha, registra la aprobación final con su acta: el proyecto queda
+     "Finalizado" (proyecto-finalizar.jsp). --%>
 <%@ include file="/WEB-INF/jspf/solo-admin.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
@@ -235,11 +236,11 @@
     </div>
 </c:if>
 
-<%-- Fase final (RF39): la sustentación, que programan estudiantes, director y evaluador,
-     y, después de su fecha y hora, la aprobación final del comité con su acta --%>
+<%-- Fase final (RF39): el comité programa la sustentación (reglamento, art. 26, literal m)
+     y, después de su fecha y hora, registra la aprobación final con su acta --%>
 <c:if test="${p.fase == 6 and not esSeminario}">
     <c:set var="idProyectoSustentacion" value="${p.id}" />
-    <c:set var="sustentacionProgramar" value="false" />
+    <c:set var="sustentacionProgramar" value="${p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
     <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
     <c:if test="${p.estado != 'Finalizado' and p.estado != 'Cancelado' and sustentacion.ya_paso == 1}">
         <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/admin/proyecto-finalizar.jsp">
@@ -247,7 +248,7 @@
             <h2 class="app-tarjeta-titulo">Aprobación final del comité</h2>
             <p class="text-secondary">
                 Ya pasó la fecha de la sustentación. Si se hizo y el proyecto cumple las condiciones académicas y documentales, registra la aprobación final con su acta:
-                el proyecto queda "Finalizado" y los estudiantes pueden radicar los papeles de grado. Si no se hizo, los estudiantes, el director o el evaluador la reprograman.
+                el proyecto queda "Finalizado" y los estudiantes pueden radicar los papeles de grado. Si no se hizo, reprográmala arriba.
             </p>
             <div class="row g-3">
                 <div class="col-sm-4">

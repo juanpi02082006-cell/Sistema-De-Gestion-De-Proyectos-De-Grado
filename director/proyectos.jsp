@@ -59,7 +59,6 @@
                     <tbody>
                         <c:forEach var="p" items="${proyectos.rows}">
                             <c:set var="informePorRevisar" value="${p.fase == 5 and (empty p.ultima_informe or p.ultima_informe == 'Comité:Devuelto')}" />
-                            <c:set var="sustentacionPorProgramar" value="${p.fase == 6 and empty p.sustentacion and p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
                             <tr>
                                 <td>
                                     <span class="fw-semibold"><c:out value="${p.titulo}" /></span>
@@ -75,7 +74,7 @@
                                         <c:when test="${p.fase == 3}"><span class="app-estado activo">Por revisar · v<c:out value="${p.version_propuesta}" /></span></c:when>
                                         <c:when test="${informePorRevisar}"><span class="app-estado activo">Informe por revisar · v<c:out value="${p.version_informe}" /></span></c:when>
                                         <c:when test="${p.fase == 6 and (p.estado == 'Finalizado' or p.estado == 'Cancelado')}"><span class="app-estado inactivo"><c:out value="${p.estado}" /></span></c:when>
-                                        <c:when test="${p.fase == 6 and empty p.sustentacion}"><span class="app-estado activo">Sustentación por programar</span></c:when>
+                                        <c:when test="${p.fase == 6 and empty p.sustentacion}"><span class="app-lista-nota d-inline">Sustentación por programar (comité)</span></c:when>
                                         <c:when test="${p.fase == 6}">Sustentación · <fmt:formatDate value="${p.sustentacion}" pattern="dd/MM/yyyy" /> <fmt:formatDate value="${p.sustentacion_hora}" pattern="h:mm a" /></c:when>
                                         <c:when test="${p.fase >= 4 and not empty p.version_informe}">Informe · versión <c:out value="${p.version_informe}" /></c:when>
                                         <c:when test="${not empty p.version_propuesta}">Versión <c:out value="${p.version_propuesta}" /></c:when>
@@ -83,7 +82,7 @@
                                     </c:choose>
                                 </td>
                                 <td class="text-end app-acciones">
-                                    <a class="btn btn-sm ${p.fase == 3 or informePorRevisar or sustentacionPorProgramar ? 'btn-primary' : 'btn-outline-dark'} rounded-pill" href="${ctx}/director/proyecto.jsp?id=${p.id}">${p.fase == 3 or informePorRevisar ? 'Revisar' : (sustentacionPorProgramar ? 'Programar' : 'Ver')}</a>
+                                    <a class="btn btn-sm ${p.fase == 3 or informePorRevisar ? 'btn-primary' : 'btn-outline-dark'} rounded-pill" href="${ctx}/director/proyecto.jsp?id=${p.id}">${p.fase == 3 or informePorRevisar ? 'Revisar' : 'Ver'}</a>
                                 </td>
                             </tr>
                         </c:forEach>

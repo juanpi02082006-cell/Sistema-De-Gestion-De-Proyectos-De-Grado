@@ -1,59 +1,27 @@
-<%-- Programa o reprograma la sustentación de un proyecto en la fase final, por POST
-     (RF39; Anexo H: "estudiantes, director y evaluador programan la sustentación; el
-     sistema guarda la fecha y el lugar"). Puede hacerlo, cada uno con su rol activo,
-     un estudiante vigente del proyecto, su director (no los codirectores: decide el
-     director, RF13) o su evaluador, mientras el proyecto siga en la fase final sin la
-     aprobación final del comité. Pide la fecha y la hora, después de este momento, y el
-     lugar o el enlace de la reunión (hasta 150 caracteres). Hay una sola por proyecto
-     (decisión del 2026-10-10): si ya estaba, se reprograma y queda quién lo hizo y
-     cuándo. Avisa a los demás y al comité (RF5); el aviso no nombra a quien la programó,
-     así que el estudiante nunca sabe quién es su evaluador (RF27). --%>
-<%@ include file="/WEB-INF/jspf/sesion.jspf" %>
-<c:set var="rol" value="${sessionScope.rolActivo.id}" />
-<c:choose>
-    <c:when test="${rol == 5}">
-        <c:set var="paginaProyecto" value="/estudiante/proyecto.jsp" />
-        <c:set var="paginaLista" value="/estudiante/proyecto.jsp" />
-    </c:when>
-    <c:when test="${rol == 3}">
-        <c:set var="paginaProyecto" value="/director/proyecto.jsp" />
-        <c:set var="paginaLista" value="/director/proyectos.jsp" />
-    </c:when>
-    <c:when test="${rol == 4}">
-        <c:set var="paginaProyecto" value="/evaluador/proyecto.jsp" />
-        <c:set var="paginaLista" value="/evaluador/proyectos.jsp" />
-    </c:when>
-    <c:otherwise>
-        <c:redirect url="/panel/inicio.jsp">
-            <c:param name="error" value="denegado" />
-        </c:redirect>
-    </c:otherwise>
-</c:choose>
+<%-- El comité (el administrador) programa o reprograma la sustentación de un proyecto en
+     la fase final, por POST (RF39). Reglamento, art. 26, literal m: el comité "coordina las
+     sustentaciones"; el evaluador las atiende (art. 21, literal e) y los estudiantes las
+     presentan (decisión del equipo del 2026-10-14). Estudiantes, director, codirectores y
+     evaluador la ven y reciben el aviso, pero no la cambian. Solo mientras el proyecto
+     siga en la fase final sin la aprobación final. Pide la fecha y la hora, después de
+     este momento, y el lugar o el enlace de la reunión (hasta 150 caracteres). Hay una
+     sola por proyecto (decisión del 2026-10-10): si ya estaba, se reprograma y queda
+     quién lo hizo y cuándo. --%>
+<%@ include file="/WEB-INF/jspf/solo-admin.jspf" %>
 <c:if test="${pageContext.request.method != 'POST'}">
-    <c:redirect url="${paginaLista}" />
+    <c:redirect url="/admin/proyectos.jsp" />
 </c:if>
 
-<%-- El proyecto, solo si quien la programa es de él --%>
 <sql:query var="consulta">
     SELECT p.id, p.titulo, p.estado, p.modalidad_id, f.orden AS fase,
            (SELECT COUNT(*) FROM sustentaciones s WHERE s.proyecto_id = p.id) AS programada
     FROM proyectos p
     LEFT JOIN fases f ON f.id = p.fase_id
     WHERE p.id = ?
-      AND ((? = 5 AND EXISTS (SELECT 1 FROM proyecto_estudiantes pe
-                              WHERE pe.proyecto_id = p.id AND pe.estudiante_id = ? AND pe.vigente = 1))
-           OR (? = 3 AND p.director_id = ?)
-           OR (? = 4 AND p.evaluador_id = ?))
     <sql:param value="${empty param.id ? 0 : param.id}" />
-    <sql:param value="${rol}" />
-    <sql:param value="${sessionScope.usuario.id}" />
-    <sql:param value="${rol}" />
-    <sql:param value="${sessionScope.usuario.id}" />
-    <sql:param value="${rol}" />
-    <sql:param value="${sessionScope.usuario.id}" />
 </sql:query>
 <c:if test="${consulta.rowCount == 0}">
-    <c:redirect url="${paginaLista}">
+    <c:redirect url="/admin/proyectos.jsp">
         <c:param name="error" value="no-encontrado" />
     </c:redirect>
 </c:if>
@@ -86,7 +54,7 @@
     <c:when test="${empty lugar or fn:length(lugar) > 150}"><c:set var="motivo" value="sustentacion-lugar-invalido" /></c:when>
 </c:choose>
 <c:if test="${not empty motivo}">
-    <c:redirect url="${paginaProyecto}">
+    <c:redirect url="/admin/proyecto.jsp">
         <c:param name="id" value="${p.id}" />
         <c:param name="error" value="${motivo}" />
     </c:redirect>
@@ -95,7 +63,7 @@
 <c:set var="reprogramada" value="${p.programada > 0}" />
 <fmt:formatDate var="fechaTexto" value="${fh.fecha}" pattern="dd/MM/yyyy" />
 <fmt:formatDate var="horaTexto" value="${fh.hora}" pattern="h:mm a" />
-<c:set var="textoSustentacion">${reprogramada ? 'Se reprogramó' : 'Se programó'} la sustentación de «${fn:substring(p.titulo, 0, 80)}» para el ${fechaTexto} a las ${horaTexto}, en ${lugar}.</c:set>
+<c:set var="textoSustentacion">El comité ${reprogramada ? 'reprogramó' : 'programó'} la sustentación de «${fn:substring(p.titulo, 0, 80)}» para el ${fechaTexto} a las ${horaTexto}, en ${lugar}.</c:set>
 
 <sql:transaction>
     <sql:update>
@@ -119,7 +87,7 @@
     <%@ include file="/WEB-INF/jspf/avisar.jspf" %>
 </sql:transaction>
 
-<c:redirect url="${paginaProyecto}">
+<c:redirect url="/admin/proyecto.jsp">
     <c:param name="id" value="${p.id}" />
     <c:param name="ok" value="${reprogramada ? 'sustentacion-reprogramada' : 'sustentacion-programada'}" />
 </c:redirect>

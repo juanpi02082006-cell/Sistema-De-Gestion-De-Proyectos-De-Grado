@@ -137,7 +137,9 @@
                                 <td class="text-nowrap"><span class="app-estado ${p.estado_pago == 'Aprobado' or p.estado_pago == 'Por revisar' ? 'activo' : 'inactivo'}"><c:out value="${p.estado_pago}" /></span></td>
                                 <td><c:out value="${empty p.director ? 'Sin asignar' : p.director}" /></td>
                                 <td class="text-end app-acciones">
-                                    <a class="btn btn-sm ${p.estado_pago == 'Por revisar' or empty p.director ? 'btn-primary' : 'btn-outline-dark'} rounded-pill" href="${ctx}/admin/proyecto.jsp?id=${p.id}">${p.estado_pago == 'Por revisar' ? 'Revisar pago' : (empty p.director ? 'Asignar director' : 'Ver')}</a>
+                                    <%-- Fase final: el comité programa la sustentación y, pasada, registra la aprobación final (RF39) --%>
+                                    <c:set var="faseFinalPendiente" value="${p.fase == 6 and p.estado != 'Finalizado' and p.estado != 'Cancelado' and (empty p.sustentacion or p.sustentada == 1)}" />
+                                    <a class="btn btn-sm ${p.estado_pago == 'Por revisar' or empty p.director or faseFinalPendiente ? 'btn-primary' : 'btn-outline-dark'} rounded-pill" href="${ctx}/admin/proyecto.jsp?id=${p.id}">${p.estado_pago == 'Por revisar' ? 'Revisar pago' : (empty p.director ? 'Asignar director' : (faseFinalPendiente ? (empty p.sustentacion ? 'Programar sustentación' : 'Aprobación final') : 'Ver'))}</a>
                                 </td>
                             </tr>
                         </c:forEach>

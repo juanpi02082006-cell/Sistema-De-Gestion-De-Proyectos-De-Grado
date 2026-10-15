@@ -8,9 +8,9 @@
      no ve a su evaluador (RF27), pero sí su concepto y sus observaciones (RF23). En la
      fase 4, con el FDC-124 aprobado por el comité, sube el informe final (FDC-125) por
      versiones y lo envía a su director desde el día 90 hasta el 180 (RF31), con al
-     menos 2 seguimientos del director (RF20). En la fase final programa la sustentación
-     con su director y el evaluador (sustentacion.jspf); después de la sustentación, el
-     comité registra la aprobación final y el proyecto queda "Finalizado" (RF39). --%>
+     menos 2 seguimientos del director (RF20). En la fase final ve la sustentación que
+     programa el comité (sustentacion.jspf) y la presenta; después, el comité registra la
+     aprobación final y el proyecto queda "Finalizado" (RF39). --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
@@ -181,10 +181,10 @@
             </div>
         </c:if>
 
-        <%-- Fase final (RF39): la sustentación, que programan estudiantes, director y evaluador --%>
+        <%-- Fase final (RF39): la sustentación, que programa el comité --%>
         <c:if test="${p.fase == 6 and not esSeminario}">
             <c:set var="idProyectoSustentacion" value="${p.id}" />
-            <c:set var="sustentacionProgramar" value="${not terminado}" />
+            <c:set var="sustentacionProgramar" value="false" />
             <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
         </c:if>
 
@@ -429,7 +429,7 @@
                         <p class="text-secondary mt-3">Enviaste la versión <c:out value="${p.version_informe}" /> del informe final a tu director (fase 5, Informe II). Está en revisión.</p>
                     </c:when>
                     <c:when test="${p.fase == 6}">
-                        <p class="text-secondary mt-3">El comité aprobó tu informe final<c:if test="${not empty p.version_informe}">: la versión oficial es la <c:out value="${p.version_informe}" /></c:if>.${terminado ? '' : ' La sustentación se programa arriba.'}</p>
+                        <p class="text-secondary mt-3">El comité aprobó tu informe final<c:if test="${not empty p.version_informe}">: la versión oficial es la <c:out value="${p.version_informe}" /></c:if>.${terminado ? '' : ' La fecha de la sustentación la programa el comité: sale arriba.'}</p>
                     </c:when>
                 </c:choose>
                 <c:set var="informeOcultarVacios" value="${p.fase == 4 and not terminado}" />

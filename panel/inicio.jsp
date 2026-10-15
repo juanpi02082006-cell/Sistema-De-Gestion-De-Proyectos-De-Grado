@@ -30,12 +30,14 @@
         ) t WHERE (fase = 4 AND ultima LIKE 'Evaluador:%' AND ultima <> 'Evaluador:Devuelto')
                OR (fase = 5 AND ultima_informe LIKE 'Evaluador:%')
     </sql:query>
-    <%-- Fase final con la sustentación ya hecha: falta la aprobación final del comité (RF39) --%>
+    <%-- Fase final (RF39): sin la sustentación programada (la programa el comité) o con la
+         sustentación ya hecha (falta la aprobación final) --%>
     <sql:query var="aprobacionesFinales">
         SELECT COUNT(*) AS total FROM proyectos p
         JOIN fases f ON f.id = p.fase_id
-        JOIN sustentaciones s ON s.proyecto_id = p.id
-        WHERE f.orden = 6 AND p.estado NOT IN ('Finalizado', 'Cancelado') AND s.fecha_hora <= NOW()
+        LEFT JOIN sustentaciones s ON s.proyecto_id = p.id
+        WHERE f.orden = 6 AND p.estado NOT IN ('Finalizado', 'Cancelado') AND p.modalidad_id <> 5
+          AND (s.fecha_hora IS NULL OR s.fecha_hora <= NOW())
     </sql:query>
 </c:if>
 <c:if test="${rol == 4}">
@@ -123,8 +125,8 @@
         <div class="${columnaComite}">
             <a class="app-acceso" href="${ctx}/admin/proyectos.jsp?filtro=sustentacion">
                 <span class="app-acceso-numero"><c:out value="${aprobacionesFinales.rows[0].total}" /></span>
-                <span class="app-acceso-titulo">Aprobaciones finales</span>
-                <span class="app-acceso-texto">Proyectos que ya sustentaron: falta registrar la aprobación final.</span>
+                <span class="app-acceso-titulo">Fase final</span>
+                <span class="app-acceso-texto">Sustentaciones por programar y aprobaciones finales por registrar.</span>
             </a>
         </div>
         <div class="${columnaComite}">

@@ -18,7 +18,7 @@ Sprint 5 en progreso, con todas las fases del proyecto:
 - pago de cada estudiante, integrantes, director, evaluador y codirectores;
 - propuesta (FDC-124) con versiones, revisión del director con Turnitin, evaluación con la rejilla del F-DC-124 y decisión del comité con acta;
 - informe final (FDC-125) con los seguimientos del director, evaluación con la rejilla del F-DC-129 y decisión del comité;
-- fase final: estudiantes, director y evaluador programan la sustentación, y después el comité registra la aprobación final (el proyecto queda "Finalizado");
+- fase final: el comité programa la sustentación y, después de que se hace, registra la aprobación final (el proyecto queda "Finalizado");
 - prórrogas, cancelaciones automáticas, exoneración por Saber TyT, Seminario, avisos, PQR y auditoría.
 
 El plan de trabajo está en [docs/sprints.md](docs/sprints.md) y los requerimientos en [docs/requerimientos.md](docs/requerimientos.md).
