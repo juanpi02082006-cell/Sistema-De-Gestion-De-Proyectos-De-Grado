@@ -7,3 +7,6 @@
 *.png binary
 *.pdf binary
 *.docx binary
+
+# Los .bat de Windows, con CRLF
+*.bat text eol=crlf

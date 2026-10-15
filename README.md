@@ -85,6 +85,21 @@ bash pruebas/sprint5d.sh
 
 `bash pruebas/correr-pruebas.sh <carpeta-respaldo>` corre todas: respalda la base y los archivos subidos, importa la base antes de cada suite y al final lo devuelve todo.
 
+## Demostración: adelantar el tiempo
+
+El sistema respeta los plazos del reglamento: el informe final se envía desde el día 90 después de que el comité aprueba la propuesta (RF31), y la aprobación final se registra después de la sustentación (RF39). Para mostrar el flujo completo sin esperar, hay un script **solo para la demostración** que "adelanta el tiempo" de un proyecto (las reglas no cambian):
+
+```bat
+bd\demo-adelantar-tiempo.bat 65-2026-2/1
+```
+
+Con el código del proyecto (sale en "Datos del proyecto"):
+
+- **En la fase 4**, con la propuesta aprobada: corre las fechas lo que falta para el día 90 (aprobación del FDC-124, notificación, fecha límite y prórrogas aprobadas). El estudiante ya puede enviar el informe y le queda el plazo que tendría en el día 90. Correrlo otra vez no hace nada.
+- **En la fase final**, con la sustentación programada: la deja como hecha hace una hora, para que el comité registre la aprobación final.
+
+Solo toca ese proyecto. Para la presentación sirve mostrar primero que el sistema no deja enviar el informe antes del día 90, correr el script y mostrar que ya deja.
+
 ## Estructura del proyecto
 
 ```

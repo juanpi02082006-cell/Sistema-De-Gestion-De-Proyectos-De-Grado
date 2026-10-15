@@ -11,7 +11,8 @@ T="$(dirname "$0")/tmp/sprint5d"; rm -rf "$T"; mkdir -p "$T"
 OK=0; FALLA=0
 MYSQL="/c/xampp/mysql/bin/mysql.exe -u root -N -B -D sistemas_proyectos_grado --default-character-set=utf8mb4"
 HOY=$(date +%F); MANANA=$(date -d tomorrow +%F); AYER=$(date -d yesterday +%F); ANTEAYER=$(date -d "-2 days" +%F)
-EN30=$(date -d "+30 days" +%F); EN60=$(date -d "+60 days" +%F); HACE100=$(date -d "-100 days" +%F)
+EN30=$(date -d "+30 days" +%F); EN60=$(date -d "+60 days" +%F)
+HACE90=$(date -d "-90 days" +%F); EN90=$(date -d "+90 days" +%F)
 EN7=$(date -d "+7 days" +%F); EN8=$(date -d "+8 days" +%F)
 
 revisar() { if [ "$2" -eq 0 ]; then echo "  OK    $1"; OK=$((OK+1)); else echo "  FALLA $1"; FALLA=$((FALLA+1)); fi; }
@@ -54,6 +55,11 @@ finalizar() { # acta, fecha del acta, observación
     pedir admin POST /admin/proyecto-finalizar.jsp --data-urlencode "id=$PA" --data-urlencode "acta=$1" --data-urlencode "fecha_acta=$2" --data-urlencode "observacion=$3"
 }
 sustentaciones() { $MYSQL -e "SELECT COUNT(*) FROM sustentaciones WHERE proyecto_id=$PA"; }
+# Script de la demostración (bd/demo-adelantar-tiempo.sql) con el código del proyecto
+adelantar() {
+    /c/xampp/mysql/bin/mysql.exe -u root -D sistemas_proyectos_grado --default-character-set=utf8mb4 \
+        -e "SET @codigo = '$1'; SOURCE $(dirname "$0")/../bd/demo-adelantar-tiempo.sql;" > "$T/adelantar.txt" 2>&1
+}
 printf '%%PDF-1.4\n%% recibo\n' > "$T/recibo.pdf"
 printf '%%PDF-1.4\n%% turnitin\n' > "$T/turnitin.pdf"
 printf 'documento de Word de prueba' > "$T/propuesta.docx"
@@ -96,8 +102,17 @@ pedir admin POST /admin/propuesta-decidir.jsp --data-urlencode "id=$PA" --data-u
 for S in "Avance del capitulo 1" "Resultados listos"; do
     pedir dir POST /director/seguimiento-registrar.jsp --data-urlencode "id=$PA" --data-urlencode "observacion=$S"
 done
-$MYSQL -e "UPDATE proyectos SET fecha_aprobacion_124='$HACE100', fecha_limite='$EN60' WHERE id=$PA"
 pedir ana POST /estudiante/informe-guardar.jsp -F "informe=@$T/informe.docx"; pedir ana POST /estudiante/informe-enviar.jsp
+[[ "$DESTINO" == *"error=informe-antes-de-90"* ]]; revisar "Antes del día 90 el informe no se envía (la regla sigue)" $?
+# Script de la demostración: adelanta lo que falta para el día 90 (bd/demo-adelantar-tiempo.sql)
+CODIGO_PA=$($MYSQL -e "SELECT codigo FROM proyectos WHERE id=$PA" | tr -d '\r')
+adelantar "$CODIGO_PA"; grep -q "se adelantaron 90 d" "$T/adelantar.txt"; revisar "Script de la demo: \"se adelantaron 90 días\"" $?
+[ "$($MYSQL -e "SELECT CONCAT(fecha_aprobacion_124,'|',fecha_notificacion,'|',fecha_limite) FROM proyectos WHERE id=$PA")" = "$HACE90|$HACE90|$EN90" ]
+revisar "Aprobación y notificación hace 90 días; le quedan 90 de plazo" $?
+adelantar "$CODIGO_PA"; [ "$($MYSQL -e "SELECT fecha_aprobacion_124 FROM proyectos WHERE id=$PA")" = "$HACE90" ]; revisar "Correrlo otra vez no cambia nada" $?
+adelantar "99-9999-9/9"; grep -q "No hay un proyecto con el c" "$T/adelantar.txt"; revisar "Con un código que no existe, lo dice" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM proyectos WHERE id=$PC AND fecha_aprobacion_124 IS NULL AND estado='Pendiente'")" = "1" ]; revisar "Los demás proyectos no se tocan" $?
+pedir ana POST /estudiante/informe-enviar.jsp; [[ "$DESTINO" == *"ok=informe-enviado"* ]]; revisar "Con el tiempo adelantado, el informe se envía" $?
 pedir dir POST /director/informe-revisar.jsp -F "id=$PA" -F "decision=aprobar" -F "observacion=Listo" -F "turnitin=@$T/turnitin.pdf"
 rejilla FDC-129 2; pedir eva POST /evaluador/evaluacion-guardar.jsp --data-urlencode "id=$PA" --data-urlencode "documento=informe" \
     --data-urlencode "accion=enviar" --data-urlencode "concepto=Aprobado" --data-urlencode "observacion=Cumple" --data-urlencode "plazo=" "${ARGS[@]}"
@@ -171,7 +186,9 @@ pedir dir POST /panel/sustentacion-programar.jsp --data-urlencode "id=$PA" --dat
 revisar "El director la reprograma (también acepta la fecha con espacio)" $?
 
 echo "== Aprobación final del comité"
-$MYSQL -e "UPDATE sustentaciones SET fecha_hora='$AYER 10:00:00' WHERE proyecto_id=$PA"
+adelantar "$CODIGO_PA"
+[ "$($MYSQL -e "SELECT fecha_hora <= NOW() AND fecha_hora > NOW() - INTERVAL 2 HOUR FROM sustentaciones WHERE proyecto_id=$PA")" = "1" ] && [ "$(estado $PA)" = "En curso" ]
+revisar "Script de la demo: la sustentación queda como hecha hace una hora (sin finalizar el proyecto)" $?
 pedir admin GET /panel/inicio.jsp; contiene "Aprobaciones finales" && grep -A1 'filtro=sustentacion"' "$T/cuerpo.html" | grep -q 'app-acceso-numero">1<' && sinError
 revisar "Pasada la fecha, el inicio del comité cuenta 1 aprobación final pendiente" $?
 pedir admin GET "/admin/proyectos.jsp?filtro=sustentacion"; contiene "Aprobación final pendiente"; revisar "En la lista sale \"Aprobación final pendiente\"" $?
