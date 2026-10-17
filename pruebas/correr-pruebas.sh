@@ -10,7 +10,7 @@ PROYECTO=/c/xampp/tomcat/webapps/segundo-parcial
 MYSQL=/c/xampp/mysql/bin/mysql.exe
 DUMP=/c/xampp/mysql/bin/mysqldump.exe
 RESPALDO="$1"; shift
-SUITES="${*:-base sprints2-3 sprint4 sprint5 sprint5b sprint5c sprint5d qa}"
+SUITES="${*:-base sprints2-3 sprint4 sprint5 sprint5b sprint5c sprint5d sprint7 qa}"
 cd "$PROYECTO" || exit 1
 
 /c/xampp/mysql/bin/mysqladmin.exe -u root ping > /dev/null 2>&1 || { echo "MySQL no responde: no se corre nada"; exit 1; }

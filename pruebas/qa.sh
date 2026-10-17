@@ -97,7 +97,7 @@ for CARPETA in admin director evaluador estudiante; do
 done
 [ -z "$MAL" ]; revisar "$TOTAL páginas: sin sesión van al login, con otro rol se niegan y con su rol abren${MAL:+ —$MAL}" $?
 MAL=""
-for R in /panel/inicio.jsp /panel/avisos.jsp /panel/calendario.jsp /panel/modalidades.jsp /panel/pqr.jsp /ideas/banco.jsp /ideas/idea-form.jsp /archivos/ver.jsp?id=1; do
+for R in /panel/inicio.jsp /panel/buscar.jsp /panel/avisos.jsp /panel/calendario.jsp /panel/modalidades.jsp /panel/pqr.jsp /ideas/banco.jsp /ideas/idea-form.jsp /archivos/ver.jsp?id=1; do
     pedir anon GET "$R"; [[ "$CODIGO" = 302 && "$DESTINO" == *"index.jsp?aviso=sesion"* ]] || MAL="$MAL $R"
 done
 [ -z "$MAL" ]; revisar "Las páginas comunes también exigen sesión${MAL:+ — fallan:$MAL}" $?

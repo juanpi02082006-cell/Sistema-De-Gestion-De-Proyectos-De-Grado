@@ -22,17 +22,17 @@ const NAVEGADORES = [
 const ids = (ruta, desde, hasta) => Array.from({ length: hasta - desde + 1 }, (_, i) => `${ruta}?id=${desde + i}`);
 const RECORRIDOS = [
     { correo: null, nombre: 'sin sesión', paginas: ['/index.jsp', '/registro.jsp', '/index.jsp?error=credenciales', '/registro.jsp?error=faltan-datos'] },
-    { correo: 'admin.prueba@uts.edu.co', nombre: 'comité', paginas: ['/panel/inicio.jsp', '/admin/proyectos.jsp', '/admin/proyectos.jsp?filtro=pago',
+    { correo: 'admin.prueba@uts.edu.co', nombre: 'comité', paginas: ['/panel/inicio.jsp', '/panel/buscar.jsp', '/panel/buscar.jsp?q=a&fase=4', '/admin/informes.jsp', '/admin/informes.jsp?periodo=todos', '/admin/proyectos.jsp', '/admin/proyectos.jsp?filtro=pago',
         ...ids('/admin/proyecto.jsp', 1, 8), '/admin/usuarios.jsp', '/admin/usuario-form.jsp', '/admin/usuario-form.jsp?id=20', '/admin/roles.jsp',
         '/admin/rol-form.jsp', '/admin/rol-form.jsp?id=3', '/admin/periodos.jsp', '/admin/periodo-form.jsp', '/admin/periodo-form.jsp?id=1',
         '/admin/sesiones.jsp?periodo=1', '/admin/modalidad-form.jsp?id=1', '/admin/pqrs.jsp', '/admin/auditoria.jsp', '/ideas/banco.jsp',
         '/panel/calendario.jsp', '/panel/modalidades.jsp', '/panel/avisos.jsp'] },
-    { correo: 'director.prueba@uts.edu.co', nombre: 'director', paginas: ['/panel/inicio.jsp', '/director/proyectos.jsp', ...ids('/director/proyecto.jsp', 1, 8),
+    { correo: 'director.prueba@uts.edu.co', nombre: 'director', paginas: ['/panel/inicio.jsp', '/panel/buscar.jsp', '/director/proyectos.jsp', ...ids('/director/proyecto.jsp', 1, 8),
         '/ideas/banco.jsp', '/ideas/idea-form.jsp', '/panel/pqr.jsp', '/panel/calendario.jsp', '/panel/avisos.jsp'] },
-    { correo: 'evaluador.prueba@uts.edu.co', nombre: 'evaluador', paginas: ['/panel/inicio.jsp', '/evaluador/proyectos.jsp', ...ids('/evaluador/proyecto.jsp', 2, 7), '/panel/pqr.jsp'] },
+    { correo: 'evaluador.prueba@uts.edu.co', nombre: 'evaluador', paginas: ['/panel/inicio.jsp', '/panel/buscar.jsp', '/evaluador/proyectos.jsp', ...ids('/evaluador/proyecto.jsp', 2, 7), '/panel/pqr.jsp'] },
     // Docente director y evaluador: entra directo y el menú le muestra las dos opciones
     { correo: 'docente.prueba@uts.edu.co', nombre: 'docente (director y evaluador)', paginas: ['/panel/inicio.jsp', '/director/proyectos.jsp', '/evaluador/proyectos.jsp', '/ideas/banco.jsp'] },
-    { correo: 'ana.ui@correo.uts.edu.co', nombre: 'estudiante fase 1', paginas: ['/panel/inicio.jsp', '/estudiante/proyecto.jsp', '/estudiante/habilitacion.jsp',
+    { correo: 'ana.ui@correo.uts.edu.co', nombre: 'estudiante fase 1', paginas: ['/panel/inicio.jsp', '/panel/buscar.jsp', '/estudiante/proyecto.jsp', '/estudiante/habilitacion.jsp',
         '/ideas/banco.jsp', '/ideas/idea-form.jsp', '/panel/pqr.jsp', '/panel/avisos.jsp'] },
     ...['beto', 'caro', 'dani', 'eli', 'fer', 'gabi', 'hugo'].map((n, i) => ({ correo: `${n}.ui@correo.uts.edu.co`,
         nombre: `estudiante ${['fase 2', 'fase 3', 'fase 4', 'fase 4 aprobada', 'fase 5', 'fase final', 'seminario'][i]}`,

@@ -2,8 +2,8 @@
      el usuario (diseño inspirado en el sistema actual de la UTS).
      Antes de incluirlo, definir:
        <c:set var="titulo"  value="..." />   título de la pestaña
-       <c:set var="seccion" value="..." />   opción del menú que se marca (inicio, usuarios, roles,
-                                             periodos, proyectos, pqrs, auditoria, dirigidos, evaluaciones, ideas,
+       <c:set var="seccion" value="..." />   opción del menú que se marca (inicio, buscar, usuarios, roles,
+                                             periodos, proyectos, informes, pqrs, auditoria, dirigidos, evaluaciones, ideas,
                                              habilitacion, proyecto, calendario, modalidades, avisos, pqr) --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="rolMenu" value="${sessionScope.rolActivo.id}" />
@@ -41,6 +41,9 @@
         <nav class="app-lateral-menu">
             <a href="${ctx}/panel/inicio.jsp" class="${seccion == 'inicio' ? 'activo' : ''}">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>Inicio</a>
+            <%-- Buscador (RF6): cada rol busca solo en lo suyo --%>
+            <a href="${ctx}/panel/buscar.jsp" class="${seccion == 'buscar' ? 'activo' : ''}">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar</a>
             <c:if test="${rolMenu == 1}">
                 <a href="${ctx}/admin/usuarios.jsp" class="${seccion == 'usuarios' ? 'activo' : ''}">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18.5 20a6 6 0 0 0-3-5.2"/></svg>Usuarios</a>
@@ -50,6 +53,8 @@
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Periodos</a>
                 <a href="${ctx}/admin/proyectos.jsp" class="${seccion == 'proyectos' ? 'activo' : ''}">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Proyectos</a>
+                <a href="${ctx}/admin/informes.jsp" class="${seccion == 'informes' ? 'activo' : ''}">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-6"/></svg>Informes</a>
                 <a href="${ctx}/admin/pqrs.jsp" class="${seccion == 'pqrs' ? 'activo' : ''}">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>PQR</a>
                 <a href="${ctx}/admin/auditoria.jsp" class="${seccion == 'auditoria' ? 'activo' : ''}">

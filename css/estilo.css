@@ -1541,3 +1541,24 @@ a.app-campana:focus-visible {
 .app-rejilla .app-casilla span {
     padding: 0.35rem 1rem;
 }
+
+/* Impresión (informes del comité, RF15): sin el menú, la cabecera ni los filtros */
+@media print {
+    .app-lateral,
+    .app-cabecera,
+    .app-velo,
+    .app-filtros,
+    .no-imprimir {
+        display: none !important;
+    }
+
+    .app-layout {
+        padding: 0;
+    }
+
+    .app-tarjeta {
+        box-shadow: none;
+        border: 1px solid #DDDDD5;
+        break-inside: avoid;
+    }
+}

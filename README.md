@@ -87,6 +87,7 @@ bash pruebas/sprint5.sh
 bash pruebas/sprint5b.sh
 bash pruebas/sprint5c.sh
 bash pruebas/sprint5d.sh
+bash pruebas/sprint7.sh    # buscador, informes del comité y búsquedas con 5.000 proyectos
 bash pruebas/qa.sh          # permisos de cada rol, datos de otros, XSS, SQL, archivos y sesión
 bash pruebas/interfaz.sh    # todas las páginas en Chrome y Brave, en computador y celular
 bash pruebas/usuario.sh     # pruebas de usuario: estudiantes que se registran y recorren las fases

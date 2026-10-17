@@ -233,6 +233,7 @@ bash pruebas/sprint5.sh      # pago, integrantes, director y evaluador, fases 2 
 bash pruebas/sprint5b.sh     # carreras, código, avisos, plazos, codirectores, anexos, cambio de modalidad, PQR, auditoría, exoneración, Seminario y semana 12
 bash pruebas/sprint5c.sh     # fases 4 y 5: rejillas del evaluador, decisiones del comité, seguimientos e informe final
 bash pruebas/sprint5d.sh     # fase final: sustentación (programar y reprogramar) y aprobación final del comité
+bash pruebas/sprint7.sh      # buscador (RF6), informes del comité (RF15) y búsquedas con 5.000 proyectos (RNF3)
 bash pruebas/qa.sh           # QA: permisos de cada página por rol, datos de otros proyectos, XSS, SQL, parámetros basura, archivos y sesión
 bash pruebas/interfaz.sh     # todas las páginas de cada rol en Chrome y Brave, en computador y celular (Node y Playwright)
 bash pruebas/usuario.sh      # pruebas de usuario en Chrome: registro, todas las fases y los caminos alternos (Node y Playwright)
