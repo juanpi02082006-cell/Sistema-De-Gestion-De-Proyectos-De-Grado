@@ -4,7 +4,7 @@
      fase final sale la fecha de la sustentación o que falta programarla (RF39). --%>
 <%@ include file="/WEB-INF/jspf/solo-director.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
-<c:set var="titulo" value="Mis proyectos" />
+<c:set var="titulo" value="Docente director" />
 <c:set var="seccion" value="dirigidos" />
 
 <sql:query var="proyectos">
@@ -33,8 +33,8 @@
 <%@ include file="/WEB-INF/jspf/cabecera.jspf" %>
 
 <section class="app-encabezado">
-    <h1>Mis proyectos</h1>
-    <p>Los proyectos que diriges. Los que están en la fase 3 tienen una propuesta para revisar.</p>
+    <h1>Docente director</h1>
+    <p>Los proyectos que diriges o codiriges. Los que están en la fase 3 tienen una propuesta para revisar.</p>
 </section>
 
 <%@ include file="/WEB-INF/jspf/mensajes.jspf" %>

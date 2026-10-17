@@ -4,11 +4,11 @@
 # rejilla del F-DC-124, 4 con la propuesta aprobada y el informe, 5 con la rejilla del
 # F-DC-129, fase final con la sustentación por programar y Seminario con la inscripción),
 # para que cada formulario salga en pantalla, y corre pruebas/interfaz.js: todas las páginas de
-# cada rol en Chrome, Edge y Firefox, en computador y en celular.
+# cada rol en Chrome y Brave, en computador y en celular.
 # Se corre con correr-pruebas.sh (respalda la base y la devuelve):
 #   bash pruebas/correr-pruebas.sh <carpeta-respaldo> interfaz
 # Necesita Node, playwright-core (ruta en PLAYWRIGHT; por defecto la de este computador), Chrome
-# y Edge instalados, y el Firefox de Playwright (node <playwright-core>/cli.js install firefox).
+# y Brave instalados (ruta de Brave en BRAVE; por defecto la de Archivos de programa).
 cd "$(dirname "$0")/.." || exit 1
 MYSQL="/c/xampp/mysql/bin/mysql.exe -u root -N -B -D sistemas_proyectos_grado --default-character-set=utf8mb4"
 export PLAYWRIGHT="${PLAYWRIGHT:-C:/Users/juanp/node_modules/playwright-core}"

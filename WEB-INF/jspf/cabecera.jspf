@@ -7,6 +7,9 @@
                                              habilitacion, proyecto, calendario, modalidades, avisos, pqr) --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="rolMenu" value="${sessionScope.rolActivo.id}" />
+<%-- Cómo se nombra el rol del usuario (bajo su nombre y en el inicio): el docente con los dos
+     roles de docente es "Docente director y evaluador", sin importar cuál esté activo --%>
+<c:set var="nombreRolMenu" value="${(rolMenu == 3 or rolMenu == 4) and tieneRolDirector and tieneRolEvaluador ? 'Docente director y evaluador' : sessionScope.rolActivo.nombre}" />
 <%-- Alertas de vencimiento (RNF21) y avisos sin leer (RF5). Los cierres automáticos van
      en sesion.jspf, antes de las consultas de la página. --%>
 <%@ include file="/WEB-INF/jspf/alertas.jspf" %>
@@ -52,13 +55,15 @@
                 <a href="${ctx}/admin/auditoria.jsp" class="${seccion == 'auditoria' ? 'activo' : ''}">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>Auditoría</a>
             </c:if>
-            <c:if test="${rolMenu == 3}">
+            <%-- Docente: una opción por cada rol de docente que tenga (los dos, si es director
+                 de unos proyectos y evaluador de otros); al abrir una, el rol activo cambia solo --%>
+            <c:if test="${(rolMenu == 3 or rolMenu == 4) and tieneRolDirector}">
                 <a href="${ctx}/director/proyectos.jsp" class="${seccion == 'dirigidos' ? 'activo' : ''}">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Mis proyectos</a>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Docente director</a>
             </c:if>
-            <c:if test="${rolMenu == 4}">
+            <c:if test="${(rolMenu == 3 or rolMenu == 4) and tieneRolEvaluador}">
                 <a href="${ctx}/evaluador/proyectos.jsp" class="${seccion == 'evaluaciones' ? 'activo' : ''}">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Mis evaluaciones</a>
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg>Docente evaluador</a>
             </c:if>
             <c:if test="${rolMenu == 5}">
                 <a href="${ctx}/estudiante/habilitacion.jsp" class="${seccion == 'habilitacion' ? 'activo' : ''}">
@@ -75,7 +80,9 @@
         </nav>
 
         <div class="app-lateral-pie">
-            <c:if test="${fn:length(sessionScope.roles) > 1}">
+            <%-- Solo si tiene roles de grupos distintos (comité, docente, estudiante): entre los
+                 dos de docente no hace falta, porque el menú ya muestra las dos opciones --%>
+            <c:if test="${fn:length(sessionScope.roles) > 1 and tieneOtrosRoles}">
                 <a href="${ctx}/acceso/elegir-rol.jsp">
                     <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3"/><path d="M17 17H6l3 3"/></svg>Cambiar rol</a>
             </c:if>
@@ -103,7 +110,7 @@
                 <img class="app-avatar" src="${ctx}/img/perfil.png" alt="" width="42" height="42">
                 <span class="app-usuario-datos">
                     <strong><c:out value="${sessionScope.usuario.nombre}" /></strong>
-                    <span><c:out value="${sessionScope.rolActivo.nombre}" /></span>
+                    <span><c:out value="${nombreRolMenu}" /></span>
                 </span>
             </div>
         </header>

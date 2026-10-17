@@ -121,7 +121,7 @@ asignarA() { pedir admin POST /admin/proyecto-asignar.jsp --data-urlencode "id=$
 asignarA --data-urlencode "evaluador=4" --data-urlencode "interdisciplinario=on" --data-urlencode "codirector1=3"
 [[ "$DESTINO" == *"error=codirector-invalido"* ]]; revisar "El director no es codirector de su proyecto" $?
 asignarA --data-urlencode "evaluador=4" --data-urlencode "interdisciplinario=on" --data-urlencode "codirector1=4"
-[[ "$DESTINO" == *"error=codirector-invalido"* ]]; revisar "Un docente sin el rol Director no es codirector" $?
+[[ "$DESTINO" == *"error=codirector-invalido"* ]]; revisar "Un docente sin el rol Docente director no es codirector" $?
 asignarA --data-urlencode "evaluador=6" --data-urlencode "interdisciplinario=on" --data-urlencode "codirector1=6"
 [[ "$DESTINO" == *"error=codirector-invalido"* ]]; revisar "El evaluador no es codirector del mismo proyecto" $?
 asignarA --data-urlencode "evaluador=4" --data-urlencode "interdisciplinario=on" --data-urlencode "codirector1=6" --data-urlencode "codirector2=6"

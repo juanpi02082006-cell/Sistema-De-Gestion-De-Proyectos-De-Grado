@@ -8,6 +8,19 @@
 <%-- Que el navegador no guarde la página: así, después de salir,
      el botón "atrás" no muestra datos. --%>
 <c:set var="sinCache" value="${pageContext.response.setHeader('Cache-Control', 'no-store')}" />
+<%-- Roles de docente del usuario (decisión del 2026-10-16): un docente puede ser Docente
+     director (3), Docente evaluador (4) o los dos. Con los dos entra directo y el menú le
+     muestra las dos opciones; solo-director.jspf y solo-evaluador.jspf le cambian solos el
+     rol activo entre ellos. tieneOtrosRoles: tiene además un rol que no es de docente
+     (comité o estudiante), y para eso sí escoge el rol al entrar. --%>
+<c:set var="tieneRolDirector" value="false" />
+<c:set var="tieneRolEvaluador" value="false" />
+<c:set var="tieneOtrosRoles" value="false" />
+<c:forEach var="rolSesion" items="${sessionScope.roles}">
+    <c:if test="${rolSesion.id == 3}"><c:set var="tieneRolDirector" value="true" /></c:if>
+    <c:if test="${rolSesion.id == 4}"><c:set var="tieneRolEvaluador" value="true" /></c:if>
+    <c:if test="${rolSesion.id != 3 and rolSesion.id != 4}"><c:set var="tieneOtrosRoles" value="true" /></c:if>
+</c:forEach>
 <%-- Cierres automáticos (RNF21): en las páginas que se abren (GET) van aquí, antes de que
      la página consulte nada, para que la primera vista después de un vencimiento ya muestre
      el proyecto cancelado. Las acciones (POST) no los corren: cada una revisa sus plazos y

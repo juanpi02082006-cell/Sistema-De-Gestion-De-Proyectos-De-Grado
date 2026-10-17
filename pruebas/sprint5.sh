@@ -96,9 +96,9 @@ pedir caro POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf"; [[ "$DE
 pedir admin GET /admin/pago-revisar.jsp; [[ "$DESTINO" == *"/admin/proyectos.jsp" ]]; revisar "Por GET no revisa nada" $?
 
 echo "== El comité asigna director y evaluador (RF11, RF27)"
-asignar $PA 4 ""; [[ "$DESTINO" == *"error=director-invalido"* ]]; revisar "Un docente sin el rol Director no dirige" $?
+asignar $PA 4 ""; [[ "$DESTINO" == *"error=director-invalido"* ]]; revisar "Un docente sin el rol Docente director no dirige" $?
 asignar $PA "" ""; [[ "$DESTINO" == *"error=director-invalido"* ]]; revisar "Sin director: rechazado" $?
-asignar $PA 3 3; [[ "$DESTINO" == *"error=evaluador-invalido"* ]]; revisar "Un docente sin el rol Evaluador no evalúa" $?
+asignar $PA 3 3; [[ "$DESTINO" == *"error=evaluador-invalido"* ]]; revisar "Un docente sin el rol Docente evaluador no evalúa" $?
 asignar $PA 6 6; [[ "$DESTINO" == *"error=director-evaluador"* ]]; revisar "El mismo docente no dirige y evalúa (aunque tenga los dos roles)" $?
 $MYSQL -e "UPDATE usuarios SET activo=0 WHERE id=3"
 asignar $PA 3 4; [[ "$DESTINO" == *"error=director-invalido"* ]]; revisar "Un docente inactivo no se asigna" $?
@@ -269,7 +269,7 @@ for R in "admin /admin/proyectos.jsp" "admin /admin/proyecto.jsp?id=$PA" "admin 
 done
 [ "$MOJIBAKE" = 0 ]; revisar "Ninguna página nueva muestra letras raras (Ã)" $?
 pedir admin GET /panel/inicio.jsp; contiene 'admin/proyectos.jsp" class'; revisar "El menú del comité tiene Proyectos" $?
-pedir doc GET /panel/inicio.jsp; contiene 'director/proyectos.jsp" class' && ! contiene 'admin/proyectos.jsp'; revisar "El menú del director tiene Mis proyectos" $?
+pedir doc GET /panel/inicio.jsp; contiene 'director/proyectos.jsp" class' && contiene 'evaluador/proyectos.jsp" class' && ! contiene 'admin/proyectos.jsp'; revisar "El menú del docente tiene Docente director y Docente evaluador" $?
 
 # Borra solo los recibos que crearon estas pruebas
 ls "$ARCHIVOS" | grep -vxF -f "$T/archivos-antes.txt" | while read -r A; do rm -f "$ARCHIVOS/$A"; done

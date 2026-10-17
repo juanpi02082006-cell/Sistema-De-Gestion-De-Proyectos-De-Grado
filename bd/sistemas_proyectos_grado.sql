@@ -46,6 +46,8 @@ USE sistemas_proyectos_grado;
 
 -- 4 roles. Un usuario puede tener varios (usuario_roles).
 -- El Administrador es el comité de trabajos de grado (RF7, RF10, RF14).
+-- Los docentes son Docente director (3), Docente evaluador (4) o los dos (decisión del
+-- 2026-10-16): con los dos entran directo y el menú les muestra las dos opciones.
 -- El id 2 (Coordinación) ya no se usa; los demás conservan su id porque el
 -- código decide por el id (1 Administrador, 5 Estudiante).
 CREATE TABLE roles (
@@ -633,10 +635,10 @@ CREATE TABLE exoneraciones (
 -- -----------------------------------------------------------------------------
 
 INSERT INTO roles (id, nombre, descripcion) VALUES
-    (1, 'Administrador', 'Comité de trabajos de grado: registra a los docentes, aprueba ideas y propuestas y es el último filtro de aprobación'),
-    (3, 'Director',      'Docente que dirige y califica proyectos; también registra ideas en el banco'),
-    (4, 'Evaluador',     'Docente que evalúa proyectos aprobados por el director; también registra ideas en el banco'),
-    (5, 'Estudiante',    'Se registra solo, elige una idea o formula su propuesta y sube los formatos de su proyecto');
+    (1, 'Administrador',     'Comité de trabajos de grado: registra a los docentes, aprueba ideas y propuestas y es el último filtro de aprobación'),
+    (3, 'Docente director',  'Docente que dirige o codirige proyectos; también registra ideas en el banco'),
+    (4, 'Docente evaluador', 'Docente que evalúa proyectos aprobados por el director; también registra ideas en el banco'),
+    (5, 'Estudiante',        'Se registra solo, elige una idea o formula su propuesta y sube los formatos de su proyecto');
 
 INSERT INTO tipos_documentos (id, nombre, sigla) VALUES
     (1, 'Tarjeta de identidad',  'T.I'),
@@ -918,5 +920,5 @@ INSERT INTO usuario_roles (usuario_id, rol_id) VALUES
     (3, 3),
     (4, 4),
     (5, 5),
-    (6, 3),  -- El docente de prueba tiene dos roles: Director
-    (6, 4);  -- y Evaluador (para probar el login con varios roles).
+    (6, 3),  -- El docente de prueba tiene los dos roles de docente: Docente director
+    (6, 4);  -- y Docente evaluador (entra directo y ve las dos opciones del menú).

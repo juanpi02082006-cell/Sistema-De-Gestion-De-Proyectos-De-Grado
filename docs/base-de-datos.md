@@ -27,10 +27,10 @@ Todos son ficticios y tienen la contraseña `123456` (desde el 2026-10-08). Usan
 | Correo | Rol |
 | --- | --- |
 | `admin.prueba@uts.edu.co` | Administrador (es el comité de trabajos de grado) |
-| `director.prueba@uts.edu.co` | Director |
-| `evaluador.prueba@uts.edu.co` | Evaluador |
+| `director.prueba@uts.edu.co` | Docente director |
+| `evaluador.prueba@uts.edu.co` | Docente evaluador |
 | `estudiante.prueba@correo.uts.edu.co` | Estudiante (nivel Tecnológico, plan anterior, 80 % de créditos) |
-| `docente.prueba@uts.edu.co` | Director y Evaluador (para probar un usuario con varios roles) |
+| `docente.prueba@uts.edu.co` | Docente director y Docente evaluador (entra directo y ve las dos opciones del menú) |
 
 El usuario de Coordinación se quitó en la versión 3, porque Coordinación ya no es un rol.
 
@@ -40,7 +40,7 @@ El usuario de Coordinación se quitó en la versión 3, porque Coordinación ya 
 | --- | --- |
 | Basada en la base original de la UTS (`sistemastg`), pero sin sus datos | Se toma la estructura y los catálogos institucionales (modalidades, líneas de investigación, tipos de documento); no se copian datos de personas. |
 | Sin las tablas de Laravel | El sistema original está hecho en Laravel (PHP); tablas como `migrations`, `jobs` o `sessions` no sirven en un proyecto JSP. |
-| 4 roles, y un usuario puede tener varios | Administrador, Director, Evaluador y Estudiante. El administrador es el comité de trabajos de grado (decisión del 2026-10-06). Un docente puede dirigir un proyecto y evaluar otro. |
+| 4 roles, y un usuario puede tener varios | Administrador, Docente director, Docente evaluador y Estudiante (los roles 3 y 4 se llaman así desde el 2026-10-16; antes "Director" y "Evaluador"; para una base con datos, `bd/migracion-roles-docente.sql`). El administrador es el comité de trabajos de grado (decisión del 2026-10-06). Un docente puede dirigir un proyecto y evaluar otro; con los dos roles entra directo y el menú le muestra las dos opciones. |
 | Los roles conservan su id (1, 3, 4 y 5); el 2 ya no se usa | El código decide por el id (1 Administrador, 5 Estudiante). Así no hubo que cambiar la lógica al quitar Coordinación. |
 | Login con correo institucional y contraseña | Decisión del equipo y RF1. La base solo acepta `@uts.edu.co` y `@correo.uts.edu.co`. |
 | Una tabla `proyectos` explícita | En la original los proyectos son "solicitudes" con formularios dinámicos (`campos` y `valores_campos`): es flexible, pero difícil de programar y consultar con JSTL. |
@@ -234,7 +234,7 @@ bash pruebas/sprint5b.sh     # carreras, código, avisos, plazos, codirectores, 
 bash pruebas/sprint5c.sh     # fases 4 y 5: rejillas del evaluador, decisiones del comité, seguimientos e informe final
 bash pruebas/sprint5d.sh     # fase final: sustentación (programar y reprogramar) y aprobación final del comité
 bash pruebas/qa.sh           # QA: permisos de cada página por rol, datos de otros proyectos, XSS, SQL, parámetros basura, archivos y sesión
-bash pruebas/interfaz.sh     # todas las páginas de cada rol en Chrome, Edge y Firefox, en computador y celular (Node y Playwright)
+bash pruebas/interfaz.sh     # todas las páginas de cada rol en Chrome y Brave, en computador y celular (Node y Playwright)
 bash pruebas/usuario.sh      # pruebas de usuario en Chrome: registro, todas las fases y los caminos alternos (Node y Playwright)
 ```
 

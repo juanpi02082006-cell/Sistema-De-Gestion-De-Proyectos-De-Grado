@@ -64,7 +64,7 @@
     ORDER BY est.nombre, e.subido_por, e.id DESC
     <sql:param value="${p.id}" />
 </sql:query>
-<%-- Docentes activos con rol Director (3) y con rol Evaluador (4) --%>
+<%-- Docentes activos con el rol Docente director (3) y con el rol Docente evaluador (4) --%>
 <sql:query var="directores">
     SELECT u.id, u.nombre FROM usuarios u JOIN usuario_roles ur ON ur.usuario_id = u.id
     WHERE ur.rol_id = 3 AND u.activo = 1 ORDER BY u.nombre

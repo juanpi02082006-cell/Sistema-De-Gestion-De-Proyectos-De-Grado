@@ -6,7 +6,7 @@
      por evaluar. --%>
 <%@ include file="/WEB-INF/jspf/solo-evaluador.jspf" %>
 <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
-<c:set var="titulo" value="Mis evaluaciones" />
+<c:set var="titulo" value="Docente evaluador" />
 <c:set var="seccion" value="evaluaciones" />
 
 <sql:query var="proyectos">
@@ -37,8 +37,8 @@
 <%@ include file="/WEB-INF/jspf/cabecera.jspf" %>
 
 <section class="app-encabezado">
-    <h1>Mis evaluaciones</h1>
-    <p>Los proyectos que el comité te asignó. La propuesta te llega cuando el director la aprueba y te la envía.</p>
+    <h1>Docente evaluador</h1>
+    <p>Los proyectos que el comité te asignó para evaluar. La propuesta te llega cuando el director la aprueba y te la envía.</p>
 </section>
 
 <%@ include file="/WEB-INF/jspf/mensajes.jspf" %>

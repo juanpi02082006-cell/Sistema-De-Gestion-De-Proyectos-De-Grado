@@ -83,18 +83,14 @@ class Persona {
         await this.p.fill('#correo', this.correo);
         await this.p.fill('#clave', CLAVE);
         await Promise.all([this.p.waitForNavigation(), this.p.click('button[type=submit]')]);
-        if (this.p.url().includes('elegir-rol')) await this.escogerRol(this.rol);
+        // Nadie escoge rol: todos tienen un rol, o los dos de docente (entra directo)
         revisar(`${this.nombre}: inicia sesión${this.celular ? ' desde el celular' : ''}`, this.p.url().includes('/panel/inicio.jsp'), this.p.url());
         return this.p;
     }
-    async escogerRol(rol) {
-        await Promise.all([this.p.waitForNavigation(), this.p.locator('a.rol-opcion', { hasText: rol }).click()]);
-        this.rol = rol;
-    }
-    async cambiarRol(rol) {
-        await this.menu('/acceso/elegir-rol.jsp');
-        await this.escogerRol(rol);
-        revisar(`${this.nombre}: cambia al rol ${rol}`, this.p.url().includes('/panel/inicio.jsp'));
+    // Opciones de docente que muestra el menú lateral ("Docente director", "Docente evaluador")
+    async opcionesDocente() {
+        const p = await this.abrir();
+        return (await p.locator('.app-lateral-menu a').allInnerTexts()).map(t => t.trim()).filter(t => t.startsWith('Docente'));
     }
     // Abre una opción del menú lateral (en el celular, primero el botón del menú)
     async menu(ruta) {
@@ -298,7 +294,7 @@ async function registrar(datos, esperado) {
     const comite = new Persona('Comité', 'admin.prueba@uts.edu.co');
     const director = new Persona('Director', 'director.prueba@uts.edu.co');
     const evaluador = new Persona('Evaluador', 'evaluador.prueba@uts.edu.co');
-    const docente = new Persona('Docente (dos roles)', 'docente.prueba@uts.edu.co', { rol: 'Director' });
+    const docente = new Persona('Docente (director y evaluador)', 'docente.prueba@uts.edu.co');
     const est = {};
     const ESTUDIANTES = [
         ['ana', 'Ana Lucia Torres Mejia', 85], ['beto', 'Alberto Jose Rueda Pinto', 80, true], ['caro', 'Carolina Diaz Ardila', 50],
@@ -344,6 +340,19 @@ async function registrar(datos, esperado) {
         await revisarIdea(comite, 'Idea sin alcance definido', 'rechazar', 'No define el alcance');
         p = await director.menu('/ideas/banco.jsp');
         revisar('Director: ve la observación de la idea rechazada', (await director.texto()).includes('No define el alcance'));
+    });
+
+    await escenario('1b. Menú de los docentes (decisión del 2026-10-16)', async () => {
+        const opciones = async persona => JSON.stringify(await persona.opcionesDocente());
+        revisar('Docente con los dos roles: entra directo y ve "Docente director" y "Docente evaluador"',
+            (await opciones(docente)) === '["Docente director","Docente evaluador"]', await opciones(docente));
+        revisar('Docente con los dos roles: bajo su nombre dice "Docente director y evaluador"', (await docente.texto()).includes('Docente director y evaluador'));
+        revisar('Director de prueba (un solo rol): solo ve "Docente director"', (await opciones(director)) === '["Docente director"]', await opciones(director));
+        revisar('Evaluador de prueba (un solo rol): solo ve "Docente evaluador"', (await opciones(evaluador)) === '["Docente evaluador"]', await opciones(evaluador));
+        const p = await docente.menu('/evaluador/proyectos.jsp');
+        revisar('Docente: abre "Docente evaluador" sin cambiar de rol a mano', (await p.locator('h1').innerText()) === 'Docente evaluador');
+        await docente.menu('/director/proyectos.jsp');
+        revisar('Docente: y vuelve a "Docente director"', (await docente.p.locator('h1').innerText()) === 'Docente director');
     });
 
     await escenario('2. Registro e inicio de sesión', async () => {
@@ -587,7 +596,8 @@ async function registrar(datos, esperado) {
         await f.locator('textarea').fill('Cambio justificado');
         await hacer(comite, 'aprueba el cambio de modalidad', f.locator('button[value=aprobar]'), 'ok=modalidad-aprobada');
         revisar('el proyecto queda en Monografía', sql(`SELECT modalidad_id FROM proyectos WHERE id = ${fer.id}`) === '3');
-        await docente.cambiarRol('Evaluador');
+        // El docente, que fue codirector de Ana y director de Dani, evalúa a Fer desde la opción
+        // "Docente evaluador" del menú, sin cambiar de rol a mano
         await propuestaAprobada(est.fer, comite, director, docente, 'Director de Prueba', 'Docente de Prueba');
         p = await est.fer.menu('/estudiante/proyecto.jsp');
         await p.fill('#puntaje', '160');
@@ -606,7 +616,6 @@ async function registrar(datos, esperado) {
     });
 
     await escenario('11. Prórroga y plazo vencido (Gabi)', async () => {
-        await docente.cambiarRol('Director');
         await tomarIdea(est.gabi, 'Reservas de laboratorios');
         const gabi = await propuestaAprobada(est.gabi, comite, director, evaluador, 'Director de Prueba', 'Evaluador de Prueba');
         const limite = sql(`SELECT fecha_limite FROM proyectos WHERE id = ${gabi.id}`);

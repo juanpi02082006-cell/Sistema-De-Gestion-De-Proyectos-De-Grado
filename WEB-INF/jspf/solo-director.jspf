@@ -1,5 +1,12 @@
-<%-- Protege una página del director (rol con id 3). --%>
+<%-- Protege una página del Docente director (rol con id 3). Un docente que también es
+     Docente evaluador y viene de esa sección pasa solo al rol de director (el menú le
+     muestra las dos opciones, decisión del 2026-10-16); los demás roles no entran. --%>
 <%@ include file="/WEB-INF/jspf/sesion.jspf" %>
+<c:if test="${sessionScope.rolActivo.id == 4 and tieneRolDirector}">
+    <c:forEach var="rolSesion" items="${sessionScope.roles}">
+        <c:if test="${rolSesion.id == 3}"><c:set var="rolActivo" scope="session" value="${rolSesion}" /></c:if>
+    </c:forEach>
+</c:if>
 <c:if test="${sessionScope.rolActivo.id != 3}">
     <c:redirect url="/panel/inicio.jsp">
         <c:param name="error" value="denegado" />

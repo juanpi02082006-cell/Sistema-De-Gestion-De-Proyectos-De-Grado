@@ -1,4 +1,4 @@
-<%-- Para usuarios con varios roles (por ejemplo, Director y Evaluador):
+<%-- Para usuarios con varios roles (por ejemplo, comité y docente; el docente con los dos roles de docente no escoge, ver validar.jsp):
      escoger con qué rol entrar. También sirve para cambiar de rol. --%>
 <c:if test="${empty sessionScope.usuario}">
     <c:redirect url="/index.jsp">

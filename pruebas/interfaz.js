@@ -1,10 +1,10 @@
-// Pruebas de la interfaz (2026-10-14): todas las páginas de cada rol en Chrome, Edge y Firefox,
+// Pruebas de la interfaz (2026-10-14): todas las páginas de cada rol en Chrome y Brave (RNF11),
 // en computador (1366 px) y en celular (390 px). En cada una revisa: que cargue sin error del
 // servidor, sin errores de JavaScript, con los estilos (Bootstrap y estilo.css) y sin
 // desplazamiento horizontal (RNF9, RNF11); si algo se sale de la pantalla, dice qué. En
 // celular, que el botón abra el menú. Y que un estudiante suba su propuesta en máximo 5 clics
 // (RNF17). Lo corre pruebas/interfaz.sh, que antes deja un proyecto en cada situación.
-const { chromium, firefox } = require(process.env.PLAYWRIGHT || 'playwright-core');
+const { chromium } = require(process.env.PLAYWRIGHT || 'playwright-core');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,10 +13,11 @@ let ok = 0, falla = 0;
 const revisar = (nombre, bien, detalle) => {
     if (bien) ok++; else { falla++; console.log(`  FALLA ${nombre}${detalle ? ' (' + detalle + ')' : ''}`); }
 };
+// Los navegadores que usa el equipo (decisión del 2026-10-17): Chrome y Brave
+const BRAVE = process.env.BRAVE || 'C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe';
 const NAVEGADORES = [
     { nombre: 'Chrome', lanzar: () => chromium.launch({ channel: 'chrome' }) },
-    { nombre: 'Edge', lanzar: () => chromium.launch({ channel: 'msedge' }) },
-    { nombre: 'Firefox', lanzar: () => firefox.launch() },
+    { nombre: 'Brave', lanzar: () => chromium.launch({ executablePath: BRAVE }) },
 ];
 const ids = (ruta, desde, hasta) => Array.from({ length: hasta - desde + 1 }, (_, i) => `${ruta}?id=${desde + i}`);
 const RECORRIDOS = [
@@ -29,6 +30,8 @@ const RECORRIDOS = [
     { correo: 'director.prueba@uts.edu.co', nombre: 'director', paginas: ['/panel/inicio.jsp', '/director/proyectos.jsp', ...ids('/director/proyecto.jsp', 1, 8),
         '/ideas/banco.jsp', '/ideas/idea-form.jsp', '/panel/pqr.jsp', '/panel/calendario.jsp', '/panel/avisos.jsp'] },
     { correo: 'evaluador.prueba@uts.edu.co', nombre: 'evaluador', paginas: ['/panel/inicio.jsp', '/evaluador/proyectos.jsp', ...ids('/evaluador/proyecto.jsp', 2, 7), '/panel/pqr.jsp'] },
+    // Docente director y evaluador: entra directo y el menú le muestra las dos opciones
+    { correo: 'docente.prueba@uts.edu.co', nombre: 'docente (director y evaluador)', paginas: ['/panel/inicio.jsp', '/director/proyectos.jsp', '/evaluador/proyectos.jsp', '/ideas/banco.jsp'] },
     { correo: 'ana.ui@correo.uts.edu.co', nombre: 'estudiante fase 1', paginas: ['/panel/inicio.jsp', '/estudiante/proyecto.jsp', '/estudiante/habilitacion.jsp',
         '/ideas/banco.jsp', '/ideas/idea-form.jsp', '/panel/pqr.jsp', '/panel/avisos.jsp'] },
     ...['beto', 'caro', 'dani', 'eli', 'fer', 'gabi', 'hugo'].map((n, i) => ({ correo: `${n}.ui@correo.uts.edu.co`,

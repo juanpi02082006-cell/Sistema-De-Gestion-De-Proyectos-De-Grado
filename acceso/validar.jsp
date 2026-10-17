@@ -1,6 +1,7 @@
 <%-- Valida el inicio de sesión (punto 1). Recibe correo y clave por POST.
      - Si son correctos, guarda en la sesión: usuario, roles y rolActivo.
-     - Con un solo rol entra directo al panel; con varios, elige el rol primero. --%>
+     - Con un solo rol entra directo al panel, y también el docente con los dos roles de
+       docente; con otros roles (por ejemplo, comité y docente), elige el rol primero. --%>
 <c:if test="${pageContext.request.method != 'POST'}">
     <c:redirect url="/index.jsp" />
 </c:if>
@@ -52,8 +53,15 @@
 <c:set var="usuario" scope="session" value="${usuarioValido}" />
 <c:set var="roles" scope="session" value="${rolesUsuario.rows}" />
 
+<%-- Un docente con los dos roles (Docente director y Docente evaluador) no escoge: entra
+     como director y el menú le muestra las dos opciones (decisión del 2026-10-16) --%>
+<c:set var="soloDocente" value="true" />
+<c:forEach var="r" items="${rolesUsuario.rows}">
+    <c:if test="${r.id != 3 and r.id != 4}"><c:set var="soloDocente" value="false" /></c:if>
+</c:forEach>
+
 <c:choose>
-    <c:when test="${rolesUsuario.rowCount == 1}">
+    <c:when test="${rolesUsuario.rowCount == 1 or soloDocente}">
         <c:set var="rolActivo" scope="session" value="${rolesUsuario.rows[0]}" />
         <c:redirect url="/panel/inicio.jsp" />
     </c:when>

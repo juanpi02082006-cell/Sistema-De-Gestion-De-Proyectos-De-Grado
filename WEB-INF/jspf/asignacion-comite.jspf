@@ -14,7 +14,7 @@
                 <option value="${d.id}" ${idOpcion == idDirector ? 'selected' : ''}><c:out value="${d.nombre}" /></option>
             </c:forEach>
         </select>
-        <c:if test="${directores.rowCount == 0}"><div class="form-text">No hay docentes activos con el rol Director. Asígnalo en Usuarios.</div></c:if>
+        <c:if test="${directores.rowCount == 0}"><div class="form-text">No hay docentes activos con el rol Docente director. Asígnalo en Usuarios.</div></c:if>
     </div>
     <div class="col-12">
         <label class="form-label" for="evaluador">Evaluador</label>

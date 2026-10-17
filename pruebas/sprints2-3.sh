@@ -78,7 +78,7 @@ pedir admin POST /admin/usuario-guardar.jsp --data-urlencode "id=$ID" --data "no
     --data-urlencode "carrera=$CARRERA" --data-urlencode "activo=on"
 [[ "$CODIGO" = 302 && "$DESTINO" == *"ok=usuario-actualizado"* ]]; revisar "Editar: guarda los cambios" $?
 [ "$($MYSQL -e "SELECT contrasena FROM usuarios WHERE id=$ID")" = "$HASH_ANTES" ]; revisar "Editar sin contraseña: conserva la anterior" $?
-[ "$($MYSQL -e "SELECT GROUP_CONCAT(rol_id ORDER BY rol_id) FROM usuario_roles WHERE usuario_id=$ID")" = "3,5" ]; revisar "Editar: roles actualizados (Director y Estudiante)" $?
+[ "$($MYSQL -e "SELECT GROUP_CONCAT(rol_id ORDER BY rol_id) FROM usuario_roles WHERE usuario_id=$ID")" = "3,5" ]; revisar "Editar: roles actualizados (Docente director y Estudiante)" $?
 
 pedir admin POST /admin/usuario-guardar.jsp --data-urlencode "id=1" --data-urlencode "nombre=Administrador de Prueba" --data-urlencode "tipo_documento=2" \
     --data-urlencode "numero_documento=1000000001" --data-urlencode "correo=admin.prueba@uts.edu.co" --data-urlencode "roles=3" --data-urlencode "activo=on"
@@ -95,19 +95,37 @@ pedir est POST /admin/usuario-eliminar.jsp --data-urlencode "id=$ID"
 [[ "$DESTINO" == *"error=denegado"* ]]; revisar "El estudiante no puede eliminar usuarios" $?
 pedir est GET /panel/inicio.jsp; ! contiene "admin/usuarios.jsp"; revisar "El estudiante no ve el menú de administración" $?
 
-echo "== Usuario con varios roles"
+echo "== Docente con los dos roles de docente (decisión del 2026-10-16)"
 pedir doc POST /acceso/validar.jsp --data-urlencode "correo=docente.prueba@uts.edu.co" --data-urlencode "clave=123456"
-[[ "$DESTINO" == *"/acceso/elegir-rol.jsp" ]]; revisar "Docente con 2 roles: va a elegir rol" $?
-pedir doc GET /acceso/elegir-rol.jsp; contiene ">Director<" && contiene ">Evaluador<"; revisar "Muestra Director y Evaluador" $?
+[[ "$DESTINO" == *"/panel/inicio.jsp" ]]; revisar "Docente director y evaluador: entra directo, sin escoger rol" $?
 pedir doc GET /panel/inicio.jsp
-[[ "$CODIGO" = 302 ]]; revisar "Sin elegir rol no entra al panel" $?
-pedir doc GET "/acceso/elegir-rol.jsp?rol=1"
-[ "$CODIGO" = 200 ]; revisar "No puede escoger un rol que no tiene (Administrador)" $?
+contiene 'director/proyectos.jsp" class' && contiene ">Docente director<" && contiene 'evaluador/proyectos.jsp" class' && contiene ">Docente evaluador<"
+revisar "El menú muestra Docente director y Docente evaluador" $?
+contiene "<strong>Docente director y evaluador</strong>" && ! contiene "Cambiar rol"; revisar "Entra como Docente director y evaluador, sin Cambiar rol" $?
+pedir doc GET /evaluador/proyectos.jsp; [ "$CODIGO" = 200 ] && contiene "<h1>Docente evaluador</h1>"; revisar "Abre Docente evaluador: el rol cambia solo" $?
+pedir doc GET /director/proyectos.jsp; [ "$CODIGO" = 200 ] && contiene "<h1>Docente director</h1>"; revisar "Y vuelve a Docente director" $?
+pedir doc GET "/acceso/elegir-rol.jsp?rol=1"; pedir doc GET /admin/usuarios.jsp
+[[ "$DESTINO" == *"error=denegado"* ]]; revisar "No puede tomar un rol que no tiene (Administrador)" $?
+pedir dir POST /acceso/validar.jsp --data-urlencode "correo=director.prueba@uts.edu.co" --data-urlencode "clave=123456"
+pedir dir GET /panel/inicio.jsp; contiene ">Docente director<" && ! contiene ">Docente evaluador<"; revisar "Docente solo director: el menú solo muestra Docente director" $?
+pedir dir GET /evaluador/proyectos.jsp; [[ "$DESTINO" == *"error=denegado"* ]]; revisar "Y no entra a Docente evaluador" $?
+
+echo "== Usuario con roles de grupos distintos (un docente del comité)"
+$MYSQL -e "INSERT INTO usuario_roles VALUES (6, 1)"
+pedir doc POST /acceso/validar.jsp --data-urlencode "correo=docente.prueba@uts.edu.co" --data-urlencode "clave=123456"
+[[ "$DESTINO" == *"/acceso/elegir-rol.jsp" ]]; revisar "Comité y docente: va a escoger el rol" $?
+pedir doc GET /acceso/elegir-rol.jsp; contiene ">Administrador<" && contiene ">Docente director<" && contiene ">Docente evaluador<"; revisar "Muestra sus tres roles" $?
+pedir doc GET /panel/inicio.jsp
+[[ "$CODIGO" = 302 ]]; revisar "Sin escoger rol no entra al panel" $?
+pedir doc GET "/acceso/elegir-rol.jsp?rol=5"
+[ "$CODIGO" = 200 ]; revisar "No puede escoger un rol que no tiene (Estudiante)" $?
 pedir doc GET "/acceso/elegir-rol.jsp?rol=abc"
 [ "$CODIGO" = 200 ]; revisar "Un valor raro en ?rol no rompe la página" $?
 pedir doc GET "/acceso/elegir-rol.jsp?rol=4"
-[[ "$DESTINO" == *"/panel/inicio.jsp" ]]; revisar "Escoge Evaluador y entra" $?
-pedir doc GET /panel/inicio.jsp; contiene "<strong>Evaluador</strong>" && contiene "Cambiar rol"; revisar "Panel como Evaluador, con opción de cambiar rol" $?
+[[ "$DESTINO" == *"/panel/inicio.jsp" ]]; revisar "Escoge Docente evaluador y entra" $?
+pedir doc GET /panel/inicio.jsp; contiene "<strong>Docente director y evaluador</strong>" && contiene "Cambiar rol" && ! contiene "admin/usuarios.jsp"
+revisar "Panel de docente, con opción de cambiar rol y sin el menú del comité" $?
+$MYSQL -e "DELETE FROM usuario_roles WHERE usuario_id = 6 AND rol_id = 1"
 
 echo "== Roles"
 pedir admin POST /admin/rol-guardar.jsp --data-urlencode "nombre=Rol de prueba" --data-urlencode "descripcion=Temporal"

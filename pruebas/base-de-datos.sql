@@ -36,6 +36,8 @@ CALL prueba('Correo que no es institucional (Gmail)', "INSERT INTO usuarios (nom
 CALL prueba('Créditos de 120 %', "UPDATE usuarios SET porcentaje_creditos = 120 WHERE id = 5", 1);
 CALL prueba('Plan de estudios que no existe', "UPDATE usuarios SET plan_estudios = 'Otro' WHERE id = 5", 1);
 CALL prueba('Rol Coordinación (id 2) ya no existe', "INSERT INTO usuario_roles (usuario_id, rol_id) VALUES (3, 2)", 1);
+-- Datos, no restricción: si los nombres no son esos, la subconsulta devuelve 2 filas y da error
+CALL prueba('Roles de docente: 3 Docente director y 4 Docente evaluador', "SELECT (SELECT 1 UNION ALL SELECT 2 FROM DUAL WHERE (SELECT COUNT(*) FROM roles WHERE (id = 3 AND nombre = 'Docente director') OR (id = 4 AND nombre = 'Docente evaluador')) <> 2) INTO @x", 0);
 CALL prueba('Director igual al evaluador', "UPDATE proyectos SET evaluador_id = 3 WHERE id = 1", 1);
 CALL prueba('Modalidad con 5 integrantes', "UPDATE modalidades SET max_integrantes = 5 WHERE id = 1", 1);
 CALL prueba('Fase con orden repetido', "INSERT INTO fases (orden, nombre) VALUES (3, 'Otra')", 1);

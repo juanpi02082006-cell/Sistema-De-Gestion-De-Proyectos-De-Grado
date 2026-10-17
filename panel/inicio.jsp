@@ -4,6 +4,11 @@
 <c:set var="titulo" value="Inicio" />
 <c:set var="seccion" value="inicio" />
 <c:set var="rol" value="${sessionScope.rolActivo.id}" />
+<%-- Docente: lo de cada rol de docente que tenga (director, evaluador o los dos), sin
+     importar cuál esté activo (sesion.jspf deja tieneRolDirector y tieneRolEvaluador) --%>
+<c:set var="esDocente" value="${rol == 3 or rol == 4}" />
+<c:set var="verDirector" value="${esDocente and tieneRolDirector}" />
+<c:set var="verEvaluador" value="${esDocente and tieneRolEvaluador}" />
 
 <sql:query var="periodoActivo">SELECT nombre FROM periodos WHERE estado = 'Activo' LIMIT 1</sql:query>
 
@@ -40,7 +45,7 @@
           AND (s.fecha_hora IS NULL OR s.fecha_hora <= NOW())
     </sql:query>
 </c:if>
-<c:if test="${rol == 4}">
+<c:if test="${verEvaluador}">
     <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
     <%-- Propuestas (fase 4) e informes finales (fase 5) que el director ya le envió --%>
     <sql:query var="porEvaluar">
@@ -52,13 +57,13 @@
         <sql:param value="${sessionScope.usuario.id}" />
     </sql:query>
 </c:if>
-<c:if test="${rol == 3 or rol == 4}">
+<c:if test="${esDocente}">
     <sql:query var="misIdeas">
         SELECT COUNT(*) AS total FROM ideas WHERE propuesta_por = ? AND origen = 'Docente'
         <sql:param value="${sessionScope.usuario.id}" />
     </sql:query>
 </c:if>
-<c:if test="${rol == 3}">
+<c:if test="${verDirector}">
     <%@ include file="/WEB-INF/jspf/revision-propuesta.jspf" %>
     <%-- Propuestas (fase 3) e informes finales (fase 5) que esperan su revisión --%>
     <sql:query var="porRevisar">
@@ -90,7 +95,7 @@
 <section class="app-encabezado">
     <h1>Hola, <c:out value="${sessionScope.usuario.nombre}" /></h1>
     <p>
-        Entraste como <strong><c:out value="${sessionScope.rolActivo.nombre}" /></strong>.
+        Entraste como <strong><c:out value="${nombreRolMenu}" /></strong>.
         <c:choose>
             <c:when test="${periodoActivo.rowCount > 0}">Periodo vigente: <c:out value="${periodoActivo.rows[0].nombre}" />.</c:when>
             <c:otherwise>No hay un periodo activo.</c:otherwise>
@@ -167,10 +172,10 @@
     </div>
 </c:if>
 
-<c:if test="${rol == 3 or rol == 4}">
-    <c:set var="columnaDocente" value="col-md-6 col-xl-4" />
+<c:if test="${esDocente}">
+    <c:set var="columnaDocente" value="${verDirector and verEvaluador ? 'col-md-6 col-xl-3' : 'col-md-6 col-xl-4'}" />
     <div class="row g-4">
-        <c:if test="${rol == 4}">
+        <c:if test="${verEvaluador}">
             <div class="${columnaDocente}">
                 <a class="app-acceso" href="${ctx}/evaluador/proyectos.jsp">
                     <span class="app-acceso-numero"><c:out value="${porEvaluar.rows[0].total}" /></span>
@@ -179,7 +184,7 @@
                 </a>
             </div>
         </c:if>
-        <c:if test="${rol == 3}">
+        <c:if test="${verDirector}">
             <div class="${columnaDocente}">
                 <a class="app-acceso" href="${ctx}/director/proyectos.jsp">
                     <span class="app-acceso-numero"><c:out value="${porRevisar.rows[0].total}" /></span>

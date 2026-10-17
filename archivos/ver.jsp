@@ -1,7 +1,9 @@
 <%-- Muestra un archivo subido (?id= de la entrega). Los archivos están en
      WEB-INF/archivos, que no se abre desde el navegador; aquí se revisa el permiso y
      se reenvía la petición al archivo. Pueden verlo: el administrador (comité), los
-     estudiantes del proyecto y su director, codirectores o evaluador. Un estudiante que
+     estudiantes del proyecto y su director, codirectores o evaluador (con cualquiera de
+     los dos roles de docente activo: el que tiene los dos puede tener una pestaña de cada
+     uno; asignarlo ya exige el rol de cada función). Un estudiante que
      quitaron del proyecto ("Excluido") ya no ve sus archivos; los de un proyecto cancelado
      sí siguen viendo los suyos.
      El PDF se abre en el navegador; los demás (Word) se descargan con su nombre original. --%>
@@ -16,8 +18,8 @@
     WHERE e.id = ?
       AND (? = 1
            OR (? = 5 AND EXISTS (SELECT 1 FROM proyecto_estudiantes pe WHERE pe.proyecto_id = p.id AND pe.estudiante_id = ? AND pe.estado = 'Activo'))
-           OR (? = 3 AND (p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_codirectores pc WHERE pc.proyecto_id = p.id AND pc.docente_id = ?)))
-           OR (? = 4 AND p.evaluador_id = ?))
+           OR (? IN (3, 4) AND (p.director_id = ? OR p.evaluador_id = ?
+                                 OR EXISTS (SELECT 1 FROM proyecto_codirectores pc WHERE pc.proyecto_id = p.id AND pc.docente_id = ?))))
     <sql:param value="${empty param.id ? 0 : param.id}" />
     <sql:param value="${rol}" />
     <sql:param value="${rol}" />
@@ -25,7 +27,6 @@
     <sql:param value="${rol}" />
     <sql:param value="${sessionScope.usuario.id}" />
     <sql:param value="${sessionScope.usuario.id}" />
-    <sql:param value="${rol}" />
     <sql:param value="${sessionScope.usuario.id}" />
 </sql:query>
 

@@ -1,10 +1,10 @@
 <%-- El comité (el administrador) asigna el director y el evaluador de un proyecto
-     (RF11), por POST. El director es obligatorio y debe tener el rol Director (3); el
-     evaluador es opcional y debe tener el rol Evaluador (4). Un docente nunca evalúa el
+     (RF11), por POST. El director es obligatorio y debe tener el rol Docente director (3); el
+     evaluador es opcional y debe tener el rol Docente evaluador (4). Un docente nunca evalúa el
      proyecto que dirige ni el que codirige (también lo impide la base para el director).
      También marca si el proyecto es interdisciplinario (RF13: solo investigación o
      desarrollo tecnológico; admite hasta 4 estudiantes y hasta 2 codirectores, docentes
-     activos con el rol Director, distintos del director y del evaluador). No se
+     activos con el rol Docente director, distintos del director y del evaluador). No se
      desmarca si ya tiene más estudiantes de los que permite la modalidad; al
      desmarcarlo se quitan los codirectores. Si el pago ya está aprobado (o no aplica),
      el proyecto pasa a la fase 2 (avanzar-fase-2.jspf). --%>

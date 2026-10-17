@@ -55,7 +55,7 @@
 <%@ include file="/WEB-INF/jspf/cabecera.jspf" %>
 
 <section class="app-encabezado">
-    <a class="app-volver" href="${ctx}/evaluador/proyectos.jsp">← Volver a mis evaluaciones</a>
+    <a class="app-volver" href="${ctx}/evaluador/proyectos.jsp">← Volver a Docente evaluador</a>
     <h1><c:out value="${p.titulo}" /></h1>
     <p><c:out value="${p.modalidad}" /> · <c:out value="${p.nivel}" /><c:if test="${not empty p.periodo}"> · Periodo <c:out value="${p.periodo}" /></c:if></p>
 </section>

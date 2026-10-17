@@ -105,8 +105,8 @@
             <c:when test="${param.error == 'archivo-invalido'}">El archivo debe ser un PDF.</c:when>
             <c:when test="${param.error == 'pago-aprobado'}">El comité ya aprobó tu pago: no necesitas subir otro recibo.</c:when>
             <c:when test="${param.error == 'pago-ya-revisado'}">Ese recibo ya se revisó o ya no es el último que subió el estudiante.</c:when>
-            <c:when test="${param.error == 'director-invalido'}">Escoge un director: debe ser un docente activo con el rol Director.</c:when>
-            <c:when test="${param.error == 'evaluador-invalido'}">El evaluador debe ser un docente activo con el rol Evaluador.</c:when>
+            <c:when test="${param.error == 'director-invalido'}">Escoge un director: debe ser un docente activo con el rol Docente director.</c:when>
+            <c:when test="${param.error == 'evaluador-invalido'}">El evaluador debe ser un docente activo con el rol Docente evaluador.</c:when>
             <c:when test="${param.error == 'director-evaluador'}">Un docente no puede evaluar el proyecto que dirige. Escoge otro evaluador.</c:when>
             <c:when test="${param.error == 'seminario-sin-124'}">La modalidad Seminario no usa el F-DC-124.</c:when>
             <c:when test="${param.error == 'fase-no-permite-propuesta'}">La propuesta (FDC-124) se sube y se envía en la fase 2.</c:when>
@@ -125,7 +125,7 @@
             <c:when test="${param.error == 'integrantes-completos'}">El proyecto ya tiene el máximo de integrantes de su modalidad.</c:when>
             <c:when test="${param.error == 'demasiados-integrantes'}">El proyecto tiene más integrantes de los que permite su modalidad.</c:when>
             <c:when test="${param.error == 'pagos-pendientes'}">Todos los integrantes deben tener el pago aprobado por el comité antes de enviar la propuesta.</c:when>
-            <c:when test="${param.error == 'codirector-invalido'}">Los codirectores deben ser docentes activos con el rol Director, distintos entre sí, del director y del evaluador.</c:when>
+            <c:when test="${param.error == 'codirector-invalido'}">Los codirectores deben ser docentes activos con el rol Docente director, distintos entre sí, del director y del evaluador.</c:when>
             <c:when test="${param.error == 'modalidad-fuera-de-tiempo'}">La modalidad solo se cambia antes de que se apruebe el FDC-124 (fases 1 a 3).</c:when>
             <c:when test="${param.error == 'modalidad-pendiente'}">Ya hay una solicitud de cambio de modalidad esperando la decisión del comité.</c:when>
             <c:when test="${param.error == 'modalidad-invalida'}">Escoge una modalidad distinta a la actual.</c:when>
