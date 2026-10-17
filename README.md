@@ -81,9 +81,14 @@ bash pruebas/sprint5.sh
 bash pruebas/sprint5b.sh
 bash pruebas/sprint5c.sh
 bash pruebas/sprint5d.sh
+bash pruebas/qa.sh          # permisos de cada rol, datos de otros, XSS, SQL, archivos y sesión
+bash pruebas/interfaz.sh    # todas las páginas en Chrome, Edge y Firefox, en computador y celular
+bash pruebas/usuario.sh     # pruebas de usuario: estudiantes que se registran y recorren las fases
 ```
 
-`bash pruebas/correr-pruebas.sh <carpeta-respaldo>` corre todas: respalda la base y los archivos subidos, importa la base antes de cada suite y al final lo devuelve todo.
+`bash pruebas/correr-pruebas.sh <carpeta-respaldo>` corre todas: respalda la base y los archivos subidos, importa la base antes de cada suite y al final lo devuelve todo. `interfaz` y `usuario` usan navegadores reales (Node, `playwright-core`, Chrome, Edge y el Firefox de Playwright), así que se piden por su nombre: `bash pruebas/correr-pruebas.sh <carpeta-respaldo> interfaz usuario`.
+
+Las **pruebas de usuario** (`usuario.sh`) usan el sistema desde Chrome como lo usaría la gente, desde la base recién creada: el comité crea y activa el periodo, el docente registra ideas, ocho estudiantes se registran (dos desde el celular) y cada proyecto recorre sus fases llenando los formularios y escogiendo archivos. Recorren el camino completo hasta "Finalizado" (con un recibo devuelto, la propuesta devuelta por el director y aplazada por el comité, el informe devuelto, la sustentación reprogramada), la propuesta no aprobada, la idea propia con cambio de modalidad y exoneración por Saber TyT, la prórroga con el plazo vencido, el Seminario, la PQR y los avisos. Para adelantar el tiempo usan `bd\demo-adelantar-tiempo.bat`.
 
 ## Demostración: adelantar el tiempo
 

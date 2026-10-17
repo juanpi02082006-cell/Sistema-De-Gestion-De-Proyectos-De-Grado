@@ -177,7 +177,7 @@ erDiagram
 - Banco de ideas (RF25): después de `periodos.fecha_cierre_banco` no se pueden tomar ideas.
 - Habilitación (RF33): con el plan de estudios, el % de créditos y `metodologia_aprobada` se decide qué modalidades puede tomar el estudiante y qué requisito le falta.
 - Avisos de vencimiento y de cada movimiento (RF5): se muestran **dentro del sistema**, sin correo (decisión del profesor), con la tabla `avisos`.
-- Semana 12 vencida (RF30, RNF21): `WEB-INF/jspf/cierres.jspf`, incluido en la cabecera, cancela por extemporaneidad los proyectos sin el FDC-124 aprobado (`fecha_aprobacion_124` vacía) cuando pasa `periodos.fecha_limite_propuestas`, si algún integrante es de un plan anterior y no es Seminario: estado Cancelado, estudiantes sin vigencia, la idea vuelve a "Aprobada", avisos e historial.
+- Semana 12 vencida (RF30, RNF21): `WEB-INF/jspf/cierres.jspf`, incluido en `sesion.jspf` en las peticiones GET (antes de las consultas de cada página; hasta el 2026-10-14 iba en la cabecera; las acciones POST revisan sus propios plazos), cancela por extemporaneidad los proyectos sin el FDC-124 aprobado (`fecha_aprobacion_124` vacía) cuando pasa `periodos.fecha_limite_propuestas`, si algún integrante es de un plan anterior y no es Seminario: estado Cancelado, estudiantes sin vigencia, la idea vuelve a "Aprobada", avisos e historial.
 - Seminario (RF17): cada estudiante sube su recibo, el F-AM-04 y su documento de identidad; el comité valida la inscripción (proyecto "En curso") y el director registra `proyectos.nota_final`: con 3.0 o más queda "Finalizado"; con menos, "Cancelado".
 - Fase final (RF39): la sustentación la programa el comité (reglamento, art. 26, literal m; decisión del 2026-10-14), con fecha y hora futuras y lugar (hasta 150 caracteres); se reprograma hasta la aprobación final. En `sustentaciones.programada_por` queda el usuario del comité. El comité registra la aprobación final solo cuando ya pasaron la fecha y la hora de la sustentación, con observación y acta (fila en `actas` con `revision_id` vacío; fecha no futura ni anterior a la sustentación): el proyecto queda "Finalizado" en la fase final y los estudiantes siguen vigentes en él.
 
@@ -233,7 +233,12 @@ bash pruebas/sprint5.sh      # pago, integrantes, director y evaluador, fases 2 
 bash pruebas/sprint5b.sh     # carreras, código, avisos, plazos, codirectores, anexos, cambio de modalidad, PQR, auditoría, exoneración, Seminario y semana 12
 bash pruebas/sprint5c.sh     # fases 4 y 5: rejillas del evaluador, decisiones del comité, seguimientos e informe final
 bash pruebas/sprint5d.sh     # fase final: sustentación (programar y reprogramar) y aprobación final del comité
+bash pruebas/qa.sh           # QA: permisos de cada página por rol, datos de otros proyectos, XSS, SQL, parámetros basura, archivos y sesión
+bash pruebas/interfaz.sh     # todas las páginas de cada rol en Chrome, Edge y Firefox, en computador y celular (Node y Playwright)
+bash pruebas/usuario.sh      # pruebas de usuario en Chrome: registro, todas las fases y los caminos alternos (Node y Playwright)
 ```
+
+Lo mejor es correrlas con `bash pruebas/correr-pruebas.sh <carpeta-respaldo> [suites...]`, que respalda la base y `WEB-INF/archivos`, importa la base antes de cada suite y al final lo devuelve todo. Sin suites corre todas menos `interfaz` y `usuario`, que se piden por su nombre.
 
 Importar la base borra los datos que haya. Para conservarlos, hacer antes una copia con `C:/xampp/mysql/bin/mysqldump.exe -u root --databases sistemas_proyectos_grado > copia.sql` (y de `WEB-INF/archivos`, porque `sprint4.sh` borra los recibos), y devolverla al final con `mysql -u root < copia.sql`.
 

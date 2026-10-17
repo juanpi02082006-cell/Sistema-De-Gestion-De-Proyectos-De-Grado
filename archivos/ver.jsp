@@ -1,7 +1,9 @@
 <%-- Muestra un archivo subido (?id= de la entrega). Los archivos están en
      WEB-INF/archivos, que no se abre desde el navegador; aquí se revisa el permiso y
      se reenvía la petición al archivo. Pueden verlo: el administrador (comité), los
-     estudiantes del proyecto y su director, codirectores o evaluador.
+     estudiantes del proyecto y su director, codirectores o evaluador. Un estudiante que
+     quitaron del proyecto ("Excluido") ya no ve sus archivos; los de un proyecto cancelado
+     sí siguen viendo los suyos.
      El PDF se abre en el navegador; los demás (Word) se descargan con su nombre original. --%>
 <%@ page import="java.net.URLEncoder" %>
 <%@ include file="/WEB-INF/jspf/sesion.jspf" %>
@@ -13,7 +15,7 @@
     JOIN proyectos p ON p.id = e.proyecto_id
     WHERE e.id = ?
       AND (? = 1
-           OR (? = 5 AND EXISTS (SELECT 1 FROM proyecto_estudiantes pe WHERE pe.proyecto_id = p.id AND pe.estudiante_id = ?))
+           OR (? = 5 AND EXISTS (SELECT 1 FROM proyecto_estudiantes pe WHERE pe.proyecto_id = p.id AND pe.estudiante_id = ? AND pe.estado = 'Activo'))
            OR (? = 3 AND (p.director_id = ? OR EXISTS (SELECT 1 FROM proyecto_codirectores pc WHERE pc.proyecto_id = p.id AND pc.docente_id = ?)))
            OR (? = 4 AND p.evaluador_id = ?))
     <sql:param value="${empty param.id ? 0 : param.id}" />

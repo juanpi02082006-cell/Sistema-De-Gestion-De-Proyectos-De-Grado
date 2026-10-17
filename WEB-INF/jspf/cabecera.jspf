@@ -7,8 +7,8 @@
                                              habilitacion, proyecto, calendario, modalidades, avisos, pqr) --%>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="rolMenu" value="${sessionScope.rolActivo.id}" />
-<%-- Cierres automáticos y alertas de vencimiento (RNF21), y avisos sin leer (RF5) --%>
-<%@ include file="/WEB-INF/jspf/cierres.jspf" %>
+<%-- Alertas de vencimiento (RNF21) y avisos sin leer (RF5). Los cierres automáticos van
+     en sesion.jspf, antes de las consultas de la página. --%>
 <%@ include file="/WEB-INF/jspf/alertas.jspf" %>
 <sql:query var="avisosSinLeer">
     SELECT COUNT(*) AS total FROM avisos WHERE usuario_id = ? AND leido = 0

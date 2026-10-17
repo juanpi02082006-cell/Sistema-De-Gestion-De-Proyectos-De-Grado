@@ -359,7 +359,7 @@
                             <form class="mt-3" method="post" action="${ctx}/estudiante/anexo-guardar.jsp" enctype="multipart/form-data">
                                 <label class="form-label" for="anexo">Agregar un anexo (PDF, opcional)</label>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <input class="form-control flex-grow-1 w-auto" type="file" id="anexo" name="anexo" accept="application/pdf,.pdf" required>
+                                    <input class="form-control campo-en-linea" type="file" id="anexo" name="anexo" accept="application/pdf,.pdf" required>
                                     <button type="submit" class="btn btn-outline-dark rounded-pill">Subir anexo</button>
                                 </div>
                             </form>
@@ -522,7 +522,7 @@
                             <form class="mt-4" method="post" action="${ctx}/estudiante/integrante-agregar.jsp">
                                 <label class="form-label" for="correoCompanero">Agregar un compañero</label>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <input class="form-control flex-grow-1 w-auto" type="email" id="correoCompanero" name="correo" required
+                                    <input class="form-control campo-en-linea" type="email" id="correoCompanero" name="correo" required
                                            placeholder="correo@correo.uts.edu.co" pattern=".+@(uts\.edu\.co|correo\.uts\.edu\.co)">
                                     <button type="submit" class="btn btn-outline-dark rounded-pill">Agregar</button>
                                 </div>

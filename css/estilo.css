@@ -1324,6 +1324,14 @@ a.app-limpiar {
     padding: 0.75rem;
 }
 
+/* Campo y botón en la misma fila; en celular el campo se encoge o el botón baja
+   (sin min-width: 0, el campo de archivo de Chrome se sale de la tarjeta) */
+.campo-en-linea {
+    flex: 1 1 14rem;
+    width: auto;
+    min-width: 0;
+}
+
 /* Datos del proyecto: texto y pares etiqueta / valor, sin cajas */
 .app-texto-proyecto {
     margin: 0 0 1.25rem;

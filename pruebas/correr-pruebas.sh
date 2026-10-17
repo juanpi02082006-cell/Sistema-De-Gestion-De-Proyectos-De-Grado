@@ -2,14 +2,15 @@
 # Corre las pruebas sin arriesgar los datos del usuario: comprueba MySQL, respalda la base
 # y WEB-INF/archivos (y verifica el respaldo), corre cada suite sobre la base recién
 # importada y al final devuelve la base y los archivos. Si algo falla antes, se detiene.
-# Uso: bash pruebas/correr-pruebas.sh <carpeta-respaldo> [suites...]   (por defecto, todas)
+# Uso: bash pruebas/correr-pruebas.sh <carpeta-respaldo> [suites...]   (por defecto, todas menos
+# interfaz y usuario, que necesitan Node, Playwright y los navegadores: pedirlas por su nombre)
 # La carpeta de respaldo va fuera del proyecto (por ejemplo, en la carpeta temporal).
 set -u
 PROYECTO=/c/xampp/tomcat/webapps/segundo-parcial
 MYSQL=/c/xampp/mysql/bin/mysql.exe
 DUMP=/c/xampp/mysql/bin/mysqldump.exe
 RESPALDO="$1"; shift
-SUITES="${*:-base sprints2-3 sprint4 sprint5 sprint5b sprint5c sprint5d}"
+SUITES="${*:-base sprints2-3 sprint4 sprint5 sprint5b sprint5c sprint5d qa}"
 cd "$PROYECTO" || exit 1
 
 /c/xampp/mysql/bin/mysqladmin.exe -u root ping > /dev/null 2>&1 || { echo "MySQL no responde: no se corre nada"; exit 1; }

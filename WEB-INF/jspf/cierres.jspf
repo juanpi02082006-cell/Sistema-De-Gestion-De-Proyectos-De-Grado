@@ -1,5 +1,6 @@
 <%-- Cierres automáticos (RNF21: no hay un proceso programado, así que se revisan cada
-     vez que alguien usa el sistema; lo incluye cabecera.jspf).
+     vez que alguien abre una página; lo incluye sesion.jspf en las peticiones GET, antes
+     de que la página consulte nada).
      Semana 12 vencida (RF30, decisión del equipo del 2026-10-10): si pasó la fecha límite
      de propuestas del periodo y la propuesta no quedó aprobada, el trámite se cancela por
      extemporaneidad: el proyecto queda "Cancelado", el pago pierde vigencia, los

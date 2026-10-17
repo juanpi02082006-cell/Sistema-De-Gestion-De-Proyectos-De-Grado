@@ -8,3 +8,11 @@
 <%-- Que el navegador no guarde la página: así, después de salir,
      el botón "atrás" no muestra datos. --%>
 <c:set var="sinCache" value="${pageContext.response.setHeader('Cache-Control', 'no-store')}" />
+<%-- Cierres automáticos (RNF21): en las páginas que se abren (GET) van aquí, antes de que
+     la página consulte nada, para que la primera vista después de un vencimiento ya muestre
+     el proyecto cancelado. Las acciones (POST) no los corren: cada una revisa sus plazos y
+     rechaza con su propio mensaje (prorroga-vencida, informe-vencido…), y el cierre se hace
+     en la página a la que vuelven. --%>
+<c:if test="${pageContext.request.method == 'GET'}">
+    <%@ include file="/WEB-INF/jspf/cierres.jspf" %>
+</c:if>
