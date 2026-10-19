@@ -5,9 +5,10 @@
        integrantesDetalle     true para el director y el comité (datos académicos y
                               celular, RF19); false para el estudiante, que de sus
                               compañeros solo ve el nombre, el correo y el pago.
-       integrantesQuitar      true para mostrar el botón "Quitar" junto a los compañeros
-                              (no junto a uno mismo); lo usa "Mi proyecto" en las fases
-                              1 y 2 (RF36). --%>
+       integrantesSalir       true para mostrar el botón "Salirme del proyecto" junto a
+                              uno mismo, si no es el único; lo usa "Mi proyecto" en las
+                              fases 1 y 2. Nadie quita a otro (RF36, decisión del
+                              2026-10-19). --%>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <sql:query var="consultaIntegrantes">
     SELECT ue.id, ue.nombre, ue.correo, ue.celular, ca.nombre AS carrera, ca.campus, n.nombre AS nivel, ue.plan_estudios, ue.porcentaje_creditos,
@@ -27,11 +28,10 @@
         <div class="app-estudiante-nombre">
             <img class="app-iniciales" src="${ctx}/img/perfil.png" alt="" width="40" height="40">
             <span><c:out value="${i.nombre}" />${idIntegrante == idSesion ? ' (tú)' : ''}</span>
-            <c:if test="${integrantesQuitar and idIntegrante != idSesion}">
-                <form class="ms-auto" method="post" action="${ctx}/estudiante/integrante-quitar.jsp"
-                      onsubmit="return confirm('¿Quitar a este compañero del proyecto?');">
-                    <input type="hidden" name="estudiante" value="${i.id}">
-                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Quitar</button>
+            <c:if test="${integrantesSalir and idIntegrante == idSesion and consultaIntegrantes.rowCount > 1}">
+                <form class="ms-auto" method="post" action="${ctx}/estudiante/integrante-salir.jsp"
+                      onsubmit="return confirm('¿Salirte del proyecto? Tus compañeros siguen con él y tú podrás tomar otra idea.');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Salirme del proyecto</button>
                 </form>
             </c:if>
         </div>

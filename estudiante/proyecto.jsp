@@ -544,18 +544,18 @@
                     <h2 class="app-tarjeta-titulo">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> (hasta <c:out value="${p.maximo}" /> en esta modalidad)</span></h2>
                     <c:set var="idProyectoIntegrantes" value="${p.id}" />
                     <c:set var="integrantesDetalle" value="false" />
-                    <c:set var="integrantesQuitar" value="${integrantesAbiertos}" />
+                    <c:set var="integrantesSalir" value="${integrantesAbiertos}" />
                     <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
                     <c:choose>
                         <c:when test="${integrantesAbiertos and p.integrantes < p.maximo}">
                             <form class="mt-4" method="post" action="${ctx}/estudiante/integrante-agregar.jsp">
-                                <label class="form-label" for="correoCompanero">Agregar un compañero</label>
+                                <label class="form-label" for="companero">Agregar un compañero</label>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <input class="form-control campo-en-linea" type="email" id="correoCompanero" name="correo" required
-                                           placeholder="correo@correo.uts.edu.co" pattern=".+@(uts\.edu\.co|correo\.uts\.edu\.co)">
+                                    <input class="form-control campo-en-linea" type="text" id="companero" name="companero" required
+                                           maxlength="120" autocomplete="off" placeholder="Correo institucional o número de documento">
                                     <button type="submit" class="btn btn-outline-dark rounded-pill">Agregar</button>
                                 </div>
-                                <div class="form-text">Debe tener cuenta, estar habilitado, ser de tu mismo nivel y no tener otro proyecto. Después sube su propio recibo de pago.</div>
+                                <div class="form-text">Escribe su correo institucional o su número de documento. Debe tener cuenta, estar habilitado, ser de tu mismo nivel y no tener otro proyecto. Después sube su propio recibo de pago.</div>
                             </form>
                         </c:when>
                         <c:when test="${integrantesAbiertos}">

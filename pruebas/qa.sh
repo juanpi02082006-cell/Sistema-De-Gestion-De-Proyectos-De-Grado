@@ -126,8 +126,10 @@ pedir eva POST /evaluador/evaluacion-guardar.jsp --data-urlencode "id=3" --data-
 [ "$($MYSQL -e "SELECT COUNT(*) FROM revisiones")" = "0" ]; revisar "El evaluador no evalúa un proyecto ajeno" $?
 pedir ana POST /estudiante/anexo-quitar.jsp --data-urlencode "id=2"
 [ "$($MYSQL -e "SELECT COUNT(*) FROM entregas WHERE id=2")" = "1" ]; revisar "Ana no quita anexos de otro proyecto" $?
-pedir ana POST /estudiante/integrante-quitar.jsp --data-urlencode "estudiante=21"
-[ "$($MYSQL -e "SELECT vigente FROM proyecto_estudiantes WHERE estudiante_id=21")" = "1" ]; revisar "Ana no quita integrantes de otro proyecto" $?
+pedir ana POST /estudiante/integrante-quitar.jsp --data-urlencode "estudiante=21"; QUITAR=$CODIGO
+pedir ana POST /estudiante/integrante-salir.jsp --data-urlencode "estudiante=21"
+[ "$QUITAR" = "404" ] && [ "$($MYSQL -e "SELECT vigente FROM proyecto_estudiantes WHERE estudiante_id=21")" = "1" ]
+revisar "Ana no quita integrantes de otro proyecto (ya no hay Quitar, y Salirme solo la saca a ella)" $?
 pedir ana POST /ideas/idea-eliminar.jsp --data-urlencode "id=2"
 [ "$($MYSQL -e "SELECT COUNT(*) FROM ideas WHERE id=2")" = "1" ]; revisar "Ana no borra la idea de Beto" $?
 pedir dir POST /ideas/idea-eliminar.jsp --data-urlencode "id=2"

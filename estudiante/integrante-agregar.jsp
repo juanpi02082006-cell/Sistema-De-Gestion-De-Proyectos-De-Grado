@@ -1,5 +1,6 @@
-<%-- Un estudiante del proyecto agrega a un compañero con su correo, por POST (RF36,
-     decisión del equipo del 2026-10-10: queda en el proyecto de una vez). Reglas:
+<%-- Un estudiante del proyecto agrega a un compañero con su correo o su número de
+     documento, por POST (RF36, decisión del equipo del 2026-10-10: queda en el proyecto
+     de una vez; el documento, desde el 2026-10-19). Reglas:
        - el proyecto está en la fase 1 o 2 (al enviar la propuesta, el grupo se cierra);
        - el compañero es un estudiante activo, del mismo nivel que el proyecto (RF25),
          habilitado (RF33) y sin otro proyecto vigente (RF35);
@@ -27,14 +28,18 @@
 </c:if>
 <c:set var="p" value="${consulta.rows[0]}" />
 
-<%-- El compañero: estudiante (rol 5) activo con ese correo --%>
-<c:set var="correo" value="${fn:toLowerCase(fn:trim(param.correo))}" />
+<%-- El compañero: estudiante (rol 5) activo con ese correo o ese número de documento
+     (el documento, sin los puntos ni los espacios con que a veces se escribe) --%>
+<c:set var="dato" value="${fn:trim(param.companero)}" />
+<c:set var="correo" value="${fn:toLowerCase(dato)}" />
+<c:set var="documento" value="${fn:replace(fn:replace(dato, '.', ''), ' ', '')}" />
 <sql:query var="companero">
     SELECT u.id, u.nombre, u.nivel_id,
            (SELECT COUNT(*) FROM proyecto_estudiantes x WHERE x.estudiante_id = u.id AND x.vigente = 1) AS con_proyecto
     FROM usuarios u JOIN usuario_roles ur ON ur.usuario_id = u.id AND ur.rol_id = 5
-    WHERE LOWER(u.correo) = ? AND u.activo = 1
+    WHERE (LOWER(u.correo) = ? OR u.numero_documento = ?) AND u.activo = 1
     <sql:param value="${correo}" />
+    <sql:param value="${documento}" />
 </sql:query>
 <c:if test="${companero.rowCount > 0}">
     <c:set var="c" value="${companero.rows[0]}" />
@@ -50,7 +55,7 @@
 <c:choose>
     <c:when test="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}"><c:set var="motivo" value="proyecto-cerrado" /></c:when>
     <c:when test="${(p.fase != 1 and p.fase != 2) or (p.modalidad_id == 5 and p.estado != 'Pendiente')}"><c:set var="motivo" value="integrantes-cerrados" /></c:when>
-    <c:when test="${empty correo or companero.rowCount == 0}"><c:set var="motivo" value="integrante-no-existe" /></c:when>
+    <c:when test="${empty dato or companero.rowCount == 0}"><c:set var="motivo" value="integrante-no-existe" /></c:when>
     <c:when test="${c.con_proyecto > 0}"><c:set var="motivo" value="integrante-con-proyecto" /></c:when>
     <c:when test="${idNivelCompanero != idNivelProyecto}"><c:set var="motivo" value="integrante-otro-nivel" /></c:when>
     <c:when test="${not habilitado}"><c:set var="motivo" value="integrante-no-habilitado" /></c:when>
@@ -62,7 +67,7 @@
     </c:redirect>
 </c:if>
 
-<%-- Si ya había estado en este proyecto (lo quitaron antes), vuelve a quedar vigente.
+<%-- Si ya había estado en este proyecto (se salió antes), vuelve a quedar vigente.
      La clave única (estudiante_id, vigente) impide que quede en dos proyectos. --%>
 <c:catch var="errorGuardar">
     <sql:transaction>
@@ -93,6 +98,10 @@
     </sql:transaction>
 </c:catch>
 
+<%-- El aviso de éxito dice a quién agregó, para que note si escribió mal un documento --%>
+<c:if test="${empty errorGuardar}">
+    <c:set var="companeroAgregado" value="${c.nombre}" scope="session" />
+</c:if>
 <c:redirect url="/estudiante/proyecto.jsp">
     <c:param name="${empty errorGuardar ? 'ok' : 'error'}" value="${empty errorGuardar ? 'integrante-agregado' : 'integrante-con-proyecto'}" />
 </c:redirect>

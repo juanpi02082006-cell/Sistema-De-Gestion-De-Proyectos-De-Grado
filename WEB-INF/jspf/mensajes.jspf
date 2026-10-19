@@ -29,8 +29,8 @@
             <c:when test="${param.ok == 'propuesta-enviada'}">Enviaste la propuesta a tu director: el proyecto pasó a la fase 3 (Propuesta II).</c:when>
             <c:when test="${param.ok == 'propuesta-devuelta-director'}">Devolviste la propuesta al estudiante con tus observaciones: el proyecto volvió a la fase 2.</c:when>
             <c:when test="${param.ok == 'propuesta-aprobada-director'}">Aprobaste la propuesta y la enviaste al evaluador y al comité: el proyecto pasó a la fase 4.</c:when>
-            <c:when test="${param.ok == 'integrante-agregado'}">Tu compañero quedó en el proyecto. Recuerda que cada uno sube su propio recibo de pago.</c:when>
-            <c:when test="${param.ok == 'integrante-quitado'}">El compañero salió del proyecto.</c:when>
+            <c:when test="${param.ok == 'integrante-agregado'}"><c:out value="${empty sessionScope.companeroAgregado ? 'Tu compañero' : sessionScope.companeroAgregado}" /> quedó en el proyecto. Recuerda que cada uno sube su propio recibo de pago.<c:remove var="companeroAgregado" scope="session" /></c:when>
+            <c:when test="${param.ok == 'saliste-del-proyecto'}">Te saliste del proyecto: tus compañeros siguen con él. Ya puedes tomar otra idea del banco.</c:when>
             <c:when test="${param.ok == 'observacion-codirector'}">Tu observación quedó en la versión. El director la ve antes de decidir.</c:when>
             <c:when test="${param.ok == 'anexo-subido'}">El anexo se subió correctamente.</c:when>
             <c:when test="${param.ok == 'anexo-quitado'}">El anexo se quitó.</c:when>
@@ -123,7 +123,8 @@
             <c:when test="${param.error == 'sin-evaluador'}">El comité todavía no asigna el evaluador: puedes devolver la propuesta, pero no enviarla.</c:when>
             <c:when test="${param.error == 'turnitin-requerido'}">Para aprobar la propuesta, sube el reporte de Turnitin en PDF.</c:when>
             <c:when test="${param.error == 'integrantes-cerrados'}">Los integrantes solo se cambian en las fases 1 y 2: al enviar la propuesta al director, el grupo queda cerrado.</c:when>
-            <c:when test="${param.error == 'integrante-no-existe'}">No hay un estudiante registrado y activo con ese correo. Tu compañero debe crear su cuenta primero.</c:when>
+            <c:when test="${param.error == 'integrante-no-existe'}">No hay un estudiante registrado y activo con ese correo o número de documento. Tu compañero debe crear su cuenta primero.</c:when>
+            <c:when test="${param.error == 'unico-integrante'}">Eres el único integrante del proyecto: no puedes salirte, porque el proyecto quedaría sin estudiantes.</c:when>
             <c:when test="${param.error == 'integrante-con-proyecto'}">Ese estudiante ya tiene un proyecto vigente: solo se puede tener uno a la vez.</c:when>
             <c:when test="${param.error == 'integrante-otro-nivel'}">Ese estudiante es de otro nivel (tecnológico o universitario) que el proyecto.</c:when>
             <c:when test="${param.error == 'integrante-no-habilitado'}">Hay un integrante que no está habilitado (créditos o Metodología). Debe revisar su habilitación.</c:when>

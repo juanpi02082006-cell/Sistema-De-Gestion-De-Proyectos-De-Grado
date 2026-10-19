@@ -396,9 +396,9 @@ async function registrar(datos, esperado) {
         ana = proyectoDe(est.ana.correo);
         revisar(`Ana: su proyecto ${ana.codigo} queda en la fase 1`, ana.fase === 1 && ana.estado === 'Pendiente', JSON.stringify(ana));
         let p = await est.ana.menu('/estudiante/proyecto.jsp');
-        await p.fill('#correoCompanero', est.caro.correo);
+        await p.fill('#companero', est.caro.correo);
         await hacer(est.ana, 'intenta agregar a Caro (no habilitada)', p.locator('form[action$="integrante-agregar.jsp"] button'), 'error=integrante-no-habilitado');
-        await p.fill('#correoCompanero', est.beto.correo);
+        await p.fill('#companero', est.beto.correo);
         await hacer(est.ana, 'agrega a Beto', p.locator('form[action$="integrante-agregar.jsp"] button'), 'ok=integrante-agregado');
         await p.setInputFiles('#recibo', word('recibo.docx'));
         await hacer(est.ana, 'intenta subir el recibo en Word', p.locator('button', { hasText: 'Subir recibo' }), 'error=archivo-invalido');
@@ -427,7 +427,7 @@ async function registrar(datos, esperado) {
         revisar('Ana: confirmó el envío en la ventana del navegador', est.ana.dialogos.some(d => d.includes('director')));
         revisar('el proyecto pasa a la fase 3', estadoProyecto(ana.id).fase === 3);
         p = await est.ana.menu('/estudiante/proyecto.jsp');
-        revisar('Ana: con la propuesta enviada ya no puede agregar integrantes', (await p.locator('#correoCompanero').count()) === 0);
+        revisar('Ana: con la propuesta enviada ya no puede agregar integrantes', (await p.locator('#companero').count()) === 0);
 
         p = await docente.proyecto('/director/proyectos.jsp', ana.id);
         await p.fill('#observacionCodirector', 'Sugiero ampliar el marco teorico');
@@ -646,7 +646,7 @@ async function registrar(datos, esperado) {
         await tomarIdea(est.eli, 'Analitica de datos academicos', '5');
         const eli = proyectoDe(est.eli.correo);
         let p = await est.eli.menu('/estudiante/proyecto.jsp');
-        await p.fill('#correoCompanero', est.hugo.correo);
+        await p.fill('#companero', est.hugo.correo);
         await hacer(est.eli, 'agrega a Hugo', p.locator('form[action$="integrante-agregar.jsp"] button'), 'ok=integrante-agregado');
         for (const persona of [est.eli, est.hugo]) {
             await subirRecibo(persona);

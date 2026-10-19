@@ -87,7 +87,7 @@ ANA=$(id ana@correo.uts.edu.co); BETO=$(id beto@correo.uts.edu.co)
 pedir ana POST /ideas/idea-tomar.jsp --data-urlencode "id=$($MYSQL -e "SELECT id FROM ideas WHERE titulo='Idea Final'")"
 pedir carla POST /ideas/idea-tomar.jsp --data-urlencode "id=$($MYSQL -e "SELECT id FROM ideas WHERE titulo='Idea Mono'")"
 PA=$(proyectoDe ana@correo.uts.edu.co); PC=$(proyectoDe carla@correo.uts.edu.co)
-pedir ana POST /estudiante/integrante-agregar.jsp --data-urlencode "correo=beto@correo.uts.edu.co"
+pedir ana POST /estudiante/integrante-agregar.jsp --data-urlencode "companero=beto@correo.uts.edu.co"
 for N in ana beto; do
     pedir $N POST /estudiante/pago-guardar.jsp -F "recibo=@$T/recibo.pdf;type=application/pdf"
     pedir admin POST /admin/pago-revisar.jsp --data-urlencode "id=$($MYSQL -e "SELECT MAX(id) FROM entregas WHERE proyecto_id=$PA AND tipo='Recibo de pago' AND subido_por=$(id $N@correo.uts.edu.co)")" \

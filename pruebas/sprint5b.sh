@@ -87,7 +87,7 @@ PA=$(proyectoDe ana@correo.uts.edu.co); PB=$(proyectoDe beto@correo.uts.edu.co);
 revisar "Códigos 65 (tecnológico) y 125 (universitario), con el periodo y el consecutivo" $?
 pedir ana GET /estudiante/proyecto.jsp; contiene "65-2026-2/1" && sinError; revisar "La estudiante ve el código de su proyecto" $?
 [ "$($MYSQL -e "SELECT COUNT(*) FROM historial WHERE proyecto_id=$PA AND descripcion LIKE '%65-2026-2/1%'")" = "1" ]; revisar "El código queda en el historial" $?
-pedir carlos POST /estudiante/integrante-agregar.jsp --data-urlencode "correo=dora@correo.uts.edu.co"
+pedir carlos POST /estudiante/integrante-agregar.jsp --data-urlencode "companero=dora@correo.uts.edu.co"
 [ "$(avisos "$(id dora@correo.uts.edu.co)" '%te agreg_ al proyecto%')" = "1" ]; revisar "La compañera agregada recibe un aviso" $?
 
 echo "== Avisos dentro del sistema (RF5)"
