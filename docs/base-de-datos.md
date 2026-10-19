@@ -256,7 +256,7 @@ Importar la base borra los datos que haya. Para conservarlos, hacer antes una co
 - [x] Valor del puntaje de exoneración (RNF14): estímulos del Acuerdo 01-009 para el nivel tecnológico (ver `docs/requerimientos.md`, Anexo D).
 - [x] Ajustar la base al reglamento y a las decisiones del 2026-10-06 (versión 3): 4 roles, fases 1 a 5, plan de estudios, puntaje de Saber TyT, máximo de integrantes, interdisciplinarios y codirectores, resultados de evaluación y nota, seguimientos, festivos, límite de pago y origen de las ideas.
 - [x] En qué fase se aprueba el FDC-124 y en cuál se entrega el FDC-125: en la fase 2 y en la 4 (columna `fases.formato`).
-- [ ] Formularios: la página de registro del estudiante (RF24) y los campos nuevos (plan de estudios, Metodología aprobada y puntaje de Saber TyT) en el formulario de usuarios.
+- [x] Formularios: la página de registro del estudiante (RF24) y los campos nuevos (plan de estudios, Metodología aprobada y puntaje de Saber TyT) en el formulario de usuarios. Hechos: `registro.jsp` y el formulario de usuarios con plan, créditos y Metodología; el puntaje de Saber TyT va en la solicitud de exoneración (RNF14).
 - [x] Versión 4 (2026-10-08): Metodología aprobada, estado del periodo, versiones y entregables, evaluación en borrador, rejilla del F-DC-124, cambios de modalidad y tipo de acción en el historial.
 - [x] Qué criterios de la rejilla aplican a cada modalidad: según el F-DC-124 versión 2.0, todos, menos el estado del arte en Monografía y Emprendimiento.
 - [x] Si el F-DC-124 se usa también para Seminario: no (lo confirmó el equipo).
