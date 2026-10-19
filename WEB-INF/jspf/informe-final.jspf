@@ -2,9 +2,10 @@
      seguimientos del director (RF20: al menos 2 antes de entregar el informe) y las
      versiones del FDC-125 (RF31, RF43), de la más nueva a la más antigua, con las
      observaciones enviadas sobre cada una (de quien revisa solo se muestra el rol,
-     RF27). Antes de incluirlo, definir idProyectoInforme. Deja seguimientosInforme y
-     versionesInforme (las consultas). Con informeOcultarVacios = true no salen las
-     secciones vacías (la página ya muestra lo que falta en sus requisitos). --%>
+     RF27), y los entregables de la modalidad (RF26). Antes de incluirlo, definir
+     idProyectoInforme. Deja seguimientosInforme, versionesInforme y entregablesInforme (las
+     consultas). Con informeOcultarVacios = true no salen las secciones vacías (la página ya
+     muestra lo que falta en sus requisitos). --%>
 <sql:query var="seguimientosInforme">
     SELECT s.fecha, s.observacion, u.nombre AS director
     FROM seguimientos s JOIN usuarios u ON u.id = s.director_id
@@ -57,6 +58,45 @@
                     <span class="app-lista-nota"><fmt:formatDate value="${vi.revisado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
             </c:if>
             <c:set var="idInformeAnterior" value="${vi.id}" />
+        </c:forEach>
+    </c:otherwise>
+</c:choose>
+</c:if>
+<%-- Entregables de la modalidad (RF26): manual de usuario, código fuente y evidencias del
+     desarrollo, que van con el informe final. Los sube el estudiante en la fase 4 (en su
+     página va el formulario); con entregablesQuitar = true sale "Quitar" en los que subió
+     quien está viendo la página. --%>
+<sql:query var="entregablesInforme">
+    SELECT e.id, e.tipo, e.nombre_archivo, e.subido_en, e.subido_por, u.nombre AS subido_por_nombre
+    FROM entregas e JOIN usuarios u ON u.id = e.subido_por
+    WHERE e.proyecto_id = ? AND e.tipo IN ('Manual de usuario', 'Código fuente', 'Evidencia')
+    ORDER BY FIELD(e.tipo, 'Manual de usuario', 'Código fuente', 'Evidencia'), e.id
+    <sql:param value="${idProyectoInforme}" />
+</sql:query>
+<c:if test="${entregablesInforme.rowCount > 0 or not informeOcultarVacios}">
+<h3 class="h6 fw-bold mt-4 mb-2">Entregables de la modalidad <span class="text-secondary fw-normal">· manual, código fuente y evidencias</span></h3>
+<c:choose>
+    <c:when test="${entregablesInforme.rowCount == 0}"><p class="app-vacio mt-0">No se subieron entregables.</p></c:when>
+    <c:otherwise>
+        <c:forEach var="en" items="${entregablesInforme.rows}">
+            <c:set var="idSubioEntregable">${en.subido_por}</c:set>
+            <c:set var="idUsuarioEntregable">${sessionScope.usuario.id}</c:set>
+            <div class="app-archivo">
+                <span>
+                    <span class="app-lista-dato"><c:out value="${en.tipo}" /> · <c:out value="${en.nombre_archivo}" /></span>
+                    <span class="app-lista-nota">Subido por <c:out value="${en.subido_por_nombre}" /> el <fmt:formatDate value="${en.subido_en}" pattern="dd/MM/yyyy HH:mm" /></span>
+                </span>
+                <span class="app-acciones">
+                    <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${en.id}" target="_blank" rel="noopener">Descargar</a>
+                    <c:if test="${entregablesQuitar and idSubioEntregable == idUsuarioEntregable}">
+                        <form method="post" action="${ctx}/estudiante/entregable-quitar.jsp" class="d-inline"
+                              onsubmit="return confirm('¿Quitar este entregable?');">
+                            <input type="hidden" name="id" value="${en.id}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Quitar</button>
+                        </form>
+                    </c:if>
+                </span>
+            </div>
         </c:forEach>
     </c:otherwise>
 </c:choose>

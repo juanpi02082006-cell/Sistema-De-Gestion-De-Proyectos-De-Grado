@@ -12,6 +12,7 @@
 <sql:query var="proyectos">
     SELECT * FROM (
         SELECT p.id, p.codigo, p.titulo, p.estado, p.fecha_aprobacion_124, f.orden AS fase, f.nombre AS nombre_fase,
+               DATEDIFF(CURDATE(), p.fecha_aprobacion_124) AS dia_informe, DATEDIFF(p.fecha_limite, p.fecha_aprobacion_124) AS plazo_informe,
                m.nombre AS modalidad, n.nombre AS nivel, ${sqlUltimaRevision} AS ultima, ${sqlUltimaRevisionInforme} AS ultima_informe,
                (SELECT e.fecha_limite_revision FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124'
                 ORDER BY e.version DESC LIMIT 1) AS limite,
@@ -72,6 +73,8 @@
                                 <td class="text-nowrap">
                                     <c:choose><c:when test="${p.fase == 6}">Fase final</c:when><c:otherwise>Fase <c:out value="${p.fase}" /></c:otherwise></c:choose>
                                     <span class="app-lista-nota"><c:out value="${p.nombre_fase}" /></span>
+                                    <%-- RF2: el día del informe final en la fase 4 --%>
+                                    <c:if test="${p.fase == 4 and not empty p.dia_informe and p.estado != 'Finalizado' and p.estado != 'Cancelado'}"><span class="app-lista-nota fw-semibold">Día <c:out value="${p.dia_informe}" /> de <c:out value="${p.plazo_informe}" /></span></c:if>
                                 </td>
                                 <td>
                                     <c:choose>

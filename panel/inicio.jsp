@@ -79,7 +79,7 @@
     <c:set var="idEstudiante" value="${sessionScope.usuario.id}" />
     <%@ include file="/WEB-INF/jspf/habilitacion.jspf" %>
     <sql:query var="proyectoVigente">
-        SELECT p.titulo, p.estado, p.modalidad_id, f.orden AS fase, f.nombre AS nombre_fase
+        SELECT p.id, p.titulo, p.estado, p.modalidad_id, f.orden AS fase, f.nombre AS nombre_fase
         FROM proyecto_estudiantes pe
         JOIN proyectos p ON p.id = pe.proyecto_id
         LEFT JOIN fases f ON f.id = p.fase_id
@@ -221,6 +221,7 @@
             <c:set var="faseActual" value="${pv.fase}" />
             <c:set var="esSeminario" value="${pv.modalidad_id == 5}" />
             <c:set var="estadoProyecto" value="${pv.estado}" />
+            <c:set var="idProyectoFases" value="${pv.id}" />
             <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
         </c:when>
         <c:otherwise>

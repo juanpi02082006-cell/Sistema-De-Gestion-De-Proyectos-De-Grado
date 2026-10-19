@@ -10,6 +10,7 @@
 <sql:query var="proyectos">
     SELECT * FROM (
     SELECT p.id, p.titulo, p.estado, f.orden AS fase, ${sqlUltimaRevisionInforme} AS ultima_informe,
+           DATEDIFF(CURDATE(), p.fecha_aprobacion_124) AS dia_informe, DATEDIFF(p.fecha_limite, p.fecha_aprobacion_124) AS plazo_informe,
            (SELECT MAX(e.version) FROM entregas e WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-125') AS version_informe, f.nombre AS nombre_fase, m.nombre AS modalidad, n.nombre AS nivel,
            (p.director_id = ?) AS es_director,
            (SELECT GROUP_CONCAT(u.nombre ORDER BY u.nombre SEPARATOR ', ')
@@ -68,6 +69,8 @@
                                 <td class="text-nowrap">
                                     <c:choose><c:when test="${p.fase == 6}">Fase final</c:when><c:otherwise>Fase <c:out value="${p.fase}" /></c:otherwise></c:choose>
                                     <span class="app-lista-nota"><c:out value="${p.nombre_fase}" /></span>
+                                    <%-- RF2: el día del informe final en la fase 4 --%>
+                                    <c:if test="${p.fase == 4 and not empty p.dia_informe and p.estado != 'Finalizado' and p.estado != 'Cancelado'}"><span class="app-lista-nota fw-semibold">Día <c:out value="${p.dia_informe}" /> de <c:out value="${p.plazo_informe}" /></span></c:if>
                                 </td>
                                 <td class="text-nowrap">
                                     <c:choose>

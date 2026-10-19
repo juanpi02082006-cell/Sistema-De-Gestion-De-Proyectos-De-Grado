@@ -7,7 +7,12 @@
      terminó en la fase final (aprobación final del comité, RF39), todas quedan completas;
      si se canceló, la fase en que quedó lo dice. En Seminario (esSeminario = true), que no usa
      el F-DC-124 ni las fases de la propuesta, muestra sus tres pasos según el estado del
-     proyecto: inscripción, seminario en curso y nota final. --%>
+     proyecto: inscripción, seminario en curso y nota final.
+     Contador de la fase 4 (RF2, A-15): si se define idProyectoFases y el proyecto está en
+     la fase 4, su tarjeta dice el día del informe final ("Día N de 180", con las prórrogas
+     aprobadas el plazo crece) y cuánto falta para enviarlo (día 90) o para la fecha límite;
+     antes de que el comité apruebe la propuesta, cuántos días lleva en la fase (desde que
+     el director la aprobó). --%>
 <c:choose>
 <c:when test="${esSeminario}">
     <c:set var="pasoSeminario" value="${estadoProyecto == 'Pendiente' ? 1 : (estadoProyecto == 'En curso' ? 2 : (estadoProyecto == 'Finalizado' ? 4 : 0))}" />
@@ -33,6 +38,25 @@
 <sql:query var="fasesTodas">SELECT orden, nombre, descripcion FROM fases ORDER BY orden</sql:query>
 <c:set var="proyectoTerminado" value="${estadoProyecto == 'Finalizado'}" />
 <c:set var="proyectoCancelado" value="${estadoProyecto == 'Cancelado'}" />
+<c:set var="hayContadorFase4" value="false" />
+<c:if test="${not empty idProyectoFases and faseActual == 4 and not proyectoTerminado and not proyectoCancelado}">
+    <sql:query var="consultaContador">
+        SELECT (p.fecha_aprobacion_124 IS NOT NULL) AS aprobada,
+               DATEDIFF(CURDATE(), p.fecha_aprobacion_124) AS dia,
+               DATEDIFF(p.fecha_limite, p.fecha_aprobacion_124) AS plazo,
+               DATEDIFF(p.fecha_aprobacion_124 + INTERVAL 90 DAY, CURDATE()) AS faltan_envio,
+               DATEDIFF(p.fecha_limite, CURDATE()) AS faltan_limite,
+               DATEDIFF(CURDATE(), (SELECT MAX(r.revisado_en) FROM revisiones r JOIN entregas e ON e.id = r.entrega_id
+                                    WHERE e.proyecto_id = p.id AND e.tipo = 'FDC-124' AND r.rol = 'Director'
+                                      AND r.estado = 'Enviada' AND r.decision = 'Aprobado')) AS dias_en_fase
+        FROM proyectos p WHERE p.id = ?
+        <sql:param value="${idProyectoFases}" />
+    </sql:query>
+    <c:if test="${consultaContador.rowCount > 0}">
+        <c:set var="contador" value="${consultaContador.rows[0]}" />
+        <c:set var="hayContadorFase4" value="${contador.aprobada == 1 or not empty contador.dias_en_fase}" />
+    </c:if>
+</c:if>
 <div class="app-fases">
     <c:forEach var="f" items="${fasesTodas.rows}">
         <c:set var="estadoFase" value="${proyectoTerminado or f.orden < faseActual ? 'completa' : (f.orden == faseActual ? (proyectoCancelado ? 'cancelada' : 'actual') : 'pendiente')}" />
@@ -56,6 +80,24 @@
                     <c:otherwise><c:out value="${f.descripcion}" /></c:otherwise>
                 </c:choose>
             </span>
+            <c:if test="${f.orden == 4 and estadoFase == 'actual' and hayContadorFase4}">
+                <c:choose>
+                    <c:when test="${contador.aprobada == 1}">
+                        <span class="app-fase-contador">Día <c:out value="${contador.dia}" /> de <c:out value="${contador.plazo}" /> del informe final</span>
+                        <span class="app-fase-texto">
+                            <c:choose>
+                                <c:when test="${contador.dia < 90}">Se envía desde el día 90: faltan <c:out value="${contador.faltan_envio}" /> ${contador.faltan_envio == 1 ? 'día' : 'días'}.</c:when>
+                                <c:when test="${contador.faltan_limite >= 0}">Faltan <c:out value="${contador.faltan_limite}" /> ${contador.faltan_limite == 1 ? 'día' : 'días'} para la fecha límite.</c:when>
+                                <c:otherwise>Se venció la fecha límite.</c:otherwise>
+                            </c:choose>
+                        </span>
+                    </c:when>
+                    <c:otherwise>
+                        <span class="app-fase-contador">${contador.dias_en_fase == 0 ? 'Desde hoy' : 'Lleva '}<c:if test="${contador.dias_en_fase > 0}"><c:out value="${contador.dias_en_fase}" /> ${contador.dias_en_fase == 1 ? 'día' : 'días'}</c:if> en esta fase</span>
+                        <span class="app-fase-texto">El evaluador y el comité revisan la propuesta.</span>
+                    </c:otherwise>
+                </c:choose>
+            </c:if>
             <span class="visually-hidden">${estadoFase == 'completa' ? '(completada)' : (estadoFase == 'actual' ? '(fase actual)' : (estadoFase == 'cancelada' ? '(cancelada)' : '(pendiente)'))}</span>
         </div>
     </c:forEach>

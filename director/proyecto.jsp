@@ -67,6 +67,7 @@
 
 <%@ include file="/WEB-INF/jspf/mensajes.jspf" %>
 
+<c:set var="idProyectoFases" value="${p.id}" />
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
 <%-- Fase final (RF39): la sustentación, que programa el comité --%>

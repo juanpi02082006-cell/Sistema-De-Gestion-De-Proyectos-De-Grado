@@ -8,7 +8,8 @@
      no ve a su evaluador (RF27), pero sí su concepto y sus observaciones (RF23). En la
      fase 4, con el FDC-124 aprobado por el comité, sube el informe final (FDC-125) por
      versiones y lo envía a su director desde el día 90 hasta el 180 (RF31), con al
-     menos 2 seguimientos del director (RF20). En la fase final ve la sustentación que
+     menos 2 seguimientos del director (RF20), y sube los entregables de su modalidad
+     (manual, código fuente y evidencias, RF26). En la fase final ve la sustentación que
      programa el comité (sustentacion.jspf) y la presenta; después, el comité registra la
      aprobación final y el proyecto queda "Finalizado" (RF39). --%>
 <%@ include file="/WEB-INF/jspf/solo-estudiante.jspf" %>
@@ -157,6 +158,7 @@
         </div>
     </c:when>
     <c:otherwise>
+        <c:set var="idProyectoFases" value="${p.id}" />
         <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
         <c:if test="${esSeminario and p.estado == 'Finalizado'}">
@@ -433,6 +435,7 @@
                     </c:when>
                 </c:choose>
                 <c:set var="informeOcultarVacios" value="${p.fase == 4 and not terminado}" />
+                <c:set var="entregablesQuitar" value="${p.fase == 4 and not terminado}" />
                 <c:set var="idProyectoInforme" value="${p.id}" />
                 <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
                 <c:set var="idProyectoEvaluacion" value="${p.id}" />
@@ -454,6 +457,32 @@
                             </form>
                         </c:if>
                     </div>
+
+                    <%-- Entregables de la modalidad (RF26): opcionales, van con el informe final --%>
+                    <form class="mt-4" method="post" action="${ctx}/estudiante/entregable-guardar.jsp" enctype="multipart/form-data">
+                        <h3 class="h6 fw-bold mb-2">Entregables de la modalidad</h3>
+                        <p class="text-secondary">
+                            Sube lo que pida tu modalidad: el manual de usuario (PDF o Word), el código fuente (ZIP, RAR o 7Z) y las evidencias del desarrollo
+                            (PDF, imagen PNG o JPG, o ZIP), de hasta 15 MB cada uno. Van con el informe final a tu director y al evaluador.
+                        </p>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-sm-5">
+                                <label class="form-label" for="tipoEntregable">Entregable *</label>
+                                <select class="form-select" id="tipoEntregable" name="tipo" required>
+                                    <option value="">Escoge el entregable</option>
+                                    <option value="manual">Manual de usuario</option>
+                                    <option value="codigo">Código fuente</option>
+                                    <option value="evidencia">Evidencia del desarrollo</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-7">
+                                <label class="form-label" for="entregable">Archivo *</label>
+                                <input class="form-control" type="file" id="entregable" name="archivo" required
+                                       accept=".pdf,.doc,.docx,.zip,.rar,.7z,.png,.jpg,.jpeg">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Subir entregable</button>
+                    </form>
                 </c:if>
 
                 <%-- Prórrogas del plazo del informe final (RF38): solo planes anteriores --%>

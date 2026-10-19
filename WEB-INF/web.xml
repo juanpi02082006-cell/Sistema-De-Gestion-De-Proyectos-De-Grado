@@ -29,7 +29,7 @@
          que tiene guardada (si no, el menú lateral sale sin estilo). -->
     <context-param>
         <param-name>versionEstilos</param-name>
-        <param-value>2026-10-17</param-value>
+        <param-value>2026-10-19</param-value>
     </context-param>
 
     <!-- Los formularios llegan en UTF-8 (tildes y eñes) -->
@@ -106,6 +106,19 @@
     <servlet-mapping>
         <servlet-name>subirAnexo</servlet-name>
         <url-pattern>/estudiante/anexo-guardar.jsp</url-pattern>
+    </servlet-mapping>
+    <!-- Los entregables de la modalidad (manual, código fuente, evidencias), con el informe final (RF26) -->
+    <servlet>
+        <servlet-name>subirEntregable</servlet-name>
+        <jsp-file>/estudiante/entregable-guardar.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>15728640</max-file-size>
+            <max-request-size>16777216</max-request-size>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>subirEntregable</servlet-name>
+        <url-pattern>/estudiante/entregable-guardar.jsp</url-pattern>
     </servlet-mapping>
     <!-- La solicitud de exoneración por Saber TyT, con el certificado (PDF) -->
     <servlet>

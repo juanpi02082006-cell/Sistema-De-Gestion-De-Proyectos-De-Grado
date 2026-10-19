@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Pruebas del buscador (RF6) y de los informes del comité (RF15), 2026-10-17, y del tiempo de
+# Pruebas del buscador (RF6), de los informes del comité (RF15), del contador de días de la
+# fase 4 (RF2) y de los entregables de la modalidad (RF26), 2026-10-17 y 2026-10-19, y del tiempo de
 # respuesta de las búsquedas con 5.000 proyectos (RNF3). Deja proyectos en cada situación:
 # uno con codirector y una estudiante quitada, uno finalizado, uno cancelado de otro periodo,
 # un Seminario aprobado y uno en curso con una estudiante exonerada. Revisa que cada rol
@@ -127,6 +128,59 @@ plano | grep -q "<td>Seminario</td> <td class=\"text-end\">1</td> <td class=\"te
 plano | grep -q "1 estudiante</span> <span>3 proyectos" && plano | grep -q "2 estudiantes</span> <span>2 proyectos"; revisar "Por cantidad: 3 proyectos de 1 estudiante y 2 de 2" $?
 contiene "window.print()"; revisar "Se puede imprimir" $?
 pedir admin GET "/admin/informes.jsp?periodo=abc"; sinError && contiene "Todos los periodos"; revisar "Periodo raro: todos" $?
+
+echo "== RF2: contador de días de la fase 4"
+pedir ana GET /estudiante/proyecto.jsp; contiene "Día 20 de 180 del informe final" && contiene "faltan 70 días"; revisar "La estudiante ve el día 20 de 180 y cuánto falta para enviarlo (día 90)" $?
+pedir ana GET /panel/inicio.jsp; contiene "Día 20 de 180 del informe final"; revisar "También en su inicio" $?
+pedir dir GET "/director/proyecto.jsp?id=1"; contiene "Día 20 de 180 del informe final"; revisar "El director lo ve en el proyecto" $?
+pedir dir GET /director/proyectos.jsp; contiene "Día 20 de 180"; revisar "Y en su lista" $?
+pedir eva GET /evaluador/proyectos.jsp; contiene "Día 20 de 180" && contiene "Día 10 de 180"; revisar "El evaluador, en su lista (sus dos proyectos en la fase 4)" $?
+pedir admin GET "/admin/proyecto.jsp?id=1"; contiene "Día 20 de 180 del informe final"; revisar "El comité, en el proyecto" $?
+pedir admin GET "/admin/proyecto.jsp?id=2"; ! contiene "app-fase-contador"; revisar "Un proyecto que no está en la fase 4 no tiene contador" $?
+$MYSQL -e "UPDATE proyectos SET fecha_aprobacion_124 = CURDATE() - INTERVAL 100 DAY, fecha_limite = CURDATE() + INTERVAL 260 DAY WHERE id = 5"
+pedir admin GET "/admin/proyecto.jsp?id=5"; contiene "Día 100 de 360 del informe final" && contiene "Faltan 260 días para la fecha límite"; revisar "Pasado el día 90 y con una prórroga: día 100 de 360 y lo que falta para el límite" $?
+$MYSQL <<'SQL'
+UPDATE proyectos SET fecha_aprobacion_124 = NULL, fecha_limite = NULL WHERE id = 5;
+INSERT INTO entregas (id, proyecto_id, fase_id, tipo, version, nombre_archivo, ruta_archivo, subido_por) VALUES (90, 5, 4, 'FDC-124', 1, 'p.docx', 'p7.docx', 24);
+INSERT INTO revisiones (entrega_id, revisor_id, rol, estado, decision, observacion, revisado_en) VALUES (90, 6, 'Director', 'Enviada', 'Aprobado', 'Lista', NOW() - INTERVAL 3 DAY);
+SQL
+pedir admin GET "/admin/proyecto.jsp?id=5"; contiene "Lleva 3 días en esta fase" && contiene "El evaluador y el comité revisan la propuesta"; revisar "Antes de aprobar la propuesta: los días que lleva en la fase" $?
+$MYSQL -e "UPDATE proyectos SET fecha_aprobacion_124 = CURDATE() - INTERVAL 10 DAY, fecha_limite = CURDATE() + INTERVAL 170 DAY WHERE id = 5"
+
+echo "== RF26: entregables de la modalidad"
+entrar beto beto.siete@correo.uts.edu.co
+printf '%%PDF-1.4\n%% manual\n' > "$T/manual.pdf"; printf 'PK\003\004 codigo' > "$T/codigo.zip"; printf '\211PNG evidencia' > "$T/pantalla.png"
+subirEntregable() { pedir "$1" POST /estudiante/entregable-guardar.jsp -F "tipo=$2" -F "archivo=@$3"; }
+pedir ana GET /estudiante/proyecto.jsp; contiene 'entregable-guardar.jsp' && contiene "Entregables de la modalidad"; revisar "En la fase 4, con la propuesta aprobada, sale el formulario" $?
+subirEntregable ana manual "$T/manual.pdf"; [[ "$DESTINO" == *"ok=entregable-subido"* ]]; revisar "Sube el manual de usuario (PDF)" $?
+subirEntregable ana codigo "$T/codigo.zip"; [[ "$DESTINO" == *"ok=entregable-subido"* ]]; revisar "Sube el código fuente (ZIP)" $?
+subirEntregable beto evidencia "$T/pantalla.png"; [[ "$DESTINO" == *"ok=entregable-subido"* ]]; revisar "Su compañero sube una evidencia (PNG)" $?
+[ "$($MYSQL -e "SELECT GROUP_CONCAT(tipo ORDER BY id SEPARATOR '|') FROM entregas WHERE proyecto_id = 1")" = "Manual de usuario|Código fuente|Evidencia" ]; revisar "Quedan los tres con su tipo" $?
+subirEntregable ana codigo "$T/manual.pdf"; [[ "$DESTINO" == *"error=entregable-formato"* ]]; revisar "Código fuente en PDF: rechazado" $?
+subirEntregable ana manual "$T/codigo.zip"; [[ "$DESTINO" == *"error=entregable-formato"* ]]; revisar "Manual en ZIP: rechazado" $?
+subirEntregable ana otro "$T/manual.pdf"; [[ "$DESTINO" == *"error=entregable-tipo-invalido"* ]]; revisar "Un tipo que no existe: rechazado" $?
+pedir ana POST /estudiante/entregable-guardar.jsp -F "tipo=manual"; [[ "$DESTINO" == *"error=archivo-requerido"* ]]; revisar "Sin archivo: rechazado" $?
+pedir ana GET /estudiante/proyecto.jsp; contiene "Manual de usuario · manual.pdf" && contiene "Código fuente · codigo.zip" && contiene "Evidencia · pantalla.png"; revisar "La estudiante los ve" $?
+MANUAL=$($MYSQL -e "SELECT id FROM entregas WHERE proyecto_id = 1 AND tipo = 'Manual de usuario'")
+CODIGO_E=$($MYSQL -e "SELECT id FROM entregas WHERE proyecto_id = 1 AND tipo LIKE 'C_digo fuente'")
+EVIDENCIA=$($MYSQL -e "SELECT id FROM entregas WHERE proyecto_id = 1 AND tipo = 'Evidencia'")
+pedir dir GET "/director/proyecto.jsp?id=1"; contiene "Manual de usuario · manual.pdf" && contiene "ver.jsp?id=$CODIGO_E"; revisar "El director los ve con el informe final" $?
+pedir admin GET "/admin/proyecto.jsp?id=1"; contiene "Evidencia · pantalla.png"; revisar "El comité también" $?
+pedir dir GET "/archivos/ver.jsp?id=$CODIGO_E"; [ "$CODIGO" = 200 ] && contiene "codigo"; revisar "El director descarga el código fuente" $?
+pedir caro GET "/archivos/ver.jsp?id=$MANUAL"; [[ "$DESTINO" == *"error=denegado"* ]]; revisar "La estudiante que quitaron del proyecto no lo descarga" $?
+pedir beto POST /estudiante/entregable-quitar.jsp --data-urlencode "id=$MANUAL"; [[ "$DESTINO" == *"error=no-encontrado"* ]]; revisar "Un compañero no quita lo que subió otro" $?
+pedir ana POST /estudiante/entregable-quitar.jsp --data-urlencode "id=$MANUAL"; [[ "$DESTINO" == *"ok=entregable-quitado"* ]] && [ "$($MYSQL -e "SELECT COUNT(*) FROM entregas WHERE id = $MANUAL")" = "0" ]; revisar "Quien lo subió lo quita en la fase 4" $?
+pedir ana GET /estudiante/entregable-quitar.jsp; [[ "$DESTINO" == *"/estudiante/proyecto.jsp" ]] && [ "$($MYSQL -e "SELECT COUNT(*) FROM entregas WHERE proyecto_id = 1")" = "2" ]; revisar "Por GET no quita nada" $?
+[ "$($MYSQL -e "SELECT COUNT(*) FROM historial WHERE proyecto_id = 1 AND descripcion LIKE '%entregable%'")" = "4" ]; revisar "Cada movimiento queda en el historial" $?
+$MYSQL -e "UPDATE proyectos SET fase_id = 6 WHERE id = 1; INSERT INTO entregas (id, proyecto_id, fase_id, tipo, version, nombre_archivo, ruta_archivo, subido_por, fecha_limite_revision) VALUES (91, 1, 6, 'FDC-125', 1, 'informe.docx', 'i7.docx', 20, CURDATE() + INTERVAL 5 DAY)"
+subirEntregable ana evidencia "$T/pantalla.png"; [[ "$DESTINO" == *"error=fase-no-permite-entregable"* ]]; revisar "Enviado el informe (fase 5) ya no se suben" $?
+pedir ana POST /estudiante/entregable-quitar.jsp --data-urlencode "id=$CODIGO_E"; [[ "$DESTINO" == *"error=fase-no-permite-entregable"* ]]; revisar "Ni se quitan" $?
+pedir beto POST /estudiante/entregable-quitar.jsp --data-urlencode "id=$EVIDENCIA"; [[ "$DESTINO" == *"error=fase-no-permite-entregable"* ]]; revisar "Ni la evidencia de su compañero" $?
+pedir eva GET "/evaluador/proyecto.jsp?id=1"; contiene "Evidencia · pantalla.png" && contiene "Código fuente · codigo.zip"; revisar "En la fase 5, el evaluador los ve con el informe final" $?
+pedir ana GET /estudiante/proyecto.jsp; ! contiene 'entregable-guardar.jsp' && ! contiene 'entregable-quitar.jsp'; revisar "Y a la estudiante ya no le salen el formulario ni Quitar" $?
+pedir eli GET /estudiante/proyecto.jsp; contiene 'entregable-guardar.jsp'; revisar "Eli, en la fase 4 con la propuesta aprobada, sí tiene el formulario" $?
+$MYSQL -e "UPDATE proyectos SET fecha_aprobacion_124 = NULL WHERE id = 5"
+subirEntregable eli manual "$T/manual.pdf"; [[ "$DESTINO" == *"error=fase-no-permite-entregable"* ]]; revisar "Sin la propuesta aprobada no se suben" $?
 
 echo "== RNF3: búsquedas con 5.000 proyectos"
 $MYSQL <<'SQL'

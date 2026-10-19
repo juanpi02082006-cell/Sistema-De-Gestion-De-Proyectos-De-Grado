@@ -34,6 +34,8 @@
             <c:when test="${param.ok == 'observacion-codirector'}">Tu observación quedó en la versión. El director la ve antes de decidir.</c:when>
             <c:when test="${param.ok == 'anexo-subido'}">El anexo se subió correctamente.</c:when>
             <c:when test="${param.ok == 'anexo-quitado'}">El anexo se quitó.</c:when>
+            <c:when test="${param.ok == 'entregable-subido'}">El entregable se subió correctamente. Va con el informe final al director y al evaluador.</c:when>
+            <c:when test="${param.ok == 'entregable-quitado'}">El entregable se quitó.</c:when>
             <c:when test="${param.ok == 'modalidad-solicitada'}">Tu solicitud de cambio de modalidad quedó enviada al comité.</c:when>
             <c:when test="${param.ok == 'modalidad-aprobada'}">El cambio de modalidad quedó aprobado.</c:when>
             <c:when test="${param.ok == 'modalidad-rechazada'}">El cambio de modalidad quedó rechazado.</c:when>
@@ -110,6 +112,9 @@
             <c:when test="${param.error == 'director-evaluador'}">Un docente no puede evaluar el proyecto que dirige. Escoge otro evaluador.</c:when>
             <c:when test="${param.error == 'seminario-sin-124'}">La modalidad Seminario no usa el F-DC-124.</c:when>
             <c:when test="${param.error == 'fase-no-permite-propuesta'}">La propuesta (FDC-124) se sube y se envía en la fase 2.</c:when>
+            <c:when test="${param.error == 'entregable-tipo-invalido'}">Escoge qué entregable vas a subir: manual de usuario, código fuente o evidencia del desarrollo.</c:when>
+            <c:when test="${param.error == 'entregable-formato'}">Ese formato no va para ese entregable: el manual de usuario en PDF o Word, el código fuente en ZIP, RAR o 7Z, y las evidencias en PDF, imagen (PNG o JPG) o ZIP.</c:when>
+            <c:when test="${param.error == 'fase-no-permite-entregable'}">Los entregables de la modalidad se suben en la fase 4, con la propuesta aprobada y mientras preparas el informe final.</c:when>
             <c:when test="${param.error == 'archivo-no-word'}">El FDC-124 debe ser un documento de Word (.doc o .docx).</c:when>
             <c:when test="${param.error == 'sin-director'}">Tu proyecto todavía no tiene director.</c:when>
             <c:when test="${param.error == 'propuesta-requerida'}">Sube el FDC-124 antes de enviarlo a tu director.</c:when>

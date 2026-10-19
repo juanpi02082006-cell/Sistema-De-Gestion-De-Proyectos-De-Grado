@@ -97,6 +97,7 @@
 
 <%@ include file="/WEB-INF/jspf/mensajes.jspf" %>
 
+<c:set var="idProyectoFases" value="${p.id}" />
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
 <%-- Solicitudes por decidir: cambio de modalidad (RF12) y exoneración (RNF14) --%>

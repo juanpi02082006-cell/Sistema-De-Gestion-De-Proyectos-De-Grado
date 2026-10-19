@@ -1306,6 +1306,14 @@ a.app-limpiar {
     color: #3A3A3A;
 }
 
+/* Contador de días de la fase 4 (RF2) */
+.app-fase-contador {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #111111;
+}
+
 /* Archivo subido (recibo de pago, documentos) */
 .app-archivo {
     display: flex;
