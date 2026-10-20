@@ -1,13 +1,13 @@
-<%-- Estudiantes de un proyecto, con el mismo estilo de "Datos del proyecto": iniciales y
-     nombre, y debajo los datos como pares etiqueta / valor, con el estado del pago de
+<%-- Estudiantes de un proyecto: cada uno en una línea con su foto y su nombre; "Ver
+     estudiante" abre sus datos como pares etiqueta / valor, con el estado del pago de
      cada uno (cada estudiante paga el suyo, RF32). Antes de incluirlo, definir:
        idProyectoIntegrantes  el proyecto
        integrantesDetalle     true para el director y el comité (datos académicos y
                               celular, RF19); false para el estudiante, que de sus
                               compañeros solo ve el nombre, el correo y el pago.
-       integrantesSalir       true para mostrar el botón "Salirme del proyecto" junto a
-                              uno mismo, si no es el único; lo usa "Mi proyecto" en las
-                              fases 1 y 2. Nadie quita a otro (RF36, decisión del
+       integrantesSalir       true para mostrar el botón "Salirme del proyecto" en los
+                              datos de uno mismo, si no es el único; lo usa "Mi proyecto"
+                              en las fases 1 y 2. Nadie quita a otro (RF36, decisión del
                               2026-10-19). --%>
 <%@ include file="/WEB-INF/jspf/estado-pago.jspf" %>
 <sql:query var="consultaIntegrantes">
@@ -24,17 +24,13 @@
 <c:forEach var="i" items="${consultaIntegrantes.rows}">
     <c:set var="idIntegrante">${i.id}</c:set>
     <c:set var="idSesion">${sessionScope.usuario.id}</c:set>
-    <div class="app-estudiante">
-        <div class="app-estudiante-nombre">
+    <%-- Plegado: se ve el nombre; "Ver estudiante" abre sus datos (pedido del equipo, 2026-10-19) --%>
+    <details class="app-estudiante">
+        <summary class="app-estudiante-nombre">
             <img class="app-iniciales" src="${ctx}/img/perfil.png" alt="" width="40" height="40">
             <span><c:out value="${i.nombre}" />${idIntegrante == idSesion ? ' (tú)' : ''}</span>
-            <c:if test="${integrantesSalir and idIntegrante == idSesion and consultaIntegrantes.rowCount > 1}">
-                <form class="ms-auto" method="post" action="${ctx}/estudiante/integrante-salir.jsp"
-                      onsubmit="return confirm('¿Salirte del proyecto? Tus compañeros siguen con él y tú podrás tomar otra idea.');">
-                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Salirme del proyecto</button>
-                </form>
-            </c:if>
-        </div>
+            <span class="btn btn-sm btn-outline-dark rounded-pill app-ver-estudiante"><span class="ver">Ver estudiante</span><span class="ocultar">Ocultar</span></span>
+        </summary>
         <dl class="app-pares">
             <div class="ancho"><dt>Correo</dt><dd><a href="mailto:${fn:escapeXml(i.correo)}"><c:out value="${i.correo}" /></a></dd></div>
             <c:if test="${integrantesDetalle}">
@@ -46,5 +42,11 @@
             </c:if>
             <div><dt>Pago</dt><dd><c:out value="${i.pago == 'No aplica' ? 'No aplica (lo cubre la matrícula)' : i.pago}" /></dd></div>
         </dl>
-    </div>
+        <c:if test="${integrantesSalir and idIntegrante == idSesion and consultaIntegrantes.rowCount > 1}">
+            <form class="mt-3" method="post" action="${ctx}/estudiante/integrante-salir.jsp"
+                  onsubmit="return confirm('¿Salirte del proyecto? Tus compañeros siguen con él y tú podrás tomar otra idea.');">
+                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Salirme del proyecto</button>
+            </form>
+        </c:if>
+    </details>
 </c:forEach>
