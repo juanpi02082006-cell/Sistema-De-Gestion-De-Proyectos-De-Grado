@@ -73,13 +73,13 @@
 <%-- Primero de qué proyecto se trata; después cada fase en orden: propuesta (con su
      revisión), informe final y sustentación; al final el historial --%>
 <div class="row g-4 mb-4">
-    <div class="col-lg-6">
+    <div class="col-12">
         <div class="app-tarjeta h-100">
             <c:set var="datosOcultarLimite" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado' or not empty p.fecha_aprobacion_124}" />
             <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
         </div>
     </div>
-    <div class="col-lg-6">
+    <div class="col-12">
         <div class="app-tarjeta h-100">
             <h2 class="app-tarjeta-titulo">Estudiantes</h2>
             <c:set var="idProyectoIntegrantes" value="${p.id}" />

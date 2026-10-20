@@ -186,14 +186,14 @@
         <%-- Primero de qué proyecto se trata; después cada fase en orden: pago, propuesta,
              informe final y sustentación; al final los trámites y el historial --%>
         <div class="row g-4 mb-4">
-            <div class="col-lg-6">
+            <div class="col-12">
                 <div class="app-tarjeta h-100">
                     <c:set var="datosTitulo" value="${p.titulo}" />
                     <c:set var="datosConDirector" value="true" />
                     <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
                 </div>
             </div>
-            <div class="col-lg-6">
+            <div class="col-12">
                 <div class="app-tarjeta h-100">
                     <h2 class="app-tarjeta-titulo">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> (hasta <c:out value="${p.maximo}" /> en esta modalidad)</span></h2>
                     <c:set var="idProyectoIntegrantes" value="${p.id}" />

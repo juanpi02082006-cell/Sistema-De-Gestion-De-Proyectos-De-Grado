@@ -140,7 +140,7 @@
 <%-- Primero de qué proyecto se trata; después cada fase en orden: pago y asignación,
      propuesta, informe final y sustentación; al final los trámites y el historial --%>
 <div class="row g-4 mb-4">
-    <div class="col-lg-6">
+    <div class="col-12">
         <div class="app-tarjeta h-100">
             <c:set var="datosConDirector" value="true" />
             <c:set var="datosOcultarLimite" value="${cerrado or not empty p.fecha_aprobacion_124}" />
@@ -148,7 +148,7 @@
         </div>
     </div>
 
-    <div class="col-lg-6">
+    <div class="col-12">
         <div class="app-tarjeta h-100">
             <h2 class="app-tarjeta-titulo">Estudiantes</h2>
             <c:set var="idProyectoIntegrantes" value="${p.id}" />
