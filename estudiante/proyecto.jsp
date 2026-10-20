@@ -133,7 +133,7 @@
     </sql:query>
     <%-- La exoneración se muestra cuando se puede pedir (fase 4 con la propuesta aprobada) o
          cuando ya hay algo que contar (pendiente, exonerado o renuncia); si el proyecto
-         terminó, el resultado ya sale arriba --%>
+         terminó, el resultado sale arriba, debajo de las fases --%>
     <c:set var="ex" value="${miExoneracion.rowCount > 0 ? miExoneracion.rows[0] : null}" />
     <c:set var="mostrarExoneracion" value="${p.mi_nivel == 1 and not terminado and (p.exonerado == true or p.renuncia_exoneracion == true
                                             or (not empty ex and ex.estado == 'Pendiente') or (p.fase == 4 and not empty p.fecha_aprobacion_124))}" />
@@ -183,12 +183,42 @@
             </div>
         </c:if>
 
-        <%-- Fase final (RF39): la sustentación, que programa el comité --%>
-        <c:if test="${p.fase == 6 and not esSeminario}">
-            <c:set var="idProyectoSustentacion" value="${p.id}" />
-            <c:set var="sustentacionProgramar" value="false" />
-            <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
-        </c:if>
+        <%-- Primero de qué proyecto se trata; después cada fase en orden: pago, propuesta,
+             informe final y sustentación; al final los trámites y el historial --%>
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="app-tarjeta h-100">
+                    <c:set var="datosTitulo" value="${p.titulo}" />
+                    <c:set var="datosConDirector" value="true" />
+                    <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="app-tarjeta h-100">
+                    <h2 class="app-tarjeta-titulo">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> (hasta <c:out value="${p.maximo}" /> en esta modalidad)</span></h2>
+                    <c:set var="idProyectoIntegrantes" value="${p.id}" />
+                    <c:set var="integrantesDetalle" value="false" />
+                    <c:set var="integrantesSalir" value="${integrantesAbiertos}" />
+                    <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
+                    <c:choose>
+                        <c:when test="${integrantesAbiertos and p.integrantes < p.maximo}">
+                            <form class="mt-4" method="post" action="${ctx}/estudiante/integrante-agregar.jsp">
+                                <label class="form-label" for="companero">Agregar un compañero</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <input class="form-control campo-en-linea" type="text" id="companero" name="companero" required
+                                           maxlength="120" autocomplete="off" placeholder="Correo institucional o número de documento">
+                                    <button type="submit" class="btn btn-outline-dark rounded-pill">Agregar</button>
+                                </div>
+                                <div class="form-text">Escribe su correo institucional o su número de documento. Debe tener cuenta, estar habilitado, ser de tu mismo nivel y no tener otro proyecto. Después sube su propio recibo de pago.</div>
+                            </form>
+                        </c:when>
+                        <c:when test="${integrantesAbiertos}">
+                            <p class="app-total mt-3">El proyecto ya tiene el máximo de integrantes de su modalidad.</p>
+                        </c:when>
+                    </c:choose>
+                </div>
+            </div>
+        </div>
 
         <%-- Seminario (RF17): inscripción y seminario en curso --%>
         <c:if test="${esSeminario and p.estado == 'Pendiente'}">
@@ -391,9 +421,10 @@
         <%-- Informe final (FDC-125): desde que el comité aprueba el FDC-124 (RF20, RF31) --%>
         <%-- Si el proyecto terminó sin informe (todos exonerados), la tarjeta no aplica --%>
         <c:if test="${not empty p.fecha_aprobacion_124 and not esSeminario and not (terminado and empty p.version_informe)}">
-            <div class="app-tarjeta mb-4 app-formulario">
-                <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
-                <dl class="app-pares">
+            <%-- Mientras se trabaja va abierto; aprobado por el comité, queda plegado para consultar --%>
+            <details class="app-tarjeta app-historial mb-4 app-formulario" ${p.fase == 6 or terminado ? '' : 'open'}>
+                <summary>Informe final (FDC-125)<c:if test="${p.fase == 6}"><span class="text-secondary fw-normal"> · aprobado</span></c:if></summary>
+                <dl class="app-pares mt-3">
                     <div><dt>Propuesta aprobada</dt><dd><fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></dd></div>
                     <div><dt>Se entrega desde</dt><dd><fmt:formatDate value="${p.informe_desde}" pattern="dd/MM/yyyy" /></dd></div>
                     <div><dt>Fecha límite</dt><dd><fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /></dd></div>
@@ -431,7 +462,7 @@
                         <p class="text-secondary mt-3">Enviaste la versión <c:out value="${p.version_informe}" /> del informe final a tu director (fase 5, Informe II). Está en revisión.</p>
                     </c:when>
                     <c:when test="${p.fase == 6}">
-                        <p class="text-secondary mt-3">El comité aprobó tu informe final<c:if test="${not empty p.version_informe}">: la versión oficial es la <c:out value="${p.version_informe}" /></c:if>.${terminado ? '' : ' La fecha de la sustentación la programa el comité: sale arriba.'}</p>
+                        <p class="text-secondary mt-3">El comité aprobó tu informe final<c:if test="${not empty p.version_informe}">: la versión oficial es la <c:out value="${p.version_informe}" /></c:if>.${terminado ? '' : ' La fecha de la sustentación la programa el comité: sale abajo.'}</p>
                     </c:when>
                 </c:choose>
                 <c:set var="informeOcultarVacios" value="${p.fase == 4 and not terminado}" />
@@ -528,47 +559,19 @@
                         </details>
                     </c:if>
                 </c:if>
-            </div>
+            </details>
         </c:if>
 
-        <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="app-tarjeta h-100">
-                    <c:set var="datosTitulo" value="${p.titulo}" />
-                    <c:set var="datosConDirector" value="true" />
-                    <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="app-tarjeta h-100">
-                    <h2 class="app-tarjeta-titulo">Integrantes <span class="text-secondary fw-normal">· <c:out value="${p.integrantes}" /> (hasta <c:out value="${p.maximo}" /> en esta modalidad)</span></h2>
-                    <c:set var="idProyectoIntegrantes" value="${p.id}" />
-                    <c:set var="integrantesDetalle" value="false" />
-                    <c:set var="integrantesSalir" value="${integrantesAbiertos}" />
-                    <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
-                    <c:choose>
-                        <c:when test="${integrantesAbiertos and p.integrantes < p.maximo}">
-                            <form class="mt-4" method="post" action="${ctx}/estudiante/integrante-agregar.jsp">
-                                <label class="form-label" for="companero">Agregar un compañero</label>
-                                <div class="d-flex flex-wrap gap-2">
-                                    <input class="form-control campo-en-linea" type="text" id="companero" name="companero" required
-                                           maxlength="120" autocomplete="off" placeholder="Correo institucional o número de documento">
-                                    <button type="submit" class="btn btn-outline-dark rounded-pill">Agregar</button>
-                                </div>
-                                <div class="form-text">Escribe su correo institucional o su número de documento. Debe tener cuenta, estar habilitado, ser de tu mismo nivel y no tener otro proyecto. Después sube su propio recibo de pago.</div>
-                            </form>
-                        </c:when>
-                        <c:when test="${integrantesAbiertos}">
-                            <p class="app-total mt-3">El proyecto ya tiene el máximo de integrantes de su modalidad.</p>
-                        </c:when>
-                    </c:choose>
-                </div>
-            </div>
-        </div>
+        <%-- Fase final (RF39): la sustentación, que programa el comité; va después del informe --%>
+        <c:if test="${p.fase == 6 and not esSeminario}">
+            <c:set var="idProyectoSustentacion" value="${p.id}" />
+            <c:set var="sustentacionProgramar" value="false" />
+            <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
+        </c:if>
 
         <%-- Trámites que no son del día a día: solo cuando se pueden usar --%>
         <c:if test="${mostrarModalidad or mostrarExoneracion}">
-        <div class="row g-4 mt-0">
+        <div class="row g-4">
 
 
             <%-- Cambio de modalidad (RF12): antes de que se apruebe el FDC-124 --%>

@@ -65,42 +65,24 @@
 <c:set var="idProyectoFases" value="${p.id}" />
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
-<%-- Fase final (RF39): la sustentación, que programa el comité; el evaluador la atiende --%>
-<c:if test="${p.fase == 6 and p.modalidad_id != 5}">
-    <c:set var="idProyectoSustentacion" value="${p.id}" />
-    <c:set var="sustentacionProgramar" value="false" />
-    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
-</c:if>
-
-<%-- Informe final (fase 5 en adelante) --%>
-<c:if test="${not empty p.informe_id and p.fase >= 5}">
-    <div class="app-tarjeta mb-4">
-        <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
-        <c:choose>
-            <c:when test="${informePorEvaluar}">
-                <p class="text-secondary">El director aprobó la versión <c:out value="${p.version_informe}" /> del informe final y te la envió.
-                    <c:if test="${not empty p.limite_informe}">Tienes hasta el <fmt:formatDate value="${p.limite_informe}" pattern="dd/MM/yyyy" /> (5 días hábiles).</c:if></p>
-                <c:if test="${p.informe_vencido == 1}"><div class="alert alert-warning app-aviso" role="status">Se venció el plazo para evaluar este informe. No hay aprobación automática: evalúalo cuanto antes.</div></c:if>
-            </c:when>
-            <c:when test="${p.fase == 6}"><p class="text-secondary">${p.estado == 'Finalizado' ? 'El comité aprobó el informe final y, después de la sustentación, registró la aprobación final del proyecto.' : 'El comité aprobó el informe final: el proyecto está en la fase final (sustentación).'}</p></c:when>
-            <c:when test="${fn:startsWith(p.ultima_informe, 'Evaluador:')}"><p class="text-secondary">Enviaste tu evaluación. La decisión final es del comité.</p></c:when>
-            <c:otherwise><p class="text-secondary">El director está revisando el informe; te llega cuando lo apruebe.</p></c:otherwise>
-        </c:choose>
-        <c:set var="idProyectoInforme" value="${p.id}" />
-        <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
-        <c:if test="${not informePorEvaluar}">
-            <c:set var="idProyectoEvaluacion" value="${p.id}" />
-            <c:set var="evaluacionConEvaluador" value="false" />
-            <c:set var="evaluacionInforme" value="true" />
-            <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
-        </c:if>
+<%-- Primero de qué proyecto se trata; después cada fase en orden: propuesta (con su
+     rejilla), informe final (con la suya) y sustentación --%>
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="app-tarjeta h-100">
+            <c:set var="datosOcultarLimite" value="${cerrado or not empty p.fecha_aprobacion_124}" />
+            <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
+        </div>
     </div>
-    <c:if test="${informePorEvaluar}">
-        <c:set var="rejillaEntrega" value="${p.informe_id}" />
-        <c:set var="rejillaInforme" value="true" />
-        <%@ include file="/WEB-INF/jspf/rejilla-formulario.jspf" %>
-    </c:if>
-</c:if>
+    <div class="col-lg-6">
+        <div class="app-tarjeta h-100">
+            <h2 class="app-tarjeta-titulo">Estudiantes</h2>
+            <c:set var="idProyectoIntegrantes" value="${p.id}" />
+            <c:set var="integrantesDetalle" value="false" />
+            <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
+        </div>
+    </div>
+</div>
 
 <%-- Mientras se evalúa va abierta; aprobada por el comité, queda plegada para consultar --%>
 <details class="app-tarjeta app-historial mb-4" ${empty p.fecha_aprobacion_124 ? 'open' : ''}>
@@ -156,21 +138,43 @@
     </form>
 </c:if>
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="app-tarjeta h-100">
-            <c:set var="datosOcultarLimite" value="${cerrado or not empty p.fecha_aprobacion_124}" />
-            <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="app-tarjeta h-100">
-            <h2 class="app-tarjeta-titulo">Estudiantes</h2>
-            <c:set var="idProyectoIntegrantes" value="${p.id}" />
-            <c:set var="integrantesDetalle" value="false" />
-            <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
-        </div>
-    </div>
-</div>
+<%-- Informe final (fase 5 en adelante): abierto mientras se evalúa; aprobado, queda plegado --%>
+<c:if test="${not empty p.informe_id and p.fase >= 5}">
+    <details class="app-tarjeta app-historial mb-4" ${p.fase == 6 or cerrado ? '' : 'open'}>
+        <summary>Informe final (FDC-125)<c:if test="${p.fase == 6}"><span class="text-secondary fw-normal"> · aprobado</span></c:if></summary>
+        <div class="mt-3"></div>
+        <c:choose>
+            <c:when test="${informePorEvaluar}">
+                <p class="text-secondary">El director aprobó la versión <c:out value="${p.version_informe}" /> del informe final y te la envió.
+                    <c:if test="${not empty p.limite_informe}">Tienes hasta el <fmt:formatDate value="${p.limite_informe}" pattern="dd/MM/yyyy" /> (5 días hábiles).</c:if></p>
+                <c:if test="${p.informe_vencido == 1}"><div class="alert alert-warning app-aviso" role="status">Se venció el plazo para evaluar este informe. No hay aprobación automática: evalúalo cuanto antes.</div></c:if>
+            </c:when>
+            <c:when test="${p.fase == 6}"><p class="text-secondary">${p.estado == 'Finalizado' ? 'El comité aprobó el informe final y, después de la sustentación, registró la aprobación final del proyecto.' : 'El comité aprobó el informe final: el proyecto está en la fase final (sustentación).'}</p></c:when>
+            <c:when test="${fn:startsWith(p.ultima_informe, 'Evaluador:')}"><p class="text-secondary">Enviaste tu evaluación. La decisión final es del comité.</p></c:when>
+            <c:otherwise><p class="text-secondary">El director está revisando el informe; te llega cuando lo apruebe.</p></c:otherwise>
+        </c:choose>
+        <c:set var="idProyectoInforme" value="${p.id}" />
+        <%@ include file="/WEB-INF/jspf/informe-final.jspf" %>
+        <c:if test="${not informePorEvaluar}">
+            <c:set var="idProyectoEvaluacion" value="${p.id}" />
+            <c:set var="evaluacionConEvaluador" value="false" />
+            <c:set var="evaluacionInforme" value="true" />
+            <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
+        </c:if>
+    </details>
+    <c:if test="${informePorEvaluar}">
+        <c:set var="rejillaEntrega" value="${p.informe_id}" />
+        <c:set var="rejillaInforme" value="true" />
+        <%@ include file="/WEB-INF/jspf/rejilla-formulario.jspf" %>
+    </c:if>
+</c:if>
+
+<%-- Fase final (RF39): la sustentación, que programa el comité; el evaluador la atiende.
+     Va después del informe --%>
+<c:if test="${p.fase == 6 and p.modalidad_id != 5}">
+    <c:set var="idProyectoSustentacion" value="${p.id}" />
+    <c:set var="sustentacionProgramar" value="false" />
+    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
+</c:if>
 
 <%@ include file="/WEB-INF/jspf/pie.jspf" %>

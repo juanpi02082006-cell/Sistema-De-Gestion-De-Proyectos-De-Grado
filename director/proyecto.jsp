@@ -70,12 +70,24 @@
 <c:set var="idProyectoFases" value="${p.id}" />
 <%@ include file="/WEB-INF/jspf/fases-proyecto.jspf" %>
 
-<%-- Fase final (RF39): la sustentación, que programa el comité --%>
-<c:if test="${p.fase == 6 and not esSeminario}">
-    <c:set var="idProyectoSustentacion" value="${p.id}" />
-    <c:set var="sustentacionProgramar" value="false" />
-    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
-</c:if>
+<%-- Primero de qué proyecto se trata; después cada fase en orden: propuesta (con su
+     revisión), informe final y sustentación; al final el historial --%>
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="app-tarjeta h-100">
+            <c:set var="datosOcultarLimite" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado' or not empty p.fecha_aprobacion_124}" />
+            <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="app-tarjeta h-100">
+            <h2 class="app-tarjeta-titulo">Estudiantes</h2>
+            <c:set var="idProyectoIntegrantes" value="${p.id}" />
+            <c:set var="integrantesDetalle" value="true" />
+            <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
+        </div>
+    </div>
+</div>
 
 <%-- Seminario (RF17): el docente del seminario (el director) registra la nota final --%>
 <c:if test="${esSeminario}">
@@ -151,11 +163,53 @@
         <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
     </details>
 
+    <%-- Fase 3: los codirectores dejan observaciones; decide el director (RF13) --%>
+    <c:if test="${p.fase == 3 and p.es_director != 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
+        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/director/propuesta-observar.jsp">
+            <input type="hidden" name="id" value="${p.id}">
+            <h2 class="app-tarjeta-titulo">Observación de codirector sobre la versión <c:out value="${p.version_propuesta}" /></h2>
+            <p class="text-secondary">Como codirector puedes dejar observaciones de forma y contenido. La decisión de devolverla o aprobarla es del director.</p>
+            <label class="form-label" for="observacionCodirector">Observación *</label>
+            <textarea class="form-control" id="observacionCodirector" name="observacion" required></textarea>
+            <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Enviar observación</button>
+        </form>
+    </c:if>
+
+    <%-- Fase 3: la revisión del director (solo el director, no los codirectores) --%>
+    <c:if test="${p.fase == 3 and p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
+        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/director/propuesta-revisar.jsp" enctype="multipart/form-data">
+            <input type="hidden" name="id" value="${p.id}">
+            <h2 class="app-tarjeta-titulo">Revisar la versión <c:out value="${p.version_propuesta}" /></h2>
+            <p class="text-secondary">
+                Deja tus observaciones de forma y contenido (obligatorias). Si falta algo, devuélvela al estudiante: el proyecto vuelve a la fase 2.
+                Si está lista, pásala por Turnitin (similitud máxima del 10 %), sube el reporte y envíala al evaluador y al comité: el proyecto pasa a la fase 4.
+            </p>
+            <c:if test="${p.tiene_evaluador != 1}">
+                <div class="alert alert-warning app-aviso" role="status">El comité todavía no asigna el evaluador de este proyecto: puedes devolver la propuesta, pero no enviarla.</div>
+            </c:if>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label" for="observacion">Observaciones *</label>
+                    <textarea class="form-control" id="observacion" name="observacion" required></textarea>
+                </div>
+                <div class="col-lg-7">
+                    <label class="form-label" for="turnitin">Reporte de Turnitin (PDF, solo para aprobar)</label>
+                    <input class="form-control" type="file" id="turnitin" name="turnitin" accept="application/pdf,.pdf">
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="submit" name="decision" value="devolver" class="btn btn-outline-dark rounded-pill">Devolver al estudiante</button>
+                <button type="submit" name="decision" value="aprobar" class="btn btn-primary rounded-pill app-boton text-wrap" ${p.tiene_evaluador == 1 ? '' : 'disabled'}>Aprobar y enviar al evaluador y al comité</button>
+            </div>
+        </form>
+    </c:if>
+
     <%-- Con el FDC-124 aprobado: plazos, seguimientos del director (RF20) e informe final --%>
     <c:if test="${not empty p.fecha_aprobacion_124}">
-        <div class="app-tarjeta mb-4 app-formulario">
-            <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
-            <dl class="app-pares">
+        <%-- Mientras se trabaja va abierto; aprobado por el comité, queda plegado para consultar --%>
+        <details class="app-tarjeta app-historial mb-4 app-formulario" ${p.fase == 6 or p.estado == 'Finalizado' or p.estado == 'Cancelado' ? '' : 'open'}>
+            <summary>Informe final (FDC-125)<c:if test="${p.fase == 6}"><span class="text-secondary fw-normal"> · aprobado</span></c:if></summary>
+            <dl class="app-pares mt-3">
                 <div><dt>Propuesta aprobada</dt><dd><fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></dd></div>
                 <div><dt>Se entrega desde</dt><dd><fmt:formatDate value="${p.informe_desde}" pattern="dd/MM/yyyy" /></dd></div>
                 <div><dt>Fecha límite</dt><dd><fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /></dd></div>
@@ -212,67 +266,17 @@
                     <button type="submit" class="btn btn-outline-dark rounded-pill mt-3">Registrar seguimiento</button>
                 </form>
             </c:if>
-        </div>
+        </details>
     </c:if>
 
-    <%-- Fase 3: los codirectores dejan observaciones; decide el director (RF13) --%>
-    <c:if test="${p.fase == 3 and p.es_director != 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
-        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/director/propuesta-observar.jsp">
-            <input type="hidden" name="id" value="${p.id}">
-            <h2 class="app-tarjeta-titulo">Observación de codirector sobre la versión <c:out value="${p.version_propuesta}" /></h2>
-            <p class="text-secondary">Como codirector puedes dejar observaciones de forma y contenido. La decisión de devolverla o aprobarla es del director.</p>
-            <label class="form-label" for="observacionCodirector">Observación *</label>
-            <textarea class="form-control" id="observacionCodirector" name="observacion" required></textarea>
-            <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3">Enviar observación</button>
-        </form>
-    </c:if>
-
-    <%-- Fase 3: la revisión del director (solo el director, no los codirectores) --%>
-    <c:if test="${p.fase == 3 and p.es_director == 1 and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
-        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/director/propuesta-revisar.jsp" enctype="multipart/form-data">
-            <input type="hidden" name="id" value="${p.id}">
-            <h2 class="app-tarjeta-titulo">Revisar la versión <c:out value="${p.version_propuesta}" /></h2>
-            <p class="text-secondary">
-                Deja tus observaciones de forma y contenido (obligatorias). Si falta algo, devuélvela al estudiante: el proyecto vuelve a la fase 2.
-                Si está lista, pásala por Turnitin (similitud máxima del 10 %), sube el reporte y envíala al evaluador y al comité: el proyecto pasa a la fase 4.
-            </p>
-            <c:if test="${p.tiene_evaluador != 1}">
-                <div class="alert alert-warning app-aviso" role="status">El comité todavía no asigna el evaluador de este proyecto: puedes devolver la propuesta, pero no enviarla.</div>
-            </c:if>
-            <div class="row g-3">
-                <div class="col-12">
-                    <label class="form-label" for="observacion">Observaciones *</label>
-                    <textarea class="form-control" id="observacion" name="observacion" required></textarea>
-                </div>
-                <div class="col-lg-7">
-                    <label class="form-label" for="turnitin">Reporte de Turnitin (PDF, solo para aprobar)</label>
-                    <input class="form-control" type="file" id="turnitin" name="turnitin" accept="application/pdf,.pdf">
-                </div>
-            </div>
-            <div class="d-flex flex-wrap gap-2 mt-3">
-                <button type="submit" name="decision" value="devolver" class="btn btn-outline-dark rounded-pill">Devolver al estudiante</button>
-                <button type="submit" name="decision" value="aprobar" class="btn btn-primary rounded-pill app-boton text-wrap" ${p.tiene_evaluador == 1 ? '' : 'disabled'}>Aprobar y enviar al evaluador y al comité</button>
-            </div>
-        </form>
-    </c:if>
 </c:if>
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="app-tarjeta h-100">
-            <c:set var="datosOcultarLimite" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado' or not empty p.fecha_aprobacion_124}" />
-            <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
-        </div>
-    </div>
-    <div class="col-lg-6">
-        <div class="app-tarjeta h-100">
-            <h2 class="app-tarjeta-titulo">Estudiantes</h2>
-            <c:set var="idProyectoIntegrantes" value="${p.id}" />
-            <c:set var="integrantesDetalle" value="true" />
-            <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
-        </div>
-    </div>
-</div>
+<%-- Fase final (RF39): la sustentación, que programa el comité; va después del informe --%>
+<c:if test="${p.fase == 6 and not esSeminario}">
+    <c:set var="idProyectoSustentacion" value="${p.id}" />
+    <c:set var="sustentacionProgramar" value="false" />
+    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
+</c:if>
 
 <c:set var="idProyectoHistorial" value="${p.id}" />
 <%@ include file="/WEB-INF/jspf/historial-proyecto.jspf" %>

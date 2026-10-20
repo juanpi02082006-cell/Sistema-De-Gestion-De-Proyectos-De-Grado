@@ -82,7 +82,8 @@
 <c:set var="idCodirector2">${codirectoresActuales.rowCount > 1 ? codirectoresActuales.rows[1].docente_id : ''}</c:set>
 <c:set var="idDirector">${p.director_id}</c:set>
 <c:set var="idEvaluador">${p.evaluador_id}</c:set>
-<%-- Lo que el comité tiene que hacer en este proyecto va arriba; lo demás, abajo plegado --%>
+<%-- En la fase 1, lo que el comité tiene que hacer (pagos por revisar, asignación) va abierto;
+     si no hay nada pendiente, va plegado en el mismo lugar --%>
 <c:set var="cerrado" value="${p.estado == 'Finalizado' or p.estado == 'Cancelado'}" />
 <c:set var="hayRecibosPorRevisar" value="${p.estado_pago == 'Por revisar' and (p.fase == 1 or p.fase == 2) and not cerrado}" />
 <c:set var="faltaAsignar" value="${not cerrado and (empty p.director_id or (empty p.evaluador_id and not esSeminario and p.fase >= 2))}" />
@@ -136,142 +137,26 @@
     </div>
 </c:if>
 
-<c:if test="${cambiosPendientes.rowCount > 0}">
-    <div class="app-tarjeta mb-4">
-        <h2 class="app-tarjeta-titulo">Cambio de modalidad por decidir</h2>
-        <c:forEach var="cm" items="${cambiosPendientes.rows}">
-            <p class="mb-1"><strong><c:out value="${cm.solicitante}" /></strong> pide pasar de <c:out value="${cm.anterior}" /> a <strong><c:out value="${cm.nueva}" /></strong>.</p>
-            <p class="app-observacion mt-0">Motivo: <c:out value="${cm.motivo}" /> <span class="app-lista-nota"><fmt:formatDate value="${cm.solicitado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
-            <form class="app-revision" method="post" action="${ctx}/admin/modalidad-decidir.jsp">
-                <input type="hidden" name="id" value="${cm.id}">
-                <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre el cambio de modalidad" required></textarea>
-                <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar el cambio</button>
-                <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
-            </form>
-        </c:forEach>
+<%-- Primero de qué proyecto se trata; después cada fase en orden: pago y asignación,
+     propuesta, informe final y sustentación; al final los trámites y el historial --%>
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="app-tarjeta h-100">
+            <c:set var="datosConDirector" value="true" />
+            <c:set var="datosOcultarLimite" value="${cerrado or not empty p.fecha_aprobacion_124}" />
+            <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
+        </div>
     </div>
-</c:if>
 
-<c:if test="${prorrogas.rowCount > 0}">
-    <c:set var="prorrogaPorDecidir" value="false" />
-    <c:forEach var="pr" items="${prorrogas.rows}"><c:if test="${pr.estado == 'Pendiente'}"><c:set var="prorrogaPorDecidir" value="${not cerrado}" /></c:if></c:forEach>
-    <details class="app-tarjeta app-historial mb-4" ${prorrogaPorDecidir ? 'open' : ''}>
-        <summary>Prórrogas del informe final<span class="text-secondary fw-normal"> · ${prorrogaPorDecidir ? 'hay una por decidir' : prorrogas.rowCount}${prorrogaPorDecidir ? '' : (prorrogas.rowCount == 1 ? ' solicitud' : ' solicitudes')}</span></summary>
-        <div class="mt-3"></div>
-        <c:forEach var="pr" items="${prorrogas.rows}">
-            <div class="app-archivo">
-                <span>
-                    <span class="app-lista-dato"><c:choose><c:when test="${pr.estado == 'Aprobada'}">Prórroga <c:out value="${pr.numero}" /> de 3</c:when><c:otherwise>Solicitud de prórroga</c:otherwise></c:choose> · <c:out value="${pr.solicitante}" /></span>
-                    <span class="app-lista-nota">Pedida el <fmt:formatDate value="${pr.fecha_solicitud}" pattern="dd/MM/yyyy" /> · nueva fecha límite: <fmt:formatDate value="${pr.nueva_fecha_limite}" pattern="dd/MM/yyyy" /> · Motivo: <c:out value="${pr.motivo}" /></span>
-                </span>
-                <span class="app-acciones">
-                    <span class="app-estado ${pr.estado == 'Aprobada' ? 'activo' : 'inactivo'}"><c:out value="${pr.estado}" /></span>
-                    <c:if test="${not empty pr.entrega_id}"><a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${pr.entrega_id}" target="_blank" rel="noopener">Soporte</a></c:if>
-                </span>
-            </div>
-            <c:choose>
-                <c:when test="${pr.estado == 'Pendiente' and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
-                    <form class="app-revision mb-3" method="post" action="${ctx}/admin/prorroga-decidir.jsp">
-                        <input type="hidden" name="id" value="${pr.id}">
-                        <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre la prórroga" required></textarea>
-                        <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar la prórroga</button>
-                        <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
-                    </form>
-                </c:when>
-                <c:when test="${not empty pr.observacion}">
-                    <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${pr.observacion}" /></p>
-                </c:when>
-            </c:choose>
-        </c:forEach>
-    </details>
-</c:if>
-
-<c:if test="${exoneraciones.rowCount > 0}">
-    <c:set var="exoneracionPorDecidir" value="false" />
-    <c:forEach var="xo" items="${exoneraciones.rows}"><c:if test="${xo.estado == 'Pendiente'}"><c:set var="exoneracionPorDecidir" value="${p.estado != 'Finalizado'}" /></c:if></c:forEach>
-    <details class="app-tarjeta app-historial mb-4" ${exoneracionPorDecidir ? 'open' : ''}>
-        <summary>Exoneraciones por Saber TyT<span class="text-secondary fw-normal"> · ${exoneracionPorDecidir ? 'hay una por verificar' : exoneraciones.rowCount}${exoneracionPorDecidir ? '' : (exoneraciones.rowCount == 1 ? ' solicitud' : ' solicitudes')}</span></summary>
-        <div class="mt-3"></div>
-        <c:forEach var="xo" items="${exoneraciones.rows}">
-            <div class="app-archivo">
-                <span>
-                    <span class="app-lista-dato"><c:out value="${xo.estudiante}" /> · <c:out value="${xo.puntaje}" /> puntos</span>
-                    <span class="app-lista-nota">Estímulo: <c:out value="${xo.estimulo}" /><c:if test="${xo.estado == 'Aprobada' and xo.renuncia_exoneracion == true}"> · renunció a la exoneración</c:if></span>
-                </span>
-                <span class="app-acciones">
-                    <span class="app-estado ${xo.estado == 'Aprobada' ? 'activo' : 'inactivo'}"><c:out value="${xo.estado}" /></span>
-                    <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${xo.entrega_id}" target="_blank" rel="noopener">Certificado</a>
-                </span>
-            </div>
-            <c:choose>
-                <c:when test="${xo.estado == 'Pendiente' and p.estado != 'Finalizado'}">
-                    <form class="app-revision mb-3" method="post" action="${ctx}/admin/exoneracion-revisar.jsp">
-                        <input type="hidden" name="id" value="${xo.id}">
-                        <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre la exoneración" required></textarea>
-                        <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar la exoneración</button>
-                        <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
-                    </form>
-                </c:when>
-                <c:when test="${not empty xo.observacion}">
-                    <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${xo.observacion}" /></p>
-                </c:when>
-            </c:choose>
-        </c:forEach>
-    </details>
-</c:if>
-
-<c:if test="${p.fase == 3 and not empty p.limite_director and p.estado != 'Cancelado'}">
-    <div class="${p.director_vencido == 1 ? 'alert alert-warning app-aviso' : 'app-resultado'}" role="status">
-        <c:choose>
-            <c:when test="${p.director_vencido == 1}">Se venció el plazo del director para revisar la propuesta (<fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" />). No hay aprobación automática.</c:when>
-            <c:otherwise>El director tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para revisar la propuesta (5 días hábiles).</c:otherwise>
-        </c:choose>
+    <div class="col-lg-6">
+        <div class="app-tarjeta h-100">
+            <h2 class="app-tarjeta-titulo">Estudiantes</h2>
+            <c:set var="idProyectoIntegrantes" value="${p.id}" />
+            <c:set var="integrantesDetalle" value="true" />
+            <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
+        </div>
     </div>
-</c:if>
-<c:if test="${p.fase == 4 and p.ultima == 'Director:Aprobado' and not empty p.limite_director and p.estado != 'Cancelado'}">
-    <div class="${p.director_vencido == 1 ? 'alert alert-warning app-aviso' : 'app-resultado'}" role="status">
-        <c:choose>
-            <c:when test="${p.director_vencido == 1}">Se venció el plazo del evaluador para evaluar la propuesta (<fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" />). No hay aprobación automática.</c:when>
-            <c:otherwise>El evaluador tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para evaluar la propuesta (3 días hábiles).</c:otherwise>
-        </c:choose>
-    </div>
-</c:if>
-
-<%-- Fase final (RF39): el comité programa la sustentación (reglamento, art. 26, literal m)
-     y, después de su fecha y hora, registra la aprobación final con su acta --%>
-<c:if test="${p.fase == 6 and not esSeminario}">
-    <c:set var="idProyectoSustentacion" value="${p.id}" />
-    <c:set var="sustentacionProgramar" value="${p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
-    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
-    <c:if test="${p.estado != 'Finalizado' and p.estado != 'Cancelado' and sustentacion.ya_paso == 1}">
-        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/admin/proyecto-finalizar.jsp">
-            <input type="hidden" name="id" value="${p.id}">
-            <h2 class="app-tarjeta-titulo">Aprobación final del comité</h2>
-            <p class="text-secondary">
-                Ya pasó la fecha de la sustentación. Si se hizo y el proyecto cumple las condiciones académicas y documentales, registra la aprobación final con su acta:
-                el proyecto queda "Finalizado" y los estudiantes pueden radicar los papeles de grado. Si no se hizo, reprográmala arriba.
-            </p>
-            <div class="row g-3">
-                <div class="col-sm-4">
-                    <label class="form-label" for="actaAprobacionFinal">Número del acta *</label>
-                    <input class="form-control" type="number" id="actaAprobacionFinal" name="acta" min="1" step="1" required>
-                </div>
-                <div class="col-sm-4">
-                    <label class="form-label" for="fechaActaFinal">Fecha del acta *</label>
-                    <input class="form-control" type="date" id="fechaActaFinal" name="fecha_acta" required
-                           value="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />"
-                           min="<fmt:formatDate value='${sustentacion.fecha}' pattern='yyyy-MM-dd' />" max="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />">
-                </div>
-                <div class="col-12">
-                    <label class="form-label" for="observacionFinal">Observación del comité *</label>
-                    <textarea class="form-control" id="observacionFinal" name="observacion" required></textarea>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3"
-                    onclick="return confirm('¿Registrar la aprobación final? El proyecto queda finalizado y ya no se modifica.');">Registrar la aprobación final</button>
-        </form>
-    </c:if>
-</c:if>
+</div>
 
 <%-- Seminario (RF17): inscripción (documentos y validación) y nota final --%>
 <c:if test="${esSeminario}">
@@ -358,6 +243,53 @@
 </div>
 </c:if>
 
+<c:set var="mostrarRecibosAbajo" value="${not hayRecibosPorRevisar and recibos.rowCount > 0}" />
+<c:set var="mostrarAsignacionAbajo" value="${not faltaAsignar and not cerrado}" />
+<c:if test="${mostrarRecibosAbajo or mostrarAsignacionAbajo}">
+<div class="row g-4 mb-4">
+    <c:if test="${mostrarRecibosAbajo}">
+        <div class="col-lg">
+            <details class="app-tarjeta app-historial h-100">
+                <summary>Recibos de pago<span class="text-secondary fw-normal"> · <c:out value="${p.estado_pago}" /></span></summary>
+                <div class="mt-3"></div>
+                <%@ include file="/WEB-INF/jspf/recibos-comite.jspf" %>
+            </details>
+        </div>
+    </c:if>
+    <c:if test="${mostrarAsignacionAbajo}">
+        <div class="col-lg">
+            <details class="app-tarjeta app-historial app-formulario h-100">
+                <summary>Director y evaluador<span class="text-secondary fw-normal"> · cambiar la asignación</span></summary>
+                <dl class="app-pares mt-3">
+                    <div><dt>Director</dt><dd><c:out value="${empty p.director ? 'Por asignar' : p.director}" /></dd></div>
+                    <div><dt>Evaluador</dt><dd><c:out value="${empty p.evaluador ? 'Por asignar' : p.evaluador}" /></dd></div>
+                </dl>
+                <form class="mt-3" method="post" action="${ctx}/admin/proyecto-asignar.jsp">
+                    <%@ include file="/WEB-INF/jspf/asignacion-comite.jspf" %>
+                </form>
+            </details>
+        </div>
+    </c:if>
+</div>
+</c:if>
+
+<c:if test="${p.fase == 3 and not empty p.limite_director and p.estado != 'Cancelado'}">
+    <div class="${p.director_vencido == 1 ? 'alert alert-warning app-aviso' : 'app-resultado'}" role="status">
+        <c:choose>
+            <c:when test="${p.director_vencido == 1}">Se venció el plazo del director para revisar la propuesta (<fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" />). No hay aprobación automática.</c:when>
+            <c:otherwise>El director tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para revisar la propuesta (5 días hábiles).</c:otherwise>
+        </c:choose>
+    </div>
+</c:if>
+<c:if test="${p.fase == 4 and p.ultima == 'Director:Aprobado' and not empty p.limite_director and p.estado != 'Cancelado'}">
+    <div class="${p.director_vencido == 1 ? 'alert alert-warning app-aviso' : 'app-resultado'}" role="status">
+        <c:choose>
+            <c:when test="${p.director_vencido == 1}">Se venció el plazo del evaluador para evaluar la propuesta (<fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" />). No hay aprobación automática.</c:when>
+            <c:otherwise>El evaluador tiene hasta el <fmt:formatDate value="${p.limite_director}" pattern="dd/MM/yyyy" /> para evaluar la propuesta (3 días hábiles).</c:otherwise>
+        </c:choose>
+    </div>
+</c:if>
+
 <c:if test="${p.fase >= 2 and p.modalidad_id != 5}">
     <%-- Mientras se revisa va abierta; aprobada, queda plegada para consultar --%>
     <details class="app-tarjeta app-historial mb-4" ${empty p.fecha_aprobacion_124 ? 'open' : ''}>
@@ -435,9 +367,10 @@
                 </c:choose>
             </div>
         </c:if>
-        <div class="app-tarjeta mb-4">
-            <h2 class="app-tarjeta-titulo">Informe final (FDC-125)</h2>
-            <dl class="app-pares">
+        <%-- Mientras se trabaja va abierto; aprobado por el comité, queda plegado para consultar --%>
+        <details class="app-tarjeta app-historial mb-4" ${p.fase == 6 or cerrado ? '' : 'open'}>
+            <summary>Informe final (FDC-125)<c:if test="${p.fase == 6}"><span class="text-secondary fw-normal"> · aprobado</span></c:if></summary>
+            <dl class="app-pares mt-3">
                 <div><dt>Propuesta aprobada</dt><dd><fmt:formatDate value="${p.fecha_aprobacion_124}" pattern="dd/MM/yyyy" /></dd></div>
                 <div><dt>Se entrega desde</dt><dd><fmt:formatDate value="${p.informe_desde}" pattern="dd/MM/yyyy" /></dd></div>
                 <div><dt>Fecha límite</dt><dd><fmt:formatDate value="${p.fecha_limite}" pattern="dd/MM/yyyy" /></dd></div>
@@ -448,7 +381,7 @@
             <c:set var="evaluacionConEvaluador" value="true" />
             <c:set var="evaluacionInforme" value="true" />
             <%@ include file="/WEB-INF/jspf/evaluacion-propuesta.jspf" %>
-        </div>
+        </details>
 
         <c:if test="${p.fase == 5 and fn:startsWith(p.ultima_informe, 'Evaluador:') and informeAbierto}">
             <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/admin/informe-decidir.jsp">
@@ -486,53 +419,124 @@
     </c:if>
 </c:if>
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="app-tarjeta h-100">
-            <c:set var="datosConDirector" value="true" />
-            <c:set var="datosOcultarLimite" value="${cerrado or not empty p.fecha_aprobacion_124}" />
-            <%@ include file="/WEB-INF/jspf/datos-proyecto.jspf" %>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <div class="app-tarjeta h-100">
-            <h2 class="app-tarjeta-titulo">Estudiantes</h2>
-            <c:set var="idProyectoIntegrantes" value="${p.id}" />
-            <c:set var="integrantesDetalle" value="true" />
-            <%@ include file="/WEB-INF/jspf/integrantes.jspf" %>
-        </div>
-    </div>
-</div>
-
-<c:set var="mostrarRecibosAbajo" value="${not hayRecibosPorRevisar and recibos.rowCount > 0}" />
-<c:set var="mostrarAsignacionAbajo" value="${not faltaAsignar and not cerrado}" />
-<c:if test="${mostrarRecibosAbajo or mostrarAsignacionAbajo}">
-<div class="row g-4 mt-0">
-    <c:if test="${mostrarRecibosAbajo}">
-        <div class="col-lg">
-            <details class="app-tarjeta app-historial h-100">
-                <summary>Recibos de pago<span class="text-secondary fw-normal"> · <c:out value="${p.estado_pago}" /></span></summary>
-                <div class="mt-3"></div>
-                <%@ include file="/WEB-INF/jspf/recibos-comite.jspf" %>
-            </details>
-        </div>
+<%-- Fase final (RF39): el comité programa la sustentación (reglamento, art. 26, literal m)
+     y, después de su fecha y hora, registra la aprobación final con su acta --%>
+<c:if test="${p.fase == 6 and not esSeminario}">
+    <c:set var="idProyectoSustentacion" value="${p.id}" />
+    <c:set var="sustentacionProgramar" value="${p.estado != 'Finalizado' and p.estado != 'Cancelado'}" />
+    <%@ include file="/WEB-INF/jspf/sustentacion.jspf" %>
+    <c:if test="${p.estado != 'Finalizado' and p.estado != 'Cancelado' and sustentacion.ya_paso == 1}">
+        <form class="app-tarjeta app-formulario mb-4" method="post" action="${ctx}/admin/proyecto-finalizar.jsp">
+            <input type="hidden" name="id" value="${p.id}">
+            <h2 class="app-tarjeta-titulo">Aprobación final del comité</h2>
+            <p class="text-secondary">
+                Ya pasó la fecha de la sustentación. Si se hizo y el proyecto cumple las condiciones académicas y documentales, registra la aprobación final con su acta:
+                el proyecto queda "Finalizado" y los estudiantes pueden radicar los papeles de grado. Si no se hizo, reprográmala arriba.
+            </p>
+            <div class="row g-3">
+                <div class="col-sm-4">
+                    <label class="form-label" for="actaAprobacionFinal">Número del acta *</label>
+                    <input class="form-control" type="number" id="actaAprobacionFinal" name="acta" min="1" step="1" required>
+                </div>
+                <div class="col-sm-4">
+                    <label class="form-label" for="fechaActaFinal">Fecha del acta *</label>
+                    <input class="form-control" type="date" id="fechaActaFinal" name="fecha_acta" required
+                           value="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />"
+                           min="<fmt:formatDate value='${sustentacion.fecha}' pattern='yyyy-MM-dd' />" max="<fmt:formatDate value='${p.hoy}' pattern='yyyy-MM-dd' />">
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="observacionFinal">Observación del comité *</label>
+                    <textarea class="form-control" id="observacionFinal" name="observacion" required></textarea>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary rounded-pill app-boton mt-3"
+                    onclick="return confirm('¿Registrar la aprobación final? El proyecto queda finalizado y ya no se modifica.');">Registrar la aprobación final</button>
+        </form>
     </c:if>
-    <c:if test="${mostrarAsignacionAbajo}">
-        <div class="col-lg">
-            <details class="app-tarjeta app-historial app-formulario h-100">
-                <summary>Director y evaluador<span class="text-secondary fw-normal"> · cambiar la asignación</span></summary>
-                <dl class="app-pares mt-3">
-                    <div><dt>Director</dt><dd><c:out value="${empty p.director ? 'Por asignar' : p.director}" /></dd></div>
-                    <div><dt>Evaluador</dt><dd><c:out value="${empty p.evaluador ? 'Por asignar' : p.evaluador}" /></dd></div>
-                </dl>
-                <form class="mt-3" method="post" action="${ctx}/admin/proyecto-asignar.jsp">
-                    <%@ include file="/WEB-INF/jspf/asignacion-comite.jspf" %>
-                </form>
-            </details>
-        </div>
-    </c:if>
-</div>
+</c:if>
+
+<c:if test="${cambiosPendientes.rowCount > 0}">
+    <div class="app-tarjeta mb-4">
+        <h2 class="app-tarjeta-titulo">Cambio de modalidad por decidir</h2>
+        <c:forEach var="cm" items="${cambiosPendientes.rows}">
+            <p class="mb-1"><strong><c:out value="${cm.solicitante}" /></strong> pide pasar de <c:out value="${cm.anterior}" /> a <strong><c:out value="${cm.nueva}" /></strong>.</p>
+            <p class="app-observacion mt-0">Motivo: <c:out value="${cm.motivo}" /> <span class="app-lista-nota"><fmt:formatDate value="${cm.solicitado_en}" pattern="dd/MM/yyyy HH:mm" /></span></p>
+            <form class="app-revision" method="post" action="${ctx}/admin/modalidad-decidir.jsp">
+                <input type="hidden" name="id" value="${cm.id}">
+                <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre el cambio de modalidad" required></textarea>
+                <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar el cambio</button>
+                <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
+            </form>
+        </c:forEach>
+    </div>
+</c:if>
+
+<c:if test="${prorrogas.rowCount > 0}">
+    <c:set var="prorrogaPorDecidir" value="false" />
+    <c:forEach var="pr" items="${prorrogas.rows}"><c:if test="${pr.estado == 'Pendiente'}"><c:set var="prorrogaPorDecidir" value="${not cerrado}" /></c:if></c:forEach>
+    <details class="app-tarjeta app-historial mb-4" ${prorrogaPorDecidir ? 'open' : ''}>
+        <summary>Prórrogas del informe final<span class="text-secondary fw-normal"> · ${prorrogaPorDecidir ? 'hay una por decidir' : prorrogas.rowCount}${prorrogaPorDecidir ? '' : (prorrogas.rowCount == 1 ? ' solicitud' : ' solicitudes')}</span></summary>
+        <div class="mt-3"></div>
+        <c:forEach var="pr" items="${prorrogas.rows}">
+            <div class="app-archivo">
+                <span>
+                    <span class="app-lista-dato"><c:choose><c:when test="${pr.estado == 'Aprobada'}">Prórroga <c:out value="${pr.numero}" /> de 3</c:when><c:otherwise>Solicitud de prórroga</c:otherwise></c:choose> · <c:out value="${pr.solicitante}" /></span>
+                    <span class="app-lista-nota">Pedida el <fmt:formatDate value="${pr.fecha_solicitud}" pattern="dd/MM/yyyy" /> · nueva fecha límite: <fmt:formatDate value="${pr.nueva_fecha_limite}" pattern="dd/MM/yyyy" /> · Motivo: <c:out value="${pr.motivo}" /></span>
+                </span>
+                <span class="app-acciones">
+                    <span class="app-estado ${pr.estado == 'Aprobada' ? 'activo' : 'inactivo'}"><c:out value="${pr.estado}" /></span>
+                    <c:if test="${not empty pr.entrega_id}"><a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${pr.entrega_id}" target="_blank" rel="noopener">Soporte</a></c:if>
+                </span>
+            </div>
+            <c:choose>
+                <c:when test="${pr.estado == 'Pendiente' and p.estado != 'Finalizado' and p.estado != 'Cancelado'}">
+                    <form class="app-revision mb-3" method="post" action="${ctx}/admin/prorroga-decidir.jsp">
+                        <input type="hidden" name="id" value="${pr.id}">
+                        <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre la prórroga" required></textarea>
+                        <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar la prórroga</button>
+                        <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
+                    </form>
+                </c:when>
+                <c:when test="${not empty pr.observacion}">
+                    <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${pr.observacion}" /></p>
+                </c:when>
+            </c:choose>
+        </c:forEach>
+    </details>
+</c:if>
+
+<c:if test="${exoneraciones.rowCount > 0}">
+    <c:set var="exoneracionPorDecidir" value="false" />
+    <c:forEach var="xo" items="${exoneraciones.rows}"><c:if test="${xo.estado == 'Pendiente'}"><c:set var="exoneracionPorDecidir" value="${p.estado != 'Finalizado'}" /></c:if></c:forEach>
+    <details class="app-tarjeta app-historial mb-4" ${exoneracionPorDecidir ? 'open' : ''}>
+        <summary>Exoneraciones por Saber TyT<span class="text-secondary fw-normal"> · ${exoneracionPorDecidir ? 'hay una por verificar' : exoneraciones.rowCount}${exoneracionPorDecidir ? '' : (exoneraciones.rowCount == 1 ? ' solicitud' : ' solicitudes')}</span></summary>
+        <div class="mt-3"></div>
+        <c:forEach var="xo" items="${exoneraciones.rows}">
+            <div class="app-archivo">
+                <span>
+                    <span class="app-lista-dato"><c:out value="${xo.estudiante}" /> · <c:out value="${xo.puntaje}" /> puntos</span>
+                    <span class="app-lista-nota">Estímulo: <c:out value="${xo.estimulo}" /><c:if test="${xo.estado == 'Aprobada' and xo.renuncia_exoneracion == true}"> · renunció a la exoneración</c:if></span>
+                </span>
+                <span class="app-acciones">
+                    <span class="app-estado ${xo.estado == 'Aprobada' ? 'activo' : 'inactivo'}"><c:out value="${xo.estado}" /></span>
+                    <a class="btn btn-sm btn-outline-dark rounded-pill" href="${ctx}/archivos/ver.jsp?id=${xo.entrega_id}" target="_blank" rel="noopener">Certificado</a>
+                </span>
+            </div>
+            <c:choose>
+                <c:when test="${xo.estado == 'Pendiente' and p.estado != 'Finalizado'}">
+                    <form class="app-revision mb-3" method="post" action="${ctx}/admin/exoneracion-revisar.jsp">
+                        <input type="hidden" name="id" value="${xo.id}">
+                        <textarea class="form-control" name="observacion" placeholder="Observación del comité (obligatoria)" aria-label="Observación sobre la exoneración" required></textarea>
+                        <button type="submit" name="decision" value="aprobar" class="btn btn-sm btn-primary rounded-pill">Aprobar la exoneración</button>
+                        <button type="submit" name="decision" value="rechazar" class="btn btn-sm btn-outline-dark rounded-pill">Rechazar</button>
+                    </form>
+                </c:when>
+                <c:when test="${not empty xo.observacion}">
+                    <p class="app-observacion mb-3"><strong>Observación del comité:</strong> <c:out value="${xo.observacion}" /></p>
+                </c:when>
+            </c:choose>
+        </c:forEach>
+    </details>
 </c:if>
 
 <c:set var="idProyectoHistorial" value="${p.id}" />
