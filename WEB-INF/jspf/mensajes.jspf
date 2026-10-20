@@ -21,7 +21,7 @@
             <c:when test="${param.ok == 'idea-rechazada'}">La idea quedó rechazada.</c:when>
             <c:when test="${param.ok == 'idea-tomada'}">Tomaste la idea: tu proyecto quedó creado en la fase 1.</c:when>
             <c:when test="${param.ok == 'pago-subido'}">El recibo de pago se subió correctamente. Queda en revisión del comité.</c:when>
-            <c:when test="${param.ok == 'pago-aprobado'}">El pago quedó aprobado. El proyecto pasa a la fase 2 cuando tenga director.</c:when>
+            <c:when test="${param.ok == 'pago-aprobado'}">El pago quedó aprobado. El proyecto pasa a la fase 2 cuando todos los integrantes tengan el pago aprobado y haya director.</c:when>
             <c:when test="${param.ok == 'pago-aprobado-fase-2'}">El pago quedó aprobado y el proyecto pasó a la fase 2 (Propuesta I).</c:when>
             <c:when test="${param.ok == 'pago-devuelto'}">El recibo se devolvió al estudiante con la observación.</c:when>
             <c:when test="${param.ok == 'asignacion-guardada'}">El director y el evaluador quedaron guardados.</c:when>
